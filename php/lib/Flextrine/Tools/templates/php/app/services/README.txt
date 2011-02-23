@@ -1,0 +1,1 @@
+Add custom remote methods to FlextrineService.php

@@ -1,0 +1,1 @@
+Doctrine will auto-generate proxies here.

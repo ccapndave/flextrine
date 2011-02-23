@@ -1,0 +1,50 @@
+# Copyright 2011 Dave Keen
+# http://www.actionscriptdeveloper.co.uk
+#
+# This file is part of Flextrine.
+#
+# Flextrine is free software: you can redistribute it and/or modify
+# it under the terms of the Lesser GNU General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Lesser GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# and the Lesser GNU General Public License along with this program.
+# If not, see <http://www.gnu.org/licenses/>.
+
+# Enter the connection options for your database here.  See http://www.doctrine-project.org/projects/dbal/2.0/docs/reference/dbal for details on
+# available connection options.
+connection_options:
+  dbname: your_database_name
+  user: your_database_user
+  password: your_database_password
+  host: localhost
+  driver: pdo_mysql
+
+# The directories for entities, services and auto-generated proxies.  In general these should be left at their defaults.
+directories:
+  entities: entities
+  services: services
+  proxies: Proxies
+  
+# Whether or not to use ACLs for entities in this project, and the class name and optional path of the Entity ACL definition.
+acl:
+  enable: false
+  class: EntitiesAcl
+  path: acl
+
+# The metadata driver.  See http://www.doctrine-project.org/docs/orm/2.0/en/reference/configuration.html#metadata-driver-required
+# for more details.  If you intend to use Flextrine with standard DocBlock annotations mappings this should be left at its default.
+metadata:
+  driver: Doctrine\ORM\Mapping\Driver\AnnotationDriver
+  paths: entities
+
+#autoGenerateProxies: true
+
+# On production servers set this to false to disable the Flextrine manager on your project
+flextrineManagerEnabled: true

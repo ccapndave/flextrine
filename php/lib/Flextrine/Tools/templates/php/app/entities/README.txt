@@ -1,0 +1,1 @@
+The entity classes for your application go in this directory
