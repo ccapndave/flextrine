@@ -18,4 +18,4 @@
 # If not, see <http://www.gnu.org/licenses/>.
 
 # This defines the default Flextrine project to use if not defined
-default_app: testsuite
+default_app: multime

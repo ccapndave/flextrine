@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" href="../../../../style.css" type="text/css" media="screen">
+<link rel="stylesheet" href="../../../../print.css" type="text/css" media="print">
+<meta content="Configuration,org.davekeen.flextrine.orm.Configuration,enabledRollback,entityTimeToLive,fetchMode,gateway,loadCollectionsOnDemand,loadEntitiesOnDemand,service,writeMode" name="keywords">
+<title>org.davekeen.flextrine.orm.Configuration</title>
+</head>
+<body>
+<script type="text/javascript" language="javascript" src="../../../../asdoc.js"></script><script type="text/javascript" language="javascript" src="../../../../cookies.js"></script><script type="text/javascript" language="javascript">
+<!--
+				asdocTitle = 'Configuration - API Documentation';
+				var baseRef = '../../../../';
+				window.onload = configPage;
+			--></script>
+<table style="display:none" id="titleTable" cellspacing="0" cellpadding="0" class="titleTable">
+<tr>
+<td align="left" class="titleTableTitle">Flextrine</td><td align="right" class="titleTableTopNav"><a onclick="loadClassListFrame('../../../../all-classes.html')" href="../../../../package-summary.html">All&nbsp;Packages</a>&nbsp;|&nbsp;<a onclick="loadClassListFrame('../../../../all-classes.html')" href="../../../../class-summary.html">All&nbsp;Classes</a>&nbsp;|&nbsp;<a onclick="loadClassListFrame('../../../../index-list.html')" href="../../../../all-index-A.html">Index</a>&nbsp;|&nbsp;<a href="../../../../index.html?org/davekeen/flextrine/orm/Configuration.html&amp;org/davekeen/flextrine/orm/class-list.html" id="framesLink1">Frames</a><a onclick="parent.location=document.location" href="" style="display:none" id="noFramesLink1">No&nbsp;Frames</a></td><td rowspan="3" align="right" class="titleTableLogo"><img alt="Adobe Logo" title="Adobe Logo" class="logoImage" src="../../../../images/logo.jpg"></td>
+</tr>
+<tr class="titleTableRow2">
+<td align="left" id="subTitle" class="titleTableSubTitle">Class&nbsp;Configuration</td><td align="right" id="subNav" class="titleTableSubNav"><a href="#propertySummary">Properties</a></td>
+</tr>
+<tr class="titleTableRow3">
+<td colspan="2">&nbsp;</td>
+</tr>
+</table>
+<script type="text/javascript" language="javascript">
+<!--
+if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Class Configuration"); titleBar_setSubNav(false,true,false,false,false,false,false,false,false,false,false,false,false,false);}
+--></script>
+<div class="MainContent">
+<table cellspacing="0" cellpadding="0" class="classHeaderTable">
+<tr>
+<td class="classHeaderTableLabel">Package</td><td><a onclick="javascript:loadClassListFrame('class-list.html')" href="package-detail.html">org.davekeen.flextrine.orm</a></td>
+</tr>
+<tr>
+<td class="classHeaderTableLabel">Class</td><td class="classSignature">public class Configuration</td>
+</tr>
+</table>
+<p></p>
+  The configuration class sets major Flextrine parameters.  It must be provided to an instance of the <code>EntityManager</code> using the
+  <code>setConfiguration</code> method..
+  
+  <p></p>
+<br>
+<span class="label">Example</span>
+<br>The following code shows the minimum necessary configuration for Flextrine to function.
+  
+  <pre>
+    var em:EntityManager = EntityManager.getInstance();
+    var configuration:Configuration = new Configuration();
+    configuration.gateway = "http://localhost/flextrineproject/gateway.php";
+    em.setConfiguration(configuration);
+  </pre>
+  <p></p>
+<br>
+<hr>
+</div>
+<a name="propertySummary"></a>
+<div class="summarySection">
+<div class="summaryTableTitle">Public Properties</div>
+<table id="summaryTableProperty" class="summaryTable " cellpadding="3" cellspacing="0">
+<tr>
+<th>&nbsp;</th><th colspan="2">Property</th><th class="summaryTableOwnerCol">Defined&nbsp;by</th>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#enabledRollback">enabledRollback</a> : Boolean = true<div class="summaryTableDescription">
+   Enable em.rollback().</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#entityTimeToLive">entityTimeToLive</a> : int = 5000<div class="summaryTableDescription">
+   Determines how long entities are stored in repositories before they are garbage collection.</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#fetchMode">fetchMode</a> : String = "eager"<div class="summaryTableDescription">
+   The default fetch mode to use.</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#gateway">gateway</a> : String<div class="summaryTableDescription">
+   The full URL to the <code>gateway.php</code> file in the Flextrine project.</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#loadCollectionsOnDemand">loadCollectionsOnDemand</a> : Boolean = true<div class="summaryTableDescription">
+   Whether or not to automatically load uninitialized associated collections when they are accessed, throwing ItemPendingErrors.</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#loadEntitiesOnDemand">loadEntitiesOnDemand</a> : Boolean = true<div class="summaryTableDescription">
+   Whether or not to automatically load uninitialized entities when any of their properties are accessed.</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#service">service</a> : String = "FlextrineService"<div class="summaryTableDescription">
+   The service defaults to FlextrineService (which is what it will be in most configurations)
+   </div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#writeMode">writeMode</a> : String = "push"<div class="summaryTableDescription">
+   The write mode to use.</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+</table>
+</div>
+<script type="text/javascript" language="javascript">
+<!--
+showHideInherited();
+--></script>
+<div class="MainContent">
+<a name="propertyDetail"></a>
+<div class="detailSectionHeader">Property detail</div>
+<a name="enabledRollback"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">enabledRollback</td><td class="detailHeaderType">property</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var enabledRollback:Boolean = true</code><p>
+   Enable em.rollback().  When enabled entities will store their original states allowing you to discard changes (e.g. on user cancel or network
+   error).  In general you will want to leave this on (the default), but rollback uses slightly more memory so if you are sure you don't need to
+   use it you can turn it off.
+   </p></div>
+<a name="entityTimeToLive"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">entityTimeToLive</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var entityTimeToLive:int = 5000</code><p>
+   Determines how long entities are stored in repositories before they are garbage collection.  If this is set to -1 entities will never be garbage
+   collected; this is useful if you are sure that you will never have too much information in your database and want to use the entities property
+   of EntityRepository directly.  It is not advised to set this value to less than 5 seconds (5000).
+   </p></div>
+<a name="fetchMode"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">fetchMode</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var fetchMode:String = "eager"</code><p>
+   The default fetch mode to use.  Most Flextrine methods provide a fetchMode parameter with which you can override this default setting on a call by
+   call basis.
+   </p></div>
+<a name="gateway"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">gateway</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var gateway:String</code><p>
+   The full URL to the <code>gateway.php</code> file in the Flextrine project.  For example, if your project was accessible at
+   <code>http://localhost/flextrineproject</code>, the gateway would be <code>http://localhost/flextrineproject/gateway.php</code>.
+   <b>This configuration setting is required for Flextrine to function.</b>
+   </p></div>
+<a name="loadCollectionsOnDemand"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">loadCollectionsOnDemand</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var loadCollectionsOnDemand:Boolean = true</code><p>
+   Whether or not to automatically load uninitialized associated collections when they are accessed, throwing ItemPendingErrors.  This allows
+   uninitialized collections to be bound directly to some Flex components (through AsyncListView in Flex 4).
+   </p></div>
+<a name="loadEntitiesOnDemand"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">loadEntitiesOnDemand</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var loadEntitiesOnDemand:Boolean = true</code><p>
+   Whether or not to automatically load uninitialized entities when any of their properties are accessed.  This works well with Flex binding, but is less
+   use when using entities in AS3 code.
+   </p></div>
+<a name="service"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">service</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var service:String = "FlextrineService"</code><p>
+   The service defaults to FlextrineService (which is what it will be in most configurations)
+   </p></div>
+<a name="writeMode"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">writeMode</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var writeMode:String = "push"</code><p>
+   The write mode to use.  Either WriteMode.PUSH where you make changes directly in the repository, and then flush them, or WriteMode.PULL
+   where changes need to be made on detached copies of the entities, then merged and flushed.
+   
+   At present WriteMode.PULL is experimental and it is recommended to only use WriteMode.PUSH (the default).
+   </p></div>
+<br>
+<br>
+<hr>
+<br>
+<p></p>
+<center class="copyright">Flextrine Copyright 2011 Dave Keen (http://www.actionscriptdeveloper.co.uk)</center>
+</div>
+</body>
+</html>
+<!--Flextrine Copyright 2011 Dave Keen (http://www.actionscriptdeveloper.co.uk)-->

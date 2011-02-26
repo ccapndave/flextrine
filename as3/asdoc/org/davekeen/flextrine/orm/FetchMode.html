@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" href="../../../../style.css" type="text/css" media="screen">
+<link rel="stylesheet" href="../../../../print.css" type="text/css" media="print">
+<meta content="FetchMode,org.davekeen.flextrine.orm.FetchMode,EAGER,LAZY" name="keywords">
+<title>org.davekeen.flextrine.orm.FetchMode</title>
+</head>
+<body>
+<script type="text/javascript" language="javascript" src="../../../../asdoc.js"></script><script type="text/javascript" language="javascript" src="../../../../cookies.js"></script><script type="text/javascript" language="javascript">
+<!--
+				asdocTitle = 'FetchMode - API Documentation';
+				var baseRef = '../../../../';
+				window.onload = configPage;
+			--></script>
+<table style="display:none" id="titleTable" cellspacing="0" cellpadding="0" class="titleTable">
+<tr>
+<td align="left" class="titleTableTitle">Flextrine</td><td align="right" class="titleTableTopNav"><a onclick="loadClassListFrame('../../../../all-classes.html')" href="../../../../package-summary.html">All&nbsp;Packages</a>&nbsp;|&nbsp;<a onclick="loadClassListFrame('../../../../all-classes.html')" href="../../../../class-summary.html">All&nbsp;Classes</a>&nbsp;|&nbsp;<a onclick="loadClassListFrame('../../../../index-list.html')" href="../../../../all-index-A.html">Index</a>&nbsp;|&nbsp;<a href="../../../../index.html?org/davekeen/flextrine/orm/FetchMode.html&amp;org/davekeen/flextrine/orm/class-list.html" id="framesLink1">Frames</a><a onclick="parent.location=document.location" href="" style="display:none" id="noFramesLink1">No&nbsp;Frames</a></td><td rowspan="3" align="right" class="titleTableLogo"><img alt="Adobe Logo" title="Adobe Logo" class="logoImage" src="../../../../images/logo.jpg"></td>
+</tr>
+<tr class="titleTableRow2">
+<td align="left" id="subTitle" class="titleTableSubTitle">Class&nbsp;FetchMode</td><td align="right" id="subNav" class="titleTableSubNav"><a href="#constantSummary">Constants</a></td>
+</tr>
+<tr class="titleTableRow3">
+<td colspan="2">&nbsp;</td>
+</tr>
+</table>
+<script type="text/javascript" language="javascript">
+<!--
+if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Class FetchMode"); titleBar_setSubNav(true,false,false,false,false,false,false,false,false,false,false,false,false,false);}
+--></script>
+<div class="MainContent">
+<table cellspacing="0" cellpadding="0" class="classHeaderTable">
+<tr>
+<td class="classHeaderTableLabel">Package</td><td><a onclick="javascript:loadClassListFrame('class-list.html')" href="package-detail.html">org.davekeen.flextrine.orm</a></td>
+</tr>
+<tr>
+<td class="classHeaderTableLabel">Class</td><td class="classSignature">public class FetchMode</td>
+</tr>
+</table>
+<p></p>
+  The fetch mode defines how Flextrine will load associations.
+  
+  <p>When using <code>FetchMode.EAGER</code> all associations will be followed in all connected
+  entities, thus returnig a complete connected object heirarchy.  Loading associations in eager
+  mode makes it much easier to work with entities, as all their associations will definitely be available.
+  However, in some cases (especially with bi-directional assocations) it is possible to accidentally
+  load a very large amount of data without meaning to.</p>
+  
+  <p>Conversely when using <code>FetchMode.LAZY</code> no associations will be followed at all, and Flextrine will return
+  only the requested entity and nothing more.  Both single valued associations and collections
+  will be replaced with unitialized stubs and its necessary to to use <code>EntityMananger.requireOne</code>
+  and <code>EntityManager.requireMany</code> to fill these stubs in from the database.</p>
+  
+  <p>Note that its also possible to use <code>EntityManager.select</code> with <code>FetchMode.LAZY</code> to explicitly
+  define which associations to fetch by using <b>DQL fetch joins</b>.  See Doctrine 2 DQL documentation
+  for more details.
+  
+  <p></p>
+<br>
+<hr>
+</div>
+<a name="constantSummary"></a>
+<div class="summarySection">
+<div class="summaryTableTitle">Public Constants</div>
+<table id="summaryTableConstant" class="summaryTable " cellpadding="3" cellspacing="0">
+<tr>
+<th>&nbsp;</th><th colspan="2">Constant</th><th class="summaryTableOwnerCol">Defined&nbsp;by</th>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#EAGER">EAGER</a> : String = "eager"<div class="summaryTableDescription">[static]
+   Eager fetch mode.</div>
+</td><td class="summaryTableOwnerCol">FetchMode</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#LAZY">LAZY</a> : String = "lazy"<div class="summaryTableDescription">[static]
+   Lazy fetch mode.</div>
+</td><td class="summaryTableOwnerCol">FetchMode</td>
+</tr>
+</table>
+</div>
+<script type="text/javascript" language="javascript">
+<!--
+showHideInherited();
+--></script>
+<div class="MainContent">
+<a name="constantDetail"></a>
+<div class="detailSectionHeader">Constant detail</div>
+<a name="EAGER"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">EAGER</td><td class="detailHeaderType">constant</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public static const EAGER:String = "eager"</code><p>
+   Eager fetch mode.  Follow all associations when loading entities.
+   </p></div>
+<a name="LAZY"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">LAZY</td><td class="detailHeaderType">constant</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public static const LAZY:String = "lazy"</code><p>
+   Lazy fetch mode.  Don't follow any associations when loading entities.
+   </p></div>
+<br>
+<br>
+<hr>
+<br>
+<p></p>
+<center class="copyright">Flextrine Copyright 2011 Dave Keen (http://www.actionscriptdeveloper.co.uk)</center>
+</div>
+</body>
+</html>
+<!--Flextrine Copyright 2011 Dave Keen (http://www.actionscriptdeveloper.co.uk)-->

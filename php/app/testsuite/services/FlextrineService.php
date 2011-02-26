@@ -21,14 +21,25 @@
  *
  */
 
-class FlextrineService extends \Flextrine\AbstractFlextrineService {
+use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 
-	/**
-	 *  Add custom functions that you want to call remotely from Flextrine using EntityManager.callRemoteMethod here.
+class FlextrineService extends \Flextrine\AbstractFlextrineService {
+	
+	/** Add custom functions that you want to call remotely from Flextrine using EntityManager.callRemoteMethod here.
 	 *  See http://code.google.com/p/flextrine2/wiki/CustomPHPFunctions for details.
 	 */
-
+	
 	public function useFixture($fixture) {
+		/*$purger = new ORMPurger($this->em);
+		$purger->purge();
+
+		$conn = $this->em->getConnection();
+		foreach ($conn->getSchemaManager()->listTableNames() as $tableName)
+			$conn->executeUpdate("ALTER TABLE $tableName AUTO_INCREMENT = 1");
+
+		if ($fixture)
+			$conn->exec(file_get_contents(dirname(__FILE__)."/fixtures/$fixture.sql"));*/
+		
 		// TODO: Very occasionally this doesn't clear the database, I'm not totally sure why.  M2oLoadTest specifically seems to have this problem.
 		$conn = $this->em->getConnection();
 
@@ -43,6 +54,19 @@ class FlextrineService extends \Flextrine\AbstractFlextrineService {
 			$conn->exec(file_get_contents(dirname(__FILE__)."/fixtures/$fixture.sql"));
 
 		$conn->executeUpdate("SET FOREIGN_KEY_CHECKS=1");
+		
+		/*$conn = $this->em->getConnection();
+		
+		$tempFile = tempnam(sys_get_temp_dir(), 'flextrine');
+		
+		$passwordOption = ($conn->getPassword() == "") ? "" : "-p".$conn->getPassword();
+		
+		exec("mysqldump -u".$conn->getUsername()." ".$passwordOption." --databases ".$conn->getDatabase()." -d > ".$tempFile);
+		exec("mysql -u".$conn->getUsername()." ".$passwordOption." -e DROP DATABASE ".$conn->getDatabase());
+		exec("mysql -u".$conn->getUsername()." ".$passwordOption." < ".$tempFile);
+		
+		if ($fixture)
+			exec("mysql -u".$conn->getUsername()." ".$passwordOption." < ".dirname(__FILE__)."/fixtures/$fixture.sql");*/
 	}
-
+	
 }
