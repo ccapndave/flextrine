@@ -1,5 +1,4 @@
 <?php
-$appName = "multime";
 include "../app/bootstrap.php";
 
 $helperSet = new \Symfony\Component\Console\Helper\HelperSet(array(
