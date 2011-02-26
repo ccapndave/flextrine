@@ -27,7 +27,7 @@ Flextrine is actually a Flex frontend onto Doctrine 2, a powerful ORM system for
 
 Well, its like this. The following code creates a Customer and saves it to the database:
 
-```as3
+```
 var myCustomer:Customer = new Customer();
 myCustomer.name = "Joe Bloggs";
 
