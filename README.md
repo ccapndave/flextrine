@@ -52,6 +52,6 @@ Well... that was surprisingly short. Surely there is a load of PHP on the other 
 
 	}
 
-# Amazing!  I want to use this in all my RIA Flex projects
+# Amazing!  I want to use this in all my Flex RIA projects
 
-Flextrine is release under the [GPLv3 licence](http://www.gnu.org/licenses/gpl.html).  This means that you are free to use Flextrine in a project free of charge as long as you or your client are happy to make the full source code for that project available.  If you want to use Flextrine in a commercial closed-source project please contact me through my blog at [http://www.actionscriptdeveloper.co.uk/contact/] to discuss licencing.
+Flextrine is released under the [GPLv3 licence](http://www.gnu.org/licenses/gpl.html).  This means that you are free to use Flextrine in a project free of charge as long as you or your client are happy to make the full source code for that project available.  If you want to use Flextrine in a closed-source project please contact me through my blog at [http://www.actionscriptdeveloper.co.uk/contact/] to discuss licencing.
