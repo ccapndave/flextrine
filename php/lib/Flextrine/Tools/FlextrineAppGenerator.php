@@ -33,10 +33,8 @@ require_once('vlib/vlibTemplate.php');
 
 class FlextrineAppGenerator {
 
-	private $em;
-
-	public function __construct(EntityManager $em) {
-		$this->em = $em;
+	public function __construct() {
+		
 	}
 
 	public function generate($projectName, $outputDirectory) {

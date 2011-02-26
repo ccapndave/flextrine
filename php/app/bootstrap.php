@@ -67,20 +67,22 @@ if (isset($_GET['app'])) {
 
 define('APP_PATH', ROOT_PATH.DIRECTORY_SEPARATOR."app".DIRECTORY_SEPARATOR.$appName);
 
-if (!file_exists(APP_PATH))
-	throw new \Exception("The application '$appName' does not exist.  Generate it using the flextrine console tool (flextrine app:create <app_name>)");
-
-// Load the application specific configuration file
-$appConfig =  Yaml::load(APP_PATH."/config/config.yml");
-Zend_Registry::set("appConfig", $appConfig);
-
-// We need an extra class loader for the entities and services directory themselves; use empty namespace as there could be anything in here
-$entityClassLoader = new ClassLoader(null, APP_PATH.DIRECTORY_SEPARATOR.$appConfig["directories"]["entities"]);
-$entityClassLoader->register();
-
-// Create the Doctrine EntityManager
-Zend_Registry::set("em", Flextrine\Factory\EntityManagerFactory::create(Zend_Registry::get("appConfig")));
-
-// If acls are enabled create the Acl instance
-if ($appConfig["acl"]["enable"])
-	Zend_Registry::set("acl", Flextrine\Factory\AclFactory::create(Zend_Registry::get("appConfig")));
+if (!file_exists(APP_PATH)) {
+	if (php_sapi_name() != "cli")
+		throw new \Exception("The application '$appName' does not exist.  Generate it using the flextrine console tool (flextrine app:create <app_name>)");
+} else {
+	// Load the application specific configuration file
+	$appConfig =  Yaml::load(APP_PATH."/config/config.yml");
+	Zend_Registry::set("appConfig", $appConfig);
+	
+	// We need an extra class loader for the entities and services directory themselves; use empty namespace as there could be anything in here
+	$entityClassLoader = new ClassLoader(null, APP_PATH.DIRECTORY_SEPARATOR.$appConfig["directories"]["entities"]);
+	$entityClassLoader->register();
+	
+	// Create the Doctrine EntityManager
+	Zend_Registry::set("em", Flextrine\Factory\EntityManagerFactory::create(Zend_Registry::get("appConfig")));
+	
+	// If acls are enabled create the Acl instance
+	if ($appConfig["acl"]["enable"])
+		Zend_Registry::set("acl", Flextrine\Factory\AclFactory::create(Zend_Registry::get("appConfig")));
+}

@@ -56,8 +56,6 @@ EOT
 	 * @see Console\Command\Command
 	 */
 	protected function execute(Console\Input\InputInterface $input, Console\Output\OutputInterface $output) {
-		$em = $this->getHelper('em')->getEntityManager();
-
 		$appName = $input->getArgument('app-name');
 
 		$destPath = ROOT_PATH.DIRECTORY_SEPARATOR."app".DIRECTORY_SEPARATOR.basename($appName);
@@ -65,12 +63,17 @@ EOT
 		if (file_exists($destPath)) {
 			$output->write("This app already exists.  You must delete it manually if you want to regenerate it.");
 		} else {
-			$flextrineAppGenerator = new FlextrineAppGenerator($em);
+			$flextrineAppGenerator = new FlextrineAppGenerator();
 			$flextrineAppGenerator->generate($appName, $destPath);
 
 			$output->write("New Flextrine application created successfully in $destPath.", true);
 			$output->write("", true);
 			$output->write("To get started edit config/config.yml with your database details and create some entities.", true);
+			
+			// Update the default application in the main config.yml file to the application we just created
+			$configContents = file_get_contents(ROOT_PATH.DIRECTORY_SEPARATOR."config/config.yml");
+			$configContents = preg_replace("/default_app: (.*)/", "default_app: $appName", $configContents);
+			file_put_contents(ROOT_PATH.DIRECTORY_SEPARATOR."config/config.yml", $configContents);
 		}
 	}
 
