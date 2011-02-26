@@ -32,7 +32,6 @@ package org.davekeen.flextrine.orm.delegates {
 	import org.davekeen.delegates.RemoteDelegate;
 	import org.davekeen.flextrine.orm.Query;
 	import org.davekeen.flextrine.orm.events.FlextrineEvent;
-	import org.flexunit.async.Async;
 	
 	/**
 	 * @private 

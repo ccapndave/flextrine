@@ -1,30 +1,21 @@
 package org.davekeen.flextrine.orm.collections {
-	import flash.events.Event;
-	import flash.events.EventDispatcher;
 	import flash.events.TimerEvent;
 	import flash.utils.Timer;
-
-	import mx.binding.utils.ChangeWatcher;
+	
 	import mx.collections.ArrayCollection;
-	import mx.collections.ICollectionView;
 	import mx.collections.IList;
 	import mx.collections.ItemResponder;
 	import mx.collections.ListCollectionView;
 	import mx.events.CollectionEvent;
 	import mx.events.CollectionEventKind;
-	import mx.events.FlexEvent;
 	import mx.events.PropertyChangeEvent;
-	import mx.messaging.messages.ErrorMessage;
 	import mx.rpc.AsyncToken;
 	import mx.rpc.events.FaultEvent;
 	import mx.rpc.events.ResultEvent;
-	import mx.utils.ObjectProxy;
-
+	
 	import org.davekeen.flextrine.orm.FetchMode;
 	import org.davekeen.flextrine.orm.Query;
-	import org.davekeen.flextrine.orm.collections.PagedCollection;
 	import org.davekeen.flextrine.orm.delegates.FlextrineDelegate;
-	import org.flexunit.internals.namespaces.classInternal;
 
 	public class PagedCollection extends ListCollectionView {
 

@@ -21,22 +21,15 @@
  */
 
 package org.davekeen.flextrine.orm.collections {
-	import mx.collections.ArrayCollection;
 	import mx.collections.ArrayList;
 	import mx.collections.IList;
 	import mx.collections.ListCollectionView;
 	import mx.collections.Sort;
 	import mx.collections.errors.ItemPendingError;
-	import mx.events.CollectionEvent;
-	import mx.events.CollectionEventKind;
 	import mx.logging.ILogger;
 	import mx.logging.Log;
-	import mx.rpc.IResponder;
-	import mx.rpc.events.FaultEvent;
-	import mx.rpc.events.ResultEvent;
 	
 	import org.davekeen.flextrine.flextrine;
-	import org.davekeen.flextrine.orm.EntityManager;
 	import org.davekeen.flextrine.orm.FlextrineError;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.orm.metadata.MetaTags;

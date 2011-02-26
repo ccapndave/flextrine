@@ -38,7 +38,7 @@ package org.davekeen.flextrine.util {
 		 * block will be run again when it is ready.
 		 * 
 		 * <pre>
-		 * LazyUtil.onPropertyReady(function():void {
+		 * LazyUtil.async(function():void {
 		 * 		page = myBook.pages.getItemAt(0) as Page;
 		 * } );
 		 * </pre>
@@ -49,7 +49,7 @@ package org.davekeen.flextrine.util {
 		 * @param result
 		 * @param fault
 		 */
-		public static function onPropertyReady(result:Function, fault:Function = null):void {
+		public static function async(result:Function, fault:Function = null):void {
 			try {
 				result();
 			} catch (e:ItemPendingError) {

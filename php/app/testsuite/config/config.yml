@@ -41,8 +41,8 @@ metadata:
 # Whether or not to use ACLs for entities in this project, and the class name and optional path of the Entity ACL definition.
 acl:
   enable: false
-# class: EntitiesAcl
-# path: acl
+#  class: EntitiesAcl
+#  path: acl
 
 #autoGenerateProxies: true
 
