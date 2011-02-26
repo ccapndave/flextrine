@@ -27,29 +27,24 @@ Flextrine is actually a Flex frontend onto Doctrine 2, a powerful ORM system for
 
 Well, its like this. The following code creates a Customer and saves it to the database:
 
-```
-var myCustomer:Customer = new Customer();
-myCustomer.name = "Joe Bloggs";
+	var myCustomer:Customer = new Customer();
+	myCustomer.name = "Joe Bloggs";
 
-EntityManager.persist(myCustomer);
-EntityManager.flush();
-```
+	EntityManager.persist(myCustomer);
+	EntityManager.flush();
 
 Well... that was surprisingly short. Surely there is a load of PHP on the other side to make this work?
 
-```php
-<?php
+	<?php
+	/**
+	 * @Entity
+	 */
+	class Customer {
 
-/**
- * @Entity
- */
-class Customer {
+		/** @Id @Column(type="integer") @GeneratedValue(strategy="IDENTITY") */
+		public $id;
 
-    /** @Id @Column(type="integer") @GeneratedValue(strategy="IDENTITY") */
-    public $id;
-        
-    /** @Column(length=100, type="string") */
-    public $name;
+		/** @Column(length=100, type="string") */
+		public $name;
 
-}
-```
+	}
