@@ -8,6 +8,9 @@ Flextrine is a powerful solution for creating Flex/PHP rich internet application
 - MySQL, PostgreSQL, SQLite, Oracle (more coming)
 
 # Features
+
+Here are some of the features provided by Flextrine.
+
 ## Object persistence
 Flextrine gives you a very powerful asynchronous client-server ORM (object-relational mapper) directly within Flex itself with full support for associations, relations, complex queries, lazy loading and inheritance.
 
@@ -48,3 +51,7 @@ Well... that was surprisingly short. Surely there is a load of PHP on the other 
 		public $name;
 
 	}
+
+# Amazing!  I want to use this in all my RIA Flex projects
+
+Flextrine is release under the [GPLv3 licence](http://www.gnu.org/licenses/gpl.html).  This means that you are free to use Flextrine in a project free of charge as long as you or your client are happy to make the full source code for that project available.  If you want to use Flextrine in a commercial closed-source project please contact me through my blog at [http://www.actionscriptdeveloper.co.uk/contact/] to discuss licencing.
