@@ -2,6 +2,10 @@
 
 Flextrine is a powerful solution for creating Flex/PHP rich internet applications currently providing a persistence API and remote method invokation. The ultimate goal of Flextrine is to provide a similar feature set as LiveCycle Data Services for the Flex/PHP developer.
 
+Documentation is available [in the wiki](https://github.com/ccapndave/flextrine/wiki).
+The Flextrine discussion group is on [Google Groups](http://groups.google.com/group/flextrine).
+Please log bugs and requests in [Issues](https://github.com/ccapndave/flextrine/issues).
+
 # Requirements
 - Flex 3, Flex 4
 - PHP 5.3+
