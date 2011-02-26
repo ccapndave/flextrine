@@ -2,6 +2,8 @@
 
 Flextrine is a powerful solution for creating Flex/PHP rich internet applications currently providing a persistence API and remote method invokation. The ultimate goal of Flextrine is to provide a similar feature set as LiveCycle Data Services for the Flex/PHP developer.
 
+Documentation is available [in the wiki](https://github.com/ccapndave/flextrine/wiki).  The Flextrine discussion group is on [Google Groups](http://groups.google.com/group/flextrine).  Please log bugs and requests in [issues](https://github.com/ccapndave/flextrine/issues).
+
 # Requirements
 - Flex 3, Flex 4
 - PHP 5.3+
@@ -33,8 +35,8 @@ Well, its like this. The following code creates a Customer and saves it to the d
 	var myCustomer:Customer = new Customer();
 	myCustomer.name = "Joe Bloggs";
 
-	EntityManager.persist(myCustomer);
-	EntityManager.flush();
+	em.persist(myCustomer);
+	em.flush();
 
 Well... that was surprisingly short. Surely there is a load of PHP on the other side to make this work?
 
@@ -54,4 +56,4 @@ Well... that was surprisingly short. Surely there is a load of PHP on the other 
 
 # Amazing!  I want to use this in all my Flex RIA projects
 
-Flextrine is released under the [GPLv3 licence](http://www.gnu.org/licenses/gpl.html).  This means that you are free to use Flextrine in a project free of charge as long as you or your client are happy to make the full source code for that project available.  If you want to use Flextrine in a closed-source project please contact me through my blog at [http://www.actionscriptdeveloper.co.uk/contact/] to discuss licencing.
+Flextrine is released under the [GPLv3 licence](http://www.gnu.org/licenses/gpl.html).  This means that you are free to use Flextrine in a project free of charge as long as you or your client are happy to make the full source code for that project available.  If you want to use Flextrine in a closed-source project please contact me through my blog at <http://www.actionscriptdeveloper.co.uk/contact/> to discuss licencing.
