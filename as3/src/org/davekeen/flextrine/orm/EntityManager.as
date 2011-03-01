@@ -625,7 +625,15 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		private function doAddLoadedEntityToRepository(loadedEntity:Object, checkForPropertyChanges:Boolean = false):Object {
-			var oid:String = EntityUtil.getUniqueHash(loadedEntity);
+			var oid:String;
+			try {
+				// If we get a reference error when trying to get the unique hash, then this isn't an entity.  Assume that this is a query result with a hydration mode other than
+				// HYDRATE_OBJECT and just silently return.
+				oid = EntityUtil.getUniqueHash(loadedEntity);
+			} catch (e:ReferenceError) {
+				log.info("Received a non-entity result; not adding to repository.");
+				return loadedEntity;
+			}
 			
 			// Add the entity itself to the appropriate repository
 			if (!visited[oid]) {

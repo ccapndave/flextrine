@@ -25,13 +25,50 @@ package org.davekeen.flextrine.orm {
 	[RemoteClass(alias="org.davekeen.flextrine.orm.Query")]
 	public class Query {
 		
+		/**
+		 * Hydrates an object graph. This is the default behavior.
+		 */
+		public static const HYDRATE_OBJECT:uint = 1;
+		
+		/**
+		 * Hydrates an array graph.
+		 */
+		public static const HYDRATE_ARRAY:uint = 2;
+		
+		/**
+		 * Hydrates a flat, rectangular result set with scalar values.
+		 */
+		public static const HYDRATE_SCALAR:uint = 3;
+		
+		/**
+		 * Hydrates a single scalar value.
+		 */
+		public static const HYDRATE_SINGLE_SCALAR:uint = 4;
+		
+		/**
+		 * The DQL query to execute. 
+		 */
 		public var dql:String;
 		
+		/**
+		 * Named parameters referenced in the DQL query 
+		 */		
 		public var params:Object;
 		
+		/**
+		 * The index of the first result to return.  Used when paging query results. 
+		 */
 		public var firstResult:uint;
 		
+		/**
+		 * The maximum number of results to returns.  Used when paging query results. 
+		 */
 		public var maxResults:uint;
+		
+		/**
+		 * The hydration mode to use for the query result.  By default this is HYDRATE_OBJECT. 
+		 */
+		public var hydrationMode:uint = HYDRATE_OBJECT;
 		
 		public function Query(dql:String, params:Object = null, firstResult:uint = 0, maxResults:uint = 0) {
 			this.dql = dql;
@@ -42,6 +79,10 @@ package org.davekeen.flextrine.orm {
 		
 		public function setParameter(name:String, value:Object):void {
 			params[name] = value;
+		}
+
+		public function setHydrationMode(hydrationMode:uint):void {
+			this.hydrationMode = hydrationMode;
 		}
 		
 	}

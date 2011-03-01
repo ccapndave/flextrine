@@ -132,7 +132,7 @@ abstract class AbstractFlextrineService {
 			$query->setMaxResults($lastIdx - $firstIdx);
 		}
 		
-		$result = $query->getResult();
+		$result = $query->getResult($flextrineQuery->hydrationMode);
 		
 		if ($usePaging) {
 			// Use a regular expression to turn the query into a COUNT query in order to get the total number of rows without the paging
@@ -141,9 +141,9 @@ abstract class AbstractFlextrineService {
 			$count = $query->getSingleScalarResult();
 			
 			// When using paging we need to return both the result and the total number of rows.
-			return array("results" => $this->flextrinize($result), "count" => $count);
+			return array("results" => ($flextrineQuery->hydrationMode == \Doctrine\ORM\Query::HYDRATE_OBJECT) ? $this->flextrinize($result) : $result, "count" => $count);
 		} else {
-			return $this->flextrinize($result);
+			return ($flextrineQuery->hydrationMode == \Doctrine\ORM\Query::HYDRATE_OBJECT) ? $this->flextrinize($result) : $result;
 		}
 	}
 	

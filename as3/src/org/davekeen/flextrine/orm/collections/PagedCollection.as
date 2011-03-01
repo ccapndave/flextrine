@@ -27,7 +27,7 @@ package org.davekeen.flextrine.orm.collections {
 		private var refreshTimer:Timer;
 		private var workQueue:Array = new Array();
 
-		// set to true if you want to throwe away all packet fetch requests except the most recent one
+		// set to true if you want to throw away all packet fetch requests except the most recent one
 		public var PROCESS_MOST_RECENT_ONLY:Boolean = false;
 		private var _pageSize:uint = 60;
 
@@ -40,6 +40,7 @@ package org.davekeen.flextrine.orm.collections {
 			this.sort = new NullSort();
 		}
 
+		[Bindable("collectionChange")]
 		public override function get length():int {
 			return _count;
 		}

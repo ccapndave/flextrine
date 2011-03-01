@@ -29,6 +29,8 @@ class Query {
 	
 	public $params;
 	
+	public $hydrationMode;
+	
 	public function createQuery($em) {
 		if (substr(strtoupper($this->dql), 0, 7) != "SELECT ")
 			throw new \Exception("You may only use the SELECT operator");

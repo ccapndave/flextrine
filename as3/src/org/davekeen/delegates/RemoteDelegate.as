@@ -95,7 +95,7 @@ package org.davekeen.delegates {
 			remoteObject.channelSet = channelSet;
 			remoteObject.destination = "zendamf";
 			remoteObject.source = service;
-			remoteObject.makeObjectsBindable = false;
+			//remoteObject.makeObjectsBindable = true;
 			
 			// Make the remote function call
 			var operation:AbstractOperation = remoteObject.getOperation(operationName);
