@@ -10,11 +10,9 @@ package {tmpl_var name='package'} {
 	import {tmpl_var name='package'};
  </tmpl_if>
  </tmpl_loop>
-<tmpl_if name='implements' op='!=' value='' >	import {tmpl_var name='implementspackage'};
-</tmpl_if>
 
 	[Bindable]
-	public class {tmpl_var name='classname'}EntityBase extends EventDispatcher <tmpl_if name='implements' op='!=' value='' >implements {tmpl_var name='implements'} </tmpl_if>{
+	public class {tmpl_var name='classname'}EntityBase extends EventDispatcher {
 		
 		public var isUnserialized__:Boolean;
 		
@@ -24,7 +22,9 @@ package {tmpl_var name='package'} {
 		
 <tmpl_loop name='fieldsloop'>
 <tmpl_if name='id'>		[Id]
-		public var {tmpl_var name='name'}:{tmpl_var name='type'};
+		public function get {tmpl_var name='name'}():{tmpl_var name='type'} { return _{tmpl_var name='name'}; }
+		public function set {tmpl_var name='name'}(value:{tmpl_var name='type'}):void { _{tmpl_var name='name'} = value; }
+		private var _{tmpl_var name='name'}:{tmpl_var name='type'};
 		
 <tmpl_else>		public function get {tmpl_var name='name'}():{tmpl_var name='type'} { checkIsInitialized("{tmpl_var name='name'}"); return <tmpl_if name='type' op='==' value='Date'>(_{tmpl_var name='name'} && _{tmpl_var name='name'}.getTime() > 0) ? _{tmpl_var name='name'} : null<tmpl_else>_{tmpl_var name='name'}</tmpl_if>; }
 		public function set {tmpl_var name='name'}(value:<tmpl_if name='type' op='==' value='Date'>*<tmpl_else>{tmpl_var name='type'}</tmpl_if>):void { _{tmpl_var name='name'} = <tmpl_if name='type' op='==' value='Date'>(value is Date) ? value : new Date(value)<tmpl_else>value</tmpl_if>; }
@@ -99,10 +99,12 @@ package {tmpl_var name='package'} {
 		
 		flextrine function restoreState():void {
 			if (isInitialized__) {
-<tmpl_loop name='fieldsloop'>				{tmpl_var name='name'} = flextrine::savedState["{tmpl_var name='name'}"];
+<tmpl_loop name='fieldsloop'>				<tmpl_if name='type' op='==' value='Boolean'>{tmpl_var name='name'} = (flextrine::savedState["{tmpl_var name='name'}"] == true);
+<tmpl_else>{tmpl_var name='name'} = flextrine::savedState["{tmpl_var name='name'}"];
+</tmpl_if>
 </tmpl_loop>
 <tmpl_loop name='associationsloop'>				<tmpl_if name='type' op='==' value='PersistentCollection'>{tmpl_var name='name'}.flextrine::restoreState();
-<tmpl_else>{tmpl_var name='name'} = flextrine::savedState["{tmpl_var name='name'}"]; // this will trigger bi-directional??
+<tmpl_else>{tmpl_var name='name'} = flextrine::savedState["{tmpl_var name='name'}"];
 </tmpl_if></tmpl_loop>
 			}
 		}

@@ -54,7 +54,8 @@ class AS3EntityGenerator {
 		$generatedClasses = array();
 		foreach ($metadatas as $metadata) {
 			if ($metadata->isInheritanceTypeJoined() && $metadata->rootEntityName == $metadata->name) {
-				$generatedClasses[str_replace("\\", DIRECTORY_SEPARATOR, $metadata->name.".as")] = array("code" => $this->_generateInheritanceInterface($metadata), "overwrite" => true);		
+				$generatedClasses[str_replace("\\", DIRECTORY_SEPARATOR, $metadata->name."InterfaceBase.as")] = array("code" => $this->_generateInheritanceInterfaceBase($metadata), "overwrite" => true);		
+				$generatedClasses[str_replace("\\", DIRECTORY_SEPARATOR, $metadata->name.".as")] = array("code" => $this->_generateInheritanceInterfaceChild($metadata), "overwrite" => false);		
 			} else {
 				$generatedClasses[str_replace("\\", DIRECTORY_SEPARATOR, $metadata->name."EntityBase.as")] = array("code" => $this->_generateBase($metadata), "overwrite" => true);
 				$generatedClasses[str_replace("\\", DIRECTORY_SEPARATOR, $metadata->name.".as")] = array("code" => $this->_generateChild($metadata), "overwrite" => false);
@@ -95,12 +96,6 @@ class AS3EntityGenerator {
 		$template->setVar("package", str_replace("\\", ".", $metadata->namespace));
 		$template->setVar("remoteclass", str_replace("\\", "/", $metadata->name));
 		$template->setVar("classname", $this->stripPackageFromClassName($metadata->name));
-		
-		// If the rootEntityName isn't us then we want to implement that interface (this is how Flextrine deals with inheritance)
-		if (!($metadata->rootEntityName == $metadata->name)) {
-			$template->setVar("implementspackage", str_replace("\\", ".", $metadata->rootEntityName));
-			$template->setVar("implements", $this->stripPackageFromClassName($metadata->rootEntityName));
-		}
 		
 		// Get the identifiers
 		$identifiers = $metadata->identifier;
@@ -166,11 +161,17 @@ class AS3EntityGenerator {
 		$template->setVar("remoteclass", str_replace("\\", ".", $metadata->name));
 		$template->setVar("classname", $this->stripPackageFromClassName($metadata->name));
 		
+		// If the rootEntityName isn't us then we want to implement that interface (this is how Flextrine deals with inheritance)
+		if (!($metadata->rootEntityName == $metadata->name)) {
+			$template->setVar("implementspackage", str_replace("\\", ".", $metadata->rootEntityName));
+			$template->setVar("implements", $this->stripPackageFromClassName($metadata->rootEntityName));
+		}
+		
 		return $template->grab();
 	}
 	
-	private function _generateInheritanceInterface($metadata) {
-		$template = new \vlibTemplate(dirname(__FILE__)."/templates/as3/inheritanceinterface.as.tpl");
+	private function _generateInheritanceInterfaceBase($metadata) {
+		$template = new \vlibTemplate(dirname(__FILE__)."/templates/as3/inheritanceinterfacebase.as.tpl");
 		
 		// Set the package and local class name
 		$template->setVar("package", str_replace("\\", ".", $metadata->namespace));
@@ -208,6 +209,16 @@ class AS3EntityGenerator {
 		}
 		
 		if (sizeof($associationsLoop) > 0) $template->setLoop("associationsloop", $associationsLoop);
+		
+		return $template->grab();
+	}
+	
+	private function _generateInheritanceInterfaceChild($metadata) {
+		$template = new \vlibTemplate(dirname(__FILE__)."/templates/as3/inheritanceinterface.as.tpl");
+		
+		// Set the package and local class name
+		$template->setVar("package", str_replace("\\", ".", $metadata->namespace));
+		$template->setVar("classname", $this->stripPackageFromClassName($metadata->name));
 		
 		return $template->grab();
 	}

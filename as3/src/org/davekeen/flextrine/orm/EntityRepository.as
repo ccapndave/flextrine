@@ -255,6 +255,7 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		internal function clearPersistedEntity(temporaryUid:String):void {
+			delete persistedEntities[temporaryUidMap[temporaryUid]];
 			delete temporaryUidMap[temporaryUid];
 		}
 		
