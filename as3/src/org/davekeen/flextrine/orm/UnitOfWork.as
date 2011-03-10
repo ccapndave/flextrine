@@ -235,9 +235,9 @@ import org.davekeen.flextrine.util.EntityUtil;
 
 class RemoteOperations {
 	
-	public var persists:Dictionary = new Dictionary(true);
-	public var merges:Dictionary = new Dictionary(true);
-	public var removes:Dictionary = new Dictionary(true);
+	public var persists:Dictionary = new Dictionary(false);
+	public var merges:Dictionary = new Dictionary(false);
+	public var removes:Dictionary = new Dictionary(false);
 	
 	/**
 	 * Returns the total number of queued remote operations in the RemoteOperations object

@@ -288,6 +288,7 @@ package org.davekeen.flextrine.orm {
 			log.info("Selecting (paged) " + query.dql);
 			
 			var pagedCollection:PagedCollection = new PagedCollection();
+			pagedCollection.pageSize = pageSize;
 			pagedCollection.setDelegate(getDelegate());
 			pagedCollection.setQuery(query);
 			
@@ -416,6 +417,29 @@ package org.davekeen.flextrine.orm {
 			log.info("Calling remote method " + methodName + " " + ObjectUtil.toString(args));
 			
 			return getDelegate().callRemoteMethod(methodName, args);
+		}
+		
+		/**
+		 * This is identical to callRemoteMethod, except that this expects a response from the server that is either an entity or an array of entities.
+		 * 
+		 * On the server it is essential to prepare the return value for Flextrine using the <pre>flextrinize</pre> method:
+		 * 
+		 * <pre>
+		 * public function myRemoteEntityMethod($id) {
+		 *   $entity = $this->em->getRepository("vo\User")->load($id);
+		 *   return $this->flextrinize($entity);
+		 * }
+		 * </pre>
+		 *  
+		 * @param methodName
+		 * @param args
+		 * @return 
+		 * 
+		 */
+		public function callRemoteEntityMethod(methodName:String, ...args):AsyncToken {
+			log.info("Calling remote entity method " + methodName + " " + ObjectUtil.toString(args));
+			
+			return getDelegate().callRemoteEntityMethod(methodName, args);
 		}
 		
 		/**

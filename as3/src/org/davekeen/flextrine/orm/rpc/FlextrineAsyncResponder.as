@@ -28,7 +28,10 @@ package org.davekeen.flextrine.orm.rpc {
 	 */
 	public class FlextrineAsyncResponder extends AsyncResponder {
 		
-		function FlextrineAsyncResponder(result:Function, fault:Function, token:Object = null) {
+		function FlextrineAsyncResponder(result:Function, fault:Function = null, token:Object = null) {
+			if (fault == null)
+				fault = function(o:Object, token:Object = null):void { }
+			
 			super(result, fault, token);
 		}
 		

@@ -107,10 +107,9 @@ package org.davekeen.flextrine.orm {
 			this.entityClass = entityClass;
 			
 			temporaryUidMap = new Object();
-			persistedEntities = new Dictionary(true);
-			dirtyEntities = new Dictionary(true);
-			removedEntities = new Dictionary(true);
 			
+			// Initialize the repository
+			clear();
 			entities = new EntityCollection(null, (isNaN(entityTimeToLive)) ? em.getConfiguration().entityTimeToLive : entityTimeToLive);
 			
 			// Add the id fields as an index
@@ -121,11 +120,14 @@ package org.davekeen.flextrine.orm {
 		 * @private 
 		 */
 		internal function clear():void {
-			entities.removeAll();
+			if (entities)
+				entities.removeAll();
+			
+			// We need strong keys to edits as we don't want them getting garbage collected before a flush(), clear() or rollback()
 			temporaryUidMap = new Object();
-			persistedEntities = new Dictionary(true);
-			dirtyEntities = new Dictionary(true);
-			removedEntities = new Dictionary(true);
+			persistedEntities = new Dictionary(false);
+			dirtyEntities = new Dictionary(false);
+			removedEntities = new Dictionary(false);
 		}
 		
 		/**
@@ -526,10 +528,7 @@ package org.davekeen.flextrine.orm {
 			var entity:Object = e.currentTarget;
 			
 			if (!em.getConfiguration().loadEntitiesOnDemand)
-				throw new FlextrineError("Attempt to get property '" + e.property + "' on unitialized entity '" + entity + "'.  Consider using EntityManager::require, FetchMode.EAGER or configuration.loadEntitiesOnDemand.", FlextrineError.ACCESSED_UNITIALIZED_ENTITY);
-			
-			if (!e.itemPendingError)
-				e.itemPendingError = new ItemPendingError("ItemPendingError - initializing entity " + entity);
+				throw new FlextrineError("Attempt to get property '" + e.property + "' on unitialized entity '" + entity + "'.  Consider using EntityManager::require, FetchMode.EAGER or configuration.loadEntitiesOnDemand.", FlextrineError.ACCESSED_UNINITIALIZED_ENTITY);
 			
 			log.info("Loading on demand: entity " + entity);
 			
@@ -545,7 +544,7 @@ package org.davekeen.flextrine.orm {
 			var persistentCollection:PersistentCollection = e.currentTarget as PersistentCollection;
 			
 			if (!em.getConfiguration().loadCollectionsOnDemand)
-				throw new FlextrineError("Attempt to access uninitialized collection '" + e.property + "' on entity '" + persistentCollection.getOwner() + "'.  Consider using EntityManager::require, eager loading or configuration loadEntitiesOnDemand.", FlextrineError.ACCESSED_UNITIALIZED_ENTITY);
+				throw new FlextrineError("Attempt to access uninitialized collection '" + e.property + "' on entity '" + persistentCollection.getOwner() + "'.  Consider using EntityManager::require, eager loading or configuration loadEntitiesOnDemand.", FlextrineError.ACCESSED_UNINITIALIZED_ENTITY);
 			
 			if (!e.itemPendingError)
 				e.itemPendingError = new ItemPendingError("ItemPendingError - initializing collection " + persistentCollection.getOwner() + "." + e.property);
@@ -556,7 +555,7 @@ package org.davekeen.flextrine.orm {
 		}
 
 		private function onInitializeResult(e:ResultEvent, itemPendingError:ItemPendingError):void {
-			if (itemPendingError.responders)
+			if (itemPendingError && itemPendingError.responders)
 				for each (var responder:IResponder in itemPendingError.responders)
 					responder.result(e);
 			
@@ -565,15 +564,13 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		private function onInitializeFault(e:FaultEvent, itemPendingError:ItemPendingError):void {
-			if (itemPendingError.responders)
+			if (itemPendingError && itemPendingError.responders)
 				for each (var responder:IResponder in itemPendingError.responders)
 					responder.fault(e);
 		}
 		
 		/**
-		 * Changes are not allowed to be made on any objects in the repository!  The change workflow is to get a writable copy of an entity, make changes on
-		 * that, merge it into the repository, then flush the repository.  The only exception is when the EntityRepository itself is updating an object as
-		 * part of a changeset received from the server (which is what the isUpdating flag is for).
+		 * Detected a change on a repository entity.  We may need to mark it dirty.
 		 * 
 		 * @param	e
 		 */
@@ -588,6 +585,10 @@ package org.davekeen.flextrine.orm {
 					case STATE_MANAGED:
 						if (em.getConfiguration().writeMode == WriteMode.PULL)
 							throw new FlextrineError("Attempted to change an entity directly when in WriteMode.PULL (" + e.source + ", " + e.property + ")", FlextrineError.ATTEMPTED_WRITE_TO_REPOSITORY_ENTITY);
+						
+						// If the entity is uninitialized we don't want to do anything
+						if (!EntityUtil.isInitialized(e.source))
+							return;
 						
 						// Mark the entity as dirty in the dirtyEntities map so we know what to do on an em.rollback()
 						dirtyEntities[e.source] = true;

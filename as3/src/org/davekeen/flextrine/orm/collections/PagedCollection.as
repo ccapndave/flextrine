@@ -1,4 +1,5 @@
 package org.davekeen.flextrine.orm.collections {
+	import flash.events.Event;
 	import flash.events.TimerEvent;
 	import flash.utils.Timer;
 	
@@ -16,6 +17,8 @@ package org.davekeen.flextrine.orm.collections {
 	import org.davekeen.flextrine.orm.FetchMode;
 	import org.davekeen.flextrine.orm.Query;
 	import org.davekeen.flextrine.orm.delegates.FlextrineDelegate;
+	
+	[Event(name="collectionContentsChanged", type="flash.events.Event")]
 
 	public class PagedCollection extends ListCollectionView {
 
@@ -28,25 +31,99 @@ package org.davekeen.flextrine.orm.collections {
 		private var workQueue:Array = new Array();
 
 		// set to true if you want to throw away all packet fetch requests except the most recent one
-		public var PROCESS_MOST_RECENT_ONLY:Boolean = false;
+		public var PROCESS_MOST_RECENT_ONLY:Boolean = true;
 		private var _pageSize:uint = 60;
+		private var _startOffset:int = 0;
+		
+		private var _paginatedList:ArrayCollection = new ArrayCollection();
 
 		public function PagedCollection(list:IList = null) {
-			super(list);
-
-			refreshTimer = new Timer(250, 1);
+			super(list);		
+			
+			refreshTimer = new Timer(500, 1);
 			refreshTimer.addEventListener(TimerEvent.TIMER, doRefreshTimer, false, 0, true);
+						
+			this.refresh();
 
 			this.sort = new NullSort();
 		}
+		
+		[Bindable("paginatedCollectionChange")]
+		public function get lastPage():Boolean
+		{
+			return this.startOffset >= this.length - (this.pageSize-1);	
+		}
 
+		[Bindable("paginatedCollectionChange")]
+		public function get firstPage():Boolean
+		{
+			return this.startOffset <= this.pageSize-1;	
+		}		
+
+		public function nextPage():void
+		{
+			this.startOffset += this.pageSize;
+		}
+
+		public function previousPage():void
+		{
+			this.startOffset -= this.pageSize;
+		}
+		
+		[Bindable("paginatedCollectionChange")]
+		public function get paginatedList():ArrayCollection
+		{
+			return this._paginatedList;
+		}
+		
+		private function updatePaginatedList():void
+		{
+			_paginatedList.removeAll();
+			if( !list)
+				return;
+			for( var n:int = this.startOffset ; n < this.startOffset + this.pageSize; n++)  
+			{
+				if( n < list.length)
+					_paginatedList.addItem( getItemAt(n));
+			}			
+			dispatchEvent( new Event( "paginatedCollectionChange"));
+			
+			addToQueue();
+		}
+		
 		[Bindable("collectionChange")]
 		public override function get length():int {
 			return _count;
 		}
 
+		public function set startPage(pg:int):void {
+			pg = pg * this.pageSize;
+			this.startOffset = pg;
+		}		
+
+		public function get startPage():int {
+			return this.startOffset / this.pageSize;
+		}		
+		
+		public function set startOffset(ps:int):void {
+			if( ps < 0)
+				ps = 0;
+			// TODO: must I adjust this to length - pagesize instead so that empty views will be impossible?
+			if( ps > this.length)
+				ps = this.length;
+			this._startOffset = ps;
+			updatePaginatedList();
+			dispatchEvent( new Event( "paginatedIndexChange"));
+		}
+		
+		public function get startOffset():int {
+			return this._startOffset;
+		}
+		
 		public function set pageSize(ps:uint):void {
 			this._pageSize = ps;
+			updatePaginatedList();
+			dispatchEvent( new Event( "paginatedIndexChange"));
 		}
 
 		public function get pageSize():uint {
@@ -58,7 +135,6 @@ package org.davekeen.flextrine.orm.collections {
 			loadedRecords = new Array();
 
 			getInitial();
-			//addRecordToQueue(0);
 		}
 
 		public function setQuery(query:Query):void {
@@ -66,7 +142,6 @@ package org.davekeen.flextrine.orm.collections {
 			loadedRecords = new Array();
 
 			getInitial();
-			//addRecordToQueue(0);			
 		}
 
 		public override function getItemAt(idx:int, prefetch:int = 0):Object {
@@ -82,7 +157,7 @@ package org.davekeen.flextrine.orm.collections {
 		private function addRecordToQueue(recordIdx:int):void {
 			if (!loadedRecords[recordIdx] || loadedRecords[recordIdx] == 0) {
 				loadedRecords[recordIdx] = 1;
-				//if( this.pageQueue.indexOf(recordIdx) == -1)
+
 				this.pageQueue.push({rec: recordIdx, priority: new Date().time});
 
 				/*if( !refreshTimer.running)
@@ -97,13 +172,14 @@ package org.davekeen.flextrine.orm.collections {
 		}
 
 		private function doRefreshTimer(e:TimerEvent):void {
+			addToQueue();
 			processQueue();
 		}
 
-		private function processQueue():void {
+		private function addToQueue():void {
 			// batch the records that need fetching into work units for flextrine to fetch
 			// [1,2,3,5,6,99,100,104] will result in 2 work units, 1-6 and 99-104
-
+			
 			var maxGap:int = 5; // the biggest allowed gap in record index before a new fetch packet is started
 			//this.pageQueue.sort(Array.NUMERIC);
 			this.pageQueue.sortOn("rec", Array.NUMERIC);
@@ -135,15 +211,19 @@ package org.davekeen.flextrine.orm.collections {
 			} else if (this.pageQueue.length == 1) {
 				sio = this.pageQueue.pop();
 				this.workQueue.push({start: sio.rec, end: sio.rec + 1, priority: sio.priority});
-			}
+			}		
+		}
+		
+		private function processQueue():void {
 			//trace('workQueue length', workQueue.length);
 			if (this.workQueue.length > 0) {
 				// process the most recent record fetch request packet first
-				workQueue.sortOn("priority", Array.NUMERIC | Array.DESCENDING);
+				workQueue.sortOn("priority", Array.NUMERIC);
 				var workUnit:Object = this.workQueue.pop();
 
 				if (this.PROCESS_MOST_RECENT_ONLY) {
 					while (this.workQueue.length > 0) {
+						//trace('popping');
 						var tq:Object = this.workQueue.pop();
 						for (var n:int = tq.start; n < tq.end; n++) {
 							if (loadedRecords[n] && loadedRecords[n] != 2)
@@ -159,6 +239,8 @@ package org.davekeen.flextrine.orm.collections {
 			if (delegate && query) {
 				var startidx:int = workUnit.start;
 				var endidx:int = workUnit.end;
+				//if( endidx - startidx < this.pageSize)
+				//	endidx = startidx + this.pageSize;
 				trace("Loading:", startidx, endidx);
 				var asyncToken:AsyncToken = delegate.select(query, startidx, endidx, FetchMode.LAZY);
 				asyncToken.addResponder(new ItemResponder(onAsyncResult, onAsyncFault, {start: startidx, end: endidx}));
@@ -209,15 +291,18 @@ package org.davekeen.flextrine.orm.collections {
 				var propertyChangeEvent:PropertyChangeEvent = PropertyChangeEvent.createUpdateEvent(this, "length", _count, count);
 				_count = count;
 				dispatchEvent(propertyChangeEvent);
+				// the paginator listens for this event to trigger a redraw - TODO: rethink this, it gay
+				dispatchEvent( new Event("collectionContentsChanged"));
 			}
 
 			var callLater:Timer = new Timer(1, 1);
 			callLater.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void {
+				updatePaginatedList();
+				addToQueue();
 				processQueue();
 			});
-			callLater.start();
+			callLater.start();					
 		}
-
 	}
 }
 

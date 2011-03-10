@@ -2,11 +2,12 @@ package tests.vo {
 	import flash.events.EventDispatcher;
 	import flash.utils.Dictionary;
 	import mx.events.PropertyChangeEvent;
+	import mx.collections.errors.ItemPendingError;
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.flextrine;
-  	import tests.vo.Patient;
-  
+	import tests.vo.Patient;
+
 	[Bindable]
 	public class PhoneNumberEntityBase extends EventDispatcher {
 		
@@ -16,8 +17,12 @@ package tests.vo {
 		
 		flextrine var savedState:Dictionary;
 		
+		flextrine var itemPendingError:ItemPendingError;
+		
 		[Id]
-		public var id:String;
+		public function get id():String { return _id; }
+		public function set id(value:String):void { _id = value; }
+		private var _id:String;
 		
 		public function get phoneNumber():String { checkIsInitialized("phoneNumber"); return _phoneNumber; }
 		public function set phoneNumber(value:String):void { _phoneNumber = value; }
@@ -36,8 +41,12 @@ package tests.vo {
 		}
 		
 		private function checkIsInitialized(property:String):void {
-			if (!isInitialized__ && isUnserialized__)
-				dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property));
+			if (!isInitialized__ && isUnserialized__) {
+				if (!flextrine::itemPendingError) {
+					flextrine::itemPendingError = new ItemPendingError("ItemPendingError - initializing entity " + this);
+					dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property, flextrine::itemPendingError));
+				}
+			}
 		}
 		
 		flextrine function setValue(attributeName:String, value:*):void {
@@ -84,7 +93,7 @@ package tests.vo {
 			if (isInitialized__) {
 				id = flextrine::savedState["id"];
 				phoneNumber = flextrine::savedState["phoneNumber"];
-				patient = flextrine::savedState["patient"]; // this will trigger bi-directional??
+				patient = flextrine::savedState["patient"];
 			}
 		}
 		

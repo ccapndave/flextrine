@@ -259,7 +259,7 @@ package org.davekeen.flextrine.orm.collections {
 		
 		private function checkIsInitialized(operation:String):void {
 			if (!isInitialized__)
-				throw new FlextrineError("Attempt to execute " + operation + " on an unitialized collection.", FlextrineError.ACCESSED_UNITIALIZED_COLLECTION);
+				throw new FlextrineError("Attempt to execute " + operation + " on an uninitialized collection.", FlextrineError.ACCESSED_UNINITIALIZED_COLLECTION);
 		}
 		
 		flextrine function saveState():void {

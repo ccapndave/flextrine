@@ -2,10 +2,11 @@ package tests.vo {
 	import flash.events.EventDispatcher;
 	import flash.utils.Dictionary;
 	import mx.events.PropertyChangeEvent;
+	import mx.collections.errors.ItemPendingError;
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.flextrine;
- 
+
 	[Bindable]
 	public class CountryEntityBase extends EventDispatcher {
 		
@@ -15,8 +16,12 @@ package tests.vo {
 		
 		flextrine var savedState:Dictionary;
 		
+		flextrine var itemPendingError:ItemPendingError;
+		
 		[Id]
-		public var id:String;
+		public function get id():String { return _id; }
+		public function set id(value:String):void { _id = value; }
+		private var _id:String;
 		
 		public function get name():String { checkIsInitialized("name"); return _name; }
 		public function set name(value:String):void { _name = value; }
@@ -30,8 +35,12 @@ package tests.vo {
 		}
 		
 		private function checkIsInitialized(property:String):void {
-			if (!isInitialized__ && isUnserialized__)
-				dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property));
+			if (!isInitialized__ && isUnserialized__) {
+				if (!flextrine::itemPendingError) {
+					flextrine::itemPendingError = new ItemPendingError("ItemPendingError - initializing entity " + this);
+					dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property, flextrine::itemPendingError));
+				}
+			}
 		}
 		
 		flextrine function setValue(attributeName:String, value:*):void {

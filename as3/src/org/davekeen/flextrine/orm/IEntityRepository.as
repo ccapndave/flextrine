@@ -53,6 +53,15 @@ package org.davekeen.flextrine.orm {
 		function get entities():EntityCollection;
 		
 		/**
+		 * Get the state of an entity.  An entity which is not yet in a repository is NEW, an object which is in a repository is MANAGED, and object which is an
+		 * identified entity but isn't in a repository is DETACHED and an object which is scheduled for removal is REMOVED.
+		 * 
+		 * @param	entity
+		 * @return
+		 */
+		function getEntityState(entity:Object):String;
+		
+		/**
 		 * Load the entity with the given identifier (primary key).  Behaviour for entities with composite keys is currently undefined.
 		 * 
 		 * @param	id The id of the entity to load

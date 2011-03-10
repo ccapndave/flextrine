@@ -2,10 +2,11 @@ package tests.vo.types {
 	import flash.events.EventDispatcher;
 	import flash.utils.Dictionary;
 	import mx.events.PropertyChangeEvent;
+	import mx.collections.errors.ItemPendingError;
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.flextrine;
- 
+
 	[Bindable]
 	public class TypesObjectEntityBase extends EventDispatcher {
 		
@@ -15,8 +16,12 @@ package tests.vo.types {
 		
 		flextrine var savedState:Dictionary;
 		
+		flextrine var itemPendingError:ItemPendingError;
+		
 		[Id]
-		public var id:String;
+		public function get id():String { return _id; }
+		public function set id(value:String):void { _id = value; }
+		private var _id:String;
 		
 		public function get integerField():int { checkIsInitialized("integerField"); return _integerField; }
 		public function set integerField(value:int):void { _integerField = value; }
@@ -62,8 +67,12 @@ package tests.vo.types {
 		}
 		
 		private function checkIsInitialized(property:String):void {
-			if (!isInitialized__ && isUnserialized__)
-				dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property));
+			if (!isInitialized__ && isUnserialized__) {
+				if (!flextrine::itemPendingError) {
+					flextrine::itemPendingError = new ItemPendingError("ItemPendingError - initializing entity " + this);
+					dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property, flextrine::itemPendingError));
+				}
+			}
 		}
 		
 		flextrine function setValue(attributeName:String, value:*):void {
@@ -120,7 +129,7 @@ package tests.vo.types {
 				smallIntField = flextrine::savedState["smallIntField"];
 				bigIntField = flextrine::savedState["bigIntField"];
 				decimalField = flextrine::savedState["decimalField"];
-				booleanField = flextrine::savedState["booleanField"];
+				booleanField = (flextrine::savedState["booleanField"] == true);
 				textField = flextrine::savedState["textField"];
 				stringField = flextrine::savedState["stringField"];
 				dateField = flextrine::savedState["dateField"];

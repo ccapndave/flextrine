@@ -2,14 +2,15 @@ package {tmpl_var name='package'} {
 	import flash.events.EventDispatcher;
 	import flash.utils.Dictionary;
 	import mx.events.PropertyChangeEvent;
+	import mx.collections.errors.ItemPendingError;
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.flextrine;
- <tmpl_loop name='associationsloop'>
- <tmpl_if name='type' op='<>' value='PersistentCollection'>
+<tmpl_loop name='associationsloop'>
+<tmpl_if name='type' op='<>' value='PersistentCollection'>
 	import {tmpl_var name='package'};
- </tmpl_if>
- </tmpl_loop>
+</tmpl_if>
+</tmpl_loop>
 
 	[Bindable]
 	public class {tmpl_var name='classname'}EntityBase extends EventDispatcher {
@@ -19,6 +20,8 @@ package {tmpl_var name='package'} {
 		public var isInitialized__:Boolean = true;
 		
 		flextrine var savedState:Dictionary;
+		
+		flextrine var itemPendingError:ItemPendingError;
 		
 <tmpl_loop name='fieldsloop'>
 <tmpl_if name='id'>		[Id]
@@ -51,8 +54,12 @@ package {tmpl_var name='package'} {
 		}
 		
 		private function checkIsInitialized(property:String):void {
-			if (!isInitialized__ && isUnserialized__)
-				dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property));
+			if (!isInitialized__ && isUnserialized__) {
+				if (!flextrine::itemPendingError) {
+					flextrine::itemPendingError = new ItemPendingError("ItemPendingError - initializing entity " + this);
+					dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property, flextrine::itemPendingError));
+				}
+			}
 		}
 		
 		flextrine function setValue(attributeName:String, value:*):void {

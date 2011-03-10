@@ -32,6 +32,8 @@ package org.davekeen.flextrine.orm.delegates {
 	import org.davekeen.delegates.RemoteDelegate;
 	import org.davekeen.flextrine.orm.Query;
 	import org.davekeen.flextrine.orm.events.FlextrineEvent;
+	import org.davekeen.flextrine.orm.rpc.FlextrineAsyncResponder;
+	import org.flexunit.runner.Result;
 	
 	/**
 	 * @private 
@@ -86,6 +88,24 @@ package org.davekeen.flextrine.orm.delegates {
 			methodName = (splitMethodName.length == 1) ? methodName : splitMethodName[1];
 			
 			return new RemoteDelegate(methodName, args, null, gateway, selectedService).execute();
+		}
+		
+		public function callRemoteEntityMethod(methodName:String, args:Array):AsyncToken {
+			var splitMethodName:Array = methodName.split(".");
+			
+			if (splitMethodName.length > 2)
+				throw new Error("Illegal method name - it must be in the form <RemoteMethod> or <RemoteService>.<RemoteMethod>");
+			
+			var selectedService:String = (splitMethodName.length == 1) ? service : splitMethodName[0];
+			methodName = (splitMethodName.length == 1) ? methodName : splitMethodName[1];
+			
+			var asyncToken:AsyncToken = new RemoteDelegate(methodName, args, null, gateway, selectedService).execute();
+			asyncToken.addResponder(new FlextrineAsyncResponder(
+				function (e:ResultEvent, token:Object = null):void {
+					dispatchEvent(new FlextrineEvent(FlextrineEvent.LOAD_COMPLETE, e.result, e));
+				}
+			));
+			return asyncToken;
 		}
 		
 		private function flextrineClassToDoctrineClass(entityClass:Class):String {

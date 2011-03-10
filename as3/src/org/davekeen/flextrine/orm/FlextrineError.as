@@ -37,12 +37,12 @@ package org.davekeen.flextrine.orm {
 		 * An attempt was made to access an lazily loaded association that has not been initialised.  This means it is necessary to use
 		 * <code>EntityManager.requireOne</code> or <code>EntityManager.requireMany</code> to load the association from the database.
 		 */
-		public static const ACCESSED_UNITIALIZED_ENTITY:int = 2;
+		public static const ACCESSED_UNINITIALIZED_ENTITY:int = 2;
 		
 		/**
 		 * An attempt was made to perform an operation on an unitialized collection.
 		 */
-		public static const ACCESSED_UNITIALIZED_COLLECTION:int = 3;
+		public static const ACCESSED_UNINITIALIZED_COLLECTION:int = 3;
 		
 		/**
 		 * <code>EntityManager.requireOne</code> or <code>EntityManager.requireMany</code> was called will illegal parameters.

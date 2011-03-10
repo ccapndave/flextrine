@@ -23,6 +23,7 @@
 package org.davekeen.flextrine.orm {
 	import org.davekeen.flextrine.cache.DictionaryCache;
 	import org.davekeen.flextrine.cache.ICache;
+	import org.davekeen.flextrine.flextrine;
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.metadata.MetaTags;
 	import org.davekeen.flextrine.util.ClassUtil;
@@ -62,7 +63,7 @@ package org.davekeen.flextrine.orm {
 					if (EntityUtil.isCollectionInitialized(value)) {
 						for (var n:int = 0; n < value.length; n++) {
 							var item:Object = value.getItemAt(n);
-							remoteEntity[associationAttribute].addItem(
+							remoteEntity.flextrine::addValue(associationAttribute,
 								EntityUtil.hasId(item)
 								? toUninitializedEntity(item)
 								: entityToRemoteEntity(item));
@@ -73,10 +74,10 @@ package org.davekeen.flextrine.orm {
 					}
 				} else {
 					// For single valued associations
-					remoteEntity[associationAttribute] = 
+					remoteEntity.flextrine::setValue(associationAttribute,
 						EntityUtil.hasId(value)
 						? toUninitializedEntity(value)
-						: entityToRemoteEntity(value);
+						: entityToRemoteEntity(value));
 				}
 			}
 			

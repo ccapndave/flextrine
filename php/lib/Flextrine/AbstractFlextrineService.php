@@ -72,7 +72,7 @@ abstract class AbstractFlextrineService {
 	 * @param <type> $entityOrArray
 	 * @return <type>
 	 */
-	private function flextrinize($entityOrArray) {
+	protected function flextrinize($entityOrArray) {
 		return $this->serializationWalker->walk($entityOrArray, $this->em);
 	}
 
@@ -159,19 +159,30 @@ abstract class AbstractFlextrineService {
 	public function flush($remoteOperations, $fetchMode) {
 		$this->em->clear();
 		
-		// Perform the flush
-		$flushExecutor = new FlushExecutor($this->em, $remoteOperations, $this->deserializationWalker);
-		$changeSets = $flushExecutor->flush();
-		
-		// Go through the elements in the change sets making the entities Flextrine ready (apart from temporaryUidMap and entityDeletionIdMap which are not entities)
-		$this->setFetchMode($fetchMode);
-		foreach ($changeSets as $changeSetType => $changeSet)
-			if ($changeSetType != "temporaryUidMap" && $changeSetType != "entityDeletionIdMap")
-				foreach ($changeSet as $oid => $entity)
-					$this->flextrinize($entity);
-		
-		// Return the change sets so they can be replicated in Flextrine
-		return $changeSets;
+		// Start the transaction
+		$this->em->getConnection()->beginTransaction();
+		try {
+			// Perform the flush
+			$flushExecutor = new FlushExecutor($this->em, $remoteOperations, $this->deserializationWalker);
+			$changeSets = $flushExecutor->flush();
+			
+			// Go through the elements in the change sets making the entities Flextrine ready (apart from temporaryUidMap and entityDeletionIdMap which are not entities)
+			$this->setFetchMode($fetchMode);
+			foreach ($changeSets as $changeSetType => $changeSet)
+				if ($changeSetType != "temporaryUidMap" && $changeSetType != "entityDeletionIdMap")
+					foreach ($changeSet as $oid => $entity)
+						$this->flextrinize($entity);
+			
+			// Commit the transaction
+			$this->em->getConnection()->commit();
+						
+			// Return the change sets so they can be replicated in Flextrine
+			return $changeSets;
+		} catch (\Exception $e) {
+    		$this->em->getConnection()->rollback();
+			$this->em->close();
+			throw $e;
+		}
 	}
 	
 	protected function runCustomOperation($operation, $data) {
