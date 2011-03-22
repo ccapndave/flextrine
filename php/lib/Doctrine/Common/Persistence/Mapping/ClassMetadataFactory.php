@@ -1,5 +1,7 @@
 <?php
 /*
+ *  $Id$
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -16,40 +18,49 @@
  * and is licensed under the LGPL. For more information, see
  * <http://www.doctrine-project.org>.
  */
- 
-namespace Doctrine\Common;
+
+namespace Doctrine\Common\Persistence\Mapping;
 
 /**
- * Class to store and retrieve the version of Doctrine
+ * Contract for a Doctrine persistence layer ClassMetadata class to implement.
  *
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link    www.doctrine-project.org
- * @since   2.0
- * @version $Revision$
+ * @since   2.1
  * @author  Benjamin Eberlei <kontakt@beberlei.de>
- * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author  Jonathan Wage <jonwage@gmail.com>
- * @author  Roman Borschel <roman@code-factory.org>
  */
-class Version
+interface ClassMetadataFactory
 {
     /**
-     * Current Doctrine Version
+     * Forces the factory to load the metadata of all classes known to the underlying
+     * mapping driver.
+     *
+     * @return array The ClassMetadata instances of all mapped classes.
      */
-    const VERSION = '2.1.0-DEV';
+    public function getAllMetadata();
 
     /**
-     * Compares a Doctrine version with the current one.
+     * Gets the class metadata descriptor for a class.
      *
-     * @param string $version Doctrine version to compare.
-     * @return int Returns -1 if older, 0 if it is the same, 1 if version 
-     *             passed as argument is newer.
+     * @param string $className The name of the class.
+     * @return Doctrine\ODM\MongoDB\Mapping\ClassMetadata
      */
-    public static function compare($version)
-    {
-        $currentVersion = str_replace(' ', '', strtolower(self::VERSION));
-        $version = str_replace(' ', '', $version);
+    public function getMetadataFor($className);
 
-        return version_compare($version, $currentVersion);
-    }
+    /**
+     * Checks whether the factory has the metadata for a class loaded already.
+     *
+     * @param string $className
+     * @return boolean TRUE if the metadata of the class in question is already loaded, FALSE otherwise.
+     */
+    public function hasMetadataFor($className);
+
+    /**
+     * Sets the metadata descriptor for a specific class.
+     *
+     * @param string $className
+     * @param ClassMetadata $class
+     */
+    public function setMetadataFor($className, $class);
 }

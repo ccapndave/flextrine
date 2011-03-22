@@ -21,19 +21,18 @@
  */
 
 package org.davekeen.flextrine.orm.delegates {
-	import flash.events.EventDispatcher;
-	import flash.utils.getQualifiedClassName;
-	
-	import mx.rpc.AsyncToken;
-	import mx.rpc.events.FaultEvent;
-	import mx.rpc.events.ResultEvent;
-	
 	import org.davekeen.delegates.IDelegateResponder;
 	import org.davekeen.delegates.RemoteDelegate;
 	import org.davekeen.flextrine.orm.Query;
 	import org.davekeen.flextrine.orm.events.FlextrineEvent;
 	import org.davekeen.flextrine.orm.rpc.FlextrineAsyncResponder;
-	import org.flexunit.runner.Result;
+
+	import mx.rpc.AsyncToken;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+
+	import flash.events.EventDispatcher;
+	import flash.utils.getQualifiedClassName;
 	
 	/**
 	 * @private 
@@ -51,30 +50,37 @@ package org.davekeen.flextrine.orm.delegates {
 		}
 		 
 		public function load(entityClass:Class, id:Number, fetchMode:String):AsyncToken {
+			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
 			return new RemoteDelegate("load", [ flextrineClassToDoctrineClass(entityClass), id, fetchMode ], this, gateway, service).execute();
 		}
 		
 		public function loadBy(entityClass:Class, criteria:Object, fetchMode:String):AsyncToken {
+			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
 			return new RemoteDelegate("loadBy", [ flextrineClassToDoctrineClass(entityClass), criteria, fetchMode ], this, gateway, service).execute();
 		}
 		
 		public function loadOneBy(entityClass:Class, criteria:Object, fetchMode:String):AsyncToken {
+			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
 			return new RemoteDelegate("loadOneBy", [ flextrineClassToDoctrineClass(entityClass), criteria, fetchMode ], this, gateway, service).execute();
 		}
 		
 		public function loadAll(entityClass:Class, fetchMode:String):AsyncToken {
+			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
 			return new RemoteDelegate("loadAll", [ flextrineClassToDoctrineClass(entityClass), fetchMode ], this, gateway, service).execute();
 		}
 		
 		public function select(query:Query, firstIdx:int, lastIdx:uint, fetchMode:String):AsyncToken {
+			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
 			return new RemoteDelegate("select", [ query, firstIdx, lastIdx, fetchMode ], this, gateway, service).execute();
 		}
 		
 		public function selectOne(query:Query, fetchMode:String):AsyncToken {
+			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
 			return new RemoteDelegate("selectOne", [ query, fetchMode ], this, gateway, service).execute();
 		}
 		
 		public function flush(remoteOperations:Object, fetchMode:String):AsyncToken {
+			dispatchEvent(new FlextrineEvent(FlextrineEvent.FLUSHING));
 			return new RemoteDelegate("flush", [ remoteOperations, fetchMode ], this, gateway, service).execute();
 		}
 		
@@ -114,7 +120,6 @@ package org.davekeen.flextrine.orm.delegates {
 		}
 		
 		/* INTERFACE org.davekeen.delegates.IDelegateResponder */
-		
 		public function onDelegateResult(operation:String, data:Object, resultEvent:ResultEvent = null):void {
 			switch (operation) {
 				case "load":

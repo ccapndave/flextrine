@@ -39,9 +39,7 @@ abstract class AbstractFlextrineService {
 	protected $em;
 	
 	protected $acl;
-
-	protected $flextrineManagerEnabled = true;
-
+	
 	protected $serializationWalker;
 	
 	protected $deserializationWalker;
@@ -171,7 +169,7 @@ abstract class AbstractFlextrineService {
 			foreach ($changeSets as $changeSetType => $changeSet)
 				if ($changeSetType != "temporaryUidMap" && $changeSetType != "entityDeletionIdMap")
 					foreach ($changeSet as $oid => $entity)
-						$this->flextrinize($entity);
+						$changeSet[$oid] = $this->flextrinize($entity);
 			
 			// Commit the transaction
 			$this->em->getConnection()->commit();
@@ -187,75 +185,6 @@ abstract class AbstractFlextrineService {
 	
 	protected function runCustomOperation($operation, $data) {
 		
-	}
-	
-	/**
-	 * The following functions are for use by the Flextrine Manager.  They are only accessible if $flextrineManagerEnabled is true.
-	 */
-	public function getFlextrineManagerData() {
-		if (!$this->isFlextrineManagerEnabled())
-			throw new \Exception("Flextrine manager access is not enabled");
-			
-		return array("dbname" => $this->em->getConnection()->getDatabase(),
-					 "entities" => $this->getSchemaEntities());
-	}
-	
-	public function generateAS3Entities() {
-		if (!$this->isFlextrineManagerEnabled())
-			throw new \Exception("Flextrine manager access is not enabled");
-		
-		$as3EntityGenerator = new AS3EntityGenerator($this->em);
-		return $as3EntityGenerator->generate($this->getEntityClassesMetaData());
-	}
-	
-	public function createSchema() {
-		if (!$this->isFlextrineManagerEnabled())
-			throw new \Exception("Flextrine manager access is not enabled");
-			
-		$tool = new \Doctrine\ORM\Tools\SchemaTool($this->em);
-		$tool->createSchema($this->getEntityClassesMetaData());
-	}
-	
-	public function updateSchema() {
-		if (!$this->isFlextrineManagerEnabled())
-			throw new \Exception("Flextrine manager access is not enabled");
-			
-		$tool = new \Doctrine\ORM\Tools\SchemaTool($this->em);
-		$tool->updateSchema($this->getEntityClassesMetaData());
-	}
-	
-	public function dropSchema() {
-		if (!$this->isFlextrineManagerEnabled())
-			throw new \Exception("Flextrine manager access is not enabled");
-			
-		$tool = new \Doctrine\ORM\Tools\SchemaTool($this->em);
-		$tool->dropSchema($this->getEntityClassesMetaData());
-	}
-	
-	/**
-	 * This function returns an array of strings with the fully qualified class of each entity.  The $entitiesPath parameter is no longer used
-	 * but will be left in for a little while to maintain backwards compatibility with projects created in Flextrine 0.6.1 and earlier.
-	 */
-	protected function getSchemaEntities($entitiesPath = null) {
-		$entities = array();
-		
-		foreach ($this->em->getMetadataFactory()->getAllMetadata() as $metadata)
-			$entities[] = $metadata->name;
-		
-		return $entities;
-	}
-	 
-	private function getEntityClassesMetaData() {
-		return $this->em->getMetadataFactory()->getAllMetadata();
-	}
-
-	private function isFlextrineManagerEnabled() {
-		if (Zend_Registry::isRegistered("appConfig")) {
-			$appConfig = Zend_Registry::get("appConfig");
-			return (isset($appConfig["flextrineManagerEnabled"]) && $appConfig["flextrineManagerEnabled"] == true);
-		} else {
-			return false;
-		}
 	}
 	
 }

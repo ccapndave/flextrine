@@ -119,8 +119,8 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * @private 
 		 */
-		internal function clear():void {
-			if (entities)
+		internal function clear(keepEntities:Boolean = false):void {
+			if (entities && !keepEntities)
 				entities.removeAll();
 			
 			// We need strong keys to edits as we don't want them getting garbage collected before a flush(), clear() or rollback()
@@ -407,28 +407,37 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		/**
-		 * Rollback any persisted, updated or removed entities to their original states.
+		 * Rollback any persisted, updated or removed entities to their original states.  Return true if there was anything to rollback (this is for use
+		 * in unit tests).
 		 * 
 		 * @private
 		 */
-		internal function rollback():void {
+		internal function rollback():Boolean {
 			var entity:*;
 			
+			var rolledBackEntities:Boolean;
+			
 			// Add any removed entities
-			for (entity in removedEntities)
+			for (entity in removedEntities) {
+				rolledBackEntities = true;
 				addEntity(entity);
+			}
 			
 			// Restore any dirty entities
-			for (entity in dirtyEntities)
+			for (entity in dirtyEntities) {
+				rolledBackEntities = true;
 				entity.flextrine::restoreState();
+			}
 			
 			// Remove any persisted entities
-			for (entity in persistedEntities)
+			for (entity in persistedEntities) {
+				rolledBackEntities = true;
 				deleteEntity(entity);
+			}
 			
-			persistedEntities = new Dictionary(true);
-			dirtyEntities = new Dictionary(true);
-			removedEntities = new Dictionary(true);
+			clear(true);
+			
+			return rolledBackEntities;
 		}
 		
 		public function find(id:Number):Object {			
@@ -589,6 +598,11 @@ package org.davekeen.flextrine.orm {
 						// If the entity is uninitialized we don't want to do anything
 						if (!EntityUtil.isInitialized(e.source))
 							return;
+						
+						// A special case; if the property is a Date and the time is the same we don't want to update
+						if (e.source[e.property] is Date)
+							if (e.oldValue && e.newValue && e.newValue.time == e.oldValue.time)
+								return;
 						
 						// Mark the entity as dirty in the dirtyEntities map so we know what to do on an em.rollback()
 						dirtyEntities[e.source] = true;

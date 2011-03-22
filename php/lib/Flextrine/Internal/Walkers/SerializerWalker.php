@@ -70,9 +70,9 @@ class SerializerWalker extends AbstractWalker {
 
 			foreach ($identifier as $idAttribute => $id)
 				$entity->$idAttribute = $id;
-				
-		}
 
+		}
+		
 		return $entity;
 	}
 

@@ -32,7 +32,7 @@
 			
 			em.persist(d1);
 			
-			em.rollback();
+			Assert.assertTrue(em.rollback());
 			
 			Assert.assertEquals(0, em.getRepository(Doctor).entities.length);
 			
@@ -57,10 +57,12 @@
 			em.persist(p1);
 			em.persist(p2);
 			
-			em.rollback();
+			var rolledBack:Boolean = em.rollback();
+			Assert.assertTrue(rolledBack);
 			
-			Assert.assertEquals(0, em.getRepository(Doctor).entities.length);
+			// Somehow this works for the patients but not the doctor
 			Assert.assertEquals(0, em.getRepository(Patient).entities.length);
+			Assert.assertEquals(0, em.getRepository(Doctor).entities.length);
 			
 			Assert.assertEquals(0, em.getUnitOfWork().size());
 		}

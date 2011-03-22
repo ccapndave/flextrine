@@ -80,6 +80,7 @@ final class OneToMany extends Annotation {
     public $cascade;
     public $fetch = 'LAZY';
     public $orphanRemoval = false;
+    public $indexBy;
 }
 final class ManyToOne extends Annotation {
     public $targetEntity;
@@ -93,6 +94,7 @@ final class ManyToMany extends Annotation {
     public $inversedBy;
     public $cascade;
     public $fetch = 'LAZY';
+    public $indexBy;
 }
 final class ElementCollection extends Annotation {
     public $tableName;
@@ -124,6 +126,12 @@ final class SequenceGenerator extends Annotation {
 }
 final class ChangeTrackingPolicy extends Annotation {}
 final class OrderBy extends Annotation {}
+
+final class NamedQueries extends Annotation {}
+final class NamedQuery extends Annotation {
+    public $name;
+    public $query;
+}
 
 /* Annotations for lifecycle callbacks */
 final class HasLifecycleCallbacks extends Annotation {}

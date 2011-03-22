@@ -22,11 +22,18 @@
 
 package org.davekeen.flextrine.util {
 	import mx.collections.errors.ItemPendingError;
+	import mx.logging.ILogger;
+	import mx.logging.Log;
 	import mx.rpc.AsyncResponder;
 	import mx.rpc.events.FaultEvent;
 	import mx.rpc.events.ResultEvent;
 
 	public class LazyUtil {
+
+		/**
+		 * Standard flex logger
+		 */
+		private static var log:ILogger = Log.getLogger("org.davekeen.flextrine.util.LazyUtil");
 
 		/**
 		 * A helper method to allow blocks of code that may throw ItemPendingErrors to be executed, and automatically re-executed after lazy content
@@ -53,11 +60,14 @@ package org.davekeen.flextrine.util {
 			try {
 				result();
 			} catch (e:ItemPendingError) {
+				log.info("ItemPendingError recieved during an async block; starting responder.");
 				e.addResponder(new AsyncResponder(
 					function(e:ResultEvent, token:Object):void {
+						log.info("Received result.");
 						result();
 					},
 					function (e:FaultEvent, token:Object):void {
+						log.info("Received fault [" + e.fault.faultDetail + "]");
 						if (fault != null) fault();
 					}
 				));

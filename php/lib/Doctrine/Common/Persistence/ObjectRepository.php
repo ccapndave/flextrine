@@ -1,5 +1,7 @@
 <?php
 /*
+ *  $Id$
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -16,40 +18,48 @@
  * and is licensed under the LGPL. For more information, see
  * <http://www.doctrine-project.org>.
  */
- 
-namespace Doctrine\Common;
+
+namespace Doctrine\Common\Persistence;
 
 /**
- * Class to store and retrieve the version of Doctrine
+ * Contract for a Doctrine persistence layer ObjectRepository class to implement.
  *
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link    www.doctrine-project.org
- * @since   2.0
- * @version $Revision$
+ * @since   2.1
  * @author  Benjamin Eberlei <kontakt@beberlei.de>
- * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author  Jonathan Wage <jonwage@gmail.com>
- * @author  Roman Borschel <roman@code-factory.org>
  */
-class Version
+interface ObjectRepository
 {
     /**
-     * Current Doctrine Version
+     * Finds an object by its primary key / identifier.
+     *
+     * @param $id The identifier.
+     * @return object The object.
      */
-    const VERSION = '2.1.0-DEV';
+    public function find($id);
 
     /**
-     * Compares a Doctrine version with the current one.
+     * Finds all objects in the repository.
      *
-     * @param string $version Doctrine version to compare.
-     * @return int Returns -1 if older, 0 if it is the same, 1 if version 
-     *             passed as argument is newer.
+     * @return mixed The objects.
      */
-    public static function compare($version)
-    {
-        $currentVersion = str_replace(' ', '', strtolower(self::VERSION));
-        $version = str_replace(' ', '', $version);
+    public function findAll();
 
-        return version_compare($version, $currentVersion);
-    }
+    /**
+     * Finds objects by a set of criteria.
+     *
+     * @param array $criteria
+     * @return mixed The objects.
+     */
+    public function findBy(array $criteria);
+
+    /**
+     * Finds a single object by a set of criteria.
+     *
+     * @param array $criteria
+     * @return object The object.
+     */
+    public function findOneBy(array $criteria);
 }

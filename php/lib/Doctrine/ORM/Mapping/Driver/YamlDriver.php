@@ -62,6 +62,21 @@ class YamlDriver extends AbstractFileDriver
         }
         $metadata->setPrimaryTable($table);
 
+        // Evaluate named queries
+        if (isset($element['namedQueries'])) {
+            foreach ($element['namedQueries'] as $name => $queryMapping) {
+                if (is_string($queryMapping)) {
+                    $queryMapping = array('query' => $queryMapping);
+                }
+
+                if ( ! isset($queryMapping['name'])) {
+                    $queryMapping['name'] = $name;
+                }
+
+                $metadata->addNamedQuery($queryMapping);
+            }
+        }
+
         /* not implemented specially anyway. use table = schema.table
         if (isset($element['schema'])) {
             $metadata->table['schema'] = $element['schema'];
@@ -276,6 +291,10 @@ class YamlDriver extends AbstractFileDriver
                     $mapping['cascade'] = $oneToOneElement['cascade'];
                 }
 
+                if (isset($oneToOneElement['orphanRemoval'])) {
+                    $mapping['orphanRemoval'] = (bool)$oneToOneElement['orphanRemoval'];
+                }
+
                 $metadata->mapOneToOne($mapping);
             }
         }
@@ -297,8 +316,16 @@ class YamlDriver extends AbstractFileDriver
                     $mapping['cascade'] = $oneToManyElement['cascade'];
                 }
 
+                if (isset($oneToManyElement['orphanRemoval'])) {
+                    $mapping['orphanRemoval'] = (bool)$oneToManyElement['orphanRemoval'];
+                }
+
                 if (isset($oneToManyElement['orderBy'])) {
                     $mapping['orderBy'] = $oneToManyElement['orderBy'];
+                }
+
+                if (isset($oneToManyElement['indexBy'])) {
+                    $mapping['indexBy'] = $oneToManyElement['indexBy'];
                 }
 
                 $metadata->mapOneToMany($mapping);
@@ -343,6 +370,10 @@ class YamlDriver extends AbstractFileDriver
 
                 if (isset($manyToOneElement['cascade'])) {
                     $mapping['cascade'] = $manyToOneElement['cascade'];
+                }
+
+                if (isset($manyToOneElement['orphanRemoval'])) {
+                    $mapping['orphanRemoval'] = (bool)$manyToOneElement['orphanRemoval'];
                 }
 
                 $metadata->mapManyToOne($mapping);
@@ -400,8 +431,16 @@ class YamlDriver extends AbstractFileDriver
                     $mapping['cascade'] = $manyToManyElement['cascade'];
                 }
 
+                if (isset($manyToManyElement['orphanRemoval'])) {
+                    $mapping['orphanRemoval'] = (bool)$manyToManyElement['orphan-removal'];
+                }
+
                 if (isset($manyToManyElement['orderBy'])) {
                     $mapping['orderBy'] = $manyToManyElement['orderBy'];
+                }
+
+                if (isset($manyToManyElement['indexBy'])) {
+                    $mapping['indexBy'] = $manyToManyElement['indexBy'];
                 }
 
                 $metadata->mapManyToMany($mapping);

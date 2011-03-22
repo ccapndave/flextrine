@@ -140,6 +140,12 @@ package org.davekeen.flextrine.orm {
 				flextrineDelegate = new FlextrineDelegate(configuration.gateway, configuration.service);
 				flextrineDelegate.addEventListener(FlextrineEvent.LOAD_COMPLETE, onFlextrineLoadComplete, false, int.MAX_VALUE, false);
 				flextrineDelegate.addEventListener(FlextrineEvent.FLUSH_COMPLETE, onFlextrineFlushComplete, false, int.MAX_VALUE, false);
+				
+				// Pass on events (generally these are useful for loading/saving status messages in applications)
+				flextrineDelegate.addEventListener(FlextrineEvent.LOADING, function(e:FlextrineEvent):void { dispatchEvent(e.clone()); }, false, 0, false);
+				flextrineDelegate.addEventListener(FlextrineEvent.FLUSHING, function(e:FlextrineEvent):void { dispatchEvent(e.clone()); }, false, 0, false);
+				flextrineDelegate.addEventListener(FlextrineEvent.LOAD_COMPLETE, function(e:FlextrineEvent):void { dispatchEvent(e.clone()); }, false, 0, false);
+				flextrineDelegate.addEventListener(FlextrineEvent.FLUSH_COMPLETE, function(e:FlextrineEvent):void { dispatchEvent(e.clone()); }, false, 0, false);
 			}
 			
 			return flextrineDelegate;
@@ -579,18 +585,22 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * Rollback any entities to the state they were in when last loaded from the database.  This will discard any changes to properties or associations
-		 * since the last load or flush.
+		 * since the last load or flush.  Return true if there was anything to rollback (this is mainly for use in unit tests).
 		 */
-		public function rollback():void {
+		public function rollback():Boolean {
 			if (!configuration.enabledRollback)
 				throw new Error("In order to use em.rollback() you must set enabledRollback in the configuration to true");
 			
 			log.info("Rolling back");
 			
+			var rolledBackEntities:Boolean;
+			
 			for each (var repository:EntityRepository in repositories)
-				repository.rollback();
+				rolledBackEntities = repository.rollback() ? true : rolledBackEntities;
 			
 			unitOfWork.clear();
+			
+			return rolledBackEntities;
 		}
 		
 		private function onFlextrineLoadComplete(e:FlextrineEvent):void {
@@ -621,16 +631,8 @@ package org.davekeen.flextrine.orm {
 				result = addLoadedEntityToRepository(results);
 			}
 			
-			// Re-apply the result to the token.  We need to remove all responders added by Flextrine (FlextrineAsyncResponders) which will only leave
-			// ones added by the user.
-			var resultEvent:ResultEvent = e.resultEvent;
-			
-			for (var flextrineResponderCount:uint = 0; flextrineResponderCount < resultEvent.token.responders.length; flextrineResponderCount++)
-				if (!(resultEvent.token.responders[flextrineResponderCount] is FlextrineAsyncResponder))
-					break;
-			
-			resultEvent.token.responders.splice(0, flextrineResponderCount);
-			resultEvent.token.applyResult(new ResultEvent(ResultEvent.RESULT, resultEvent.bubbles, resultEvent.cancelable, e.data.hasOwnProperty("results") ? { results: result, count: e.data.count } : result, resultEvent.token, resultEvent.message));
+			// Re-apply the result to the token.
+			e.resultEvent.setResult(e.data.hasOwnProperty("results") ? { results: result, count: e.data.count } : result);
 		}
 		
 		/**
@@ -752,16 +754,13 @@ package org.davekeen.flextrine.orm {
 			// Execute the change set against the repositories, and get back a changes object with arrays of what has been persisted, removed and updated
 			var changes:Object = executeChangeSet(changeSet);
 			
-			// Apply changes to the token.  We need to remove all responders added by Flextrine (FlextrineAsyncResponders) which will only leave
-			// ones added by the user.
-			var resultEvent:ResultEvent = e.resultEvent;
+			// Make sure no objects are marked persisted, dirty or removed (this effectively resets the rollback state).  Calling clear with a true parameter
+			// empties the dirty markers without emptying the repository itself.
+			for each (var entityRepository:EntityRepository in repositories)
+				entityRepository.clear(true);
 			
-			for (var flextrineResponderCount:uint = 0; flextrineResponderCount < resultEvent.token.responders.length; flextrineResponderCount++)
-				if (!(resultEvent.token.responders[flextrineResponderCount] is FlextrineAsyncResponder))
-					break;
-			
-			resultEvent.token.responders.splice(0, flextrineResponderCount);
-			resultEvent.token.applyResult(new ResultEvent(ResultEvent.RESULT, resultEvent.bubbles, resultEvent.cancelable, changes, resultEvent.token, resultEvent.message));
+			// Apply changes to the result event
+			e.resultEvent.setResult(changes);
 		}
 		
 		/**

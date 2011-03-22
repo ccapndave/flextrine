@@ -111,6 +111,8 @@ package org.davekeen.flextrine.orm.collections {
 			// TODO: must I adjust this to length - pagesize instead so that empty views will be impossible?
 			if( ps > this.length)
 				ps = this.length;
+			if( this._startOffset == ps)
+				return;
 			this._startOffset = ps;
 			updatePaginatedList();
 			dispatchEvent( new Event( "paginatedIndexChange"));
@@ -121,9 +123,12 @@ package org.davekeen.flextrine.orm.collections {
 		}
 		
 		public function set pageSize(ps:uint):void {
+			if( ps == this._pageSize)
+				return;
 			this._pageSize = ps;
 			updatePaginatedList();
-			dispatchEvent( new Event( "paginatedIndexChange"));
+			//dispatchEvent( new Event("paginatedIndexChange"));
+			dispatchEvent( new Event("collectionContentsChanged"));
 		}
 
 		public function get pageSize():uint {
@@ -291,7 +296,6 @@ package org.davekeen.flextrine.orm.collections {
 				var propertyChangeEvent:PropertyChangeEvent = PropertyChangeEvent.createUpdateEvent(this, "length", _count, count);
 				_count = count;
 				dispatchEvent(propertyChangeEvent);
-				// the paginator listens for this event to trigger a redraw - TODO: rethink this, it gay
 				dispatchEvent( new Event("collectionContentsChanged"));
 			}
 

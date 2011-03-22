@@ -13,6 +13,7 @@
 		public var rollbackUpdateTest:RollbackUpdateTest;
 		public var rollbackPersistTest:RollbackPersistTest;
 		public var rollbackRemoveTest:RollbackRemoveTest;
+		public var rollbackFlushTest:RollbackFlushTest;
 		
 	}
 

@@ -20,6 +20,7 @@
 namespace Doctrine\ORM;
 
 use Doctrine\DBAL\LockMode;
+use Doctrine\Common\Persistence\ObjectRepository;
 
 /**
  * An EntityRepository serves as a repository for entities with generic as well as
@@ -34,7 +35,7 @@ use Doctrine\DBAL\LockMode;
  * @author  Jonathan Wage <jonwage@gmail.com>
  * @author  Roman Borschel <roman@code-factory.org>
  */
-class EntityRepository
+class EntityRepository implements ObjectRepository
 {
     /**
      * @var string
@@ -78,6 +79,17 @@ class EntityRepository
     }
 
     /**
+     * Create a new Query instance based on a predefined metadata named query.
+     *
+     * @param string $queryName
+     * @return Query
+     */
+    public function createNamedQuery($queryName)
+    {
+        return $this->_em->createQuery($this->_class->getNamedQuery($queryName));
+    }
+
+    /**
      * Clears the repository, causing all managed entities to become detached.
      */
     public function clear()
@@ -97,6 +109,10 @@ class EntityRepository
     {
         // Check identity map first
         if ($entity = $this->_em->getUnitOfWork()->tryGetById($id, $this->_class->rootEntityName)) {
+            if (!($entity instanceof $this->_class->name)) {
+                return null;
+            }
+            
             if ($lockMode != LockMode::NONE) {
                 $this->_em->lock($entity, $lockMode, $lockVersion);
             }

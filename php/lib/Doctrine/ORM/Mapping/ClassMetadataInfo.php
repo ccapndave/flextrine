@@ -19,6 +19,7 @@
 
 namespace Doctrine\ORM\Mapping;
 
+use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use ReflectionClass;
 
 /**
@@ -39,7 +40,7 @@ use ReflectionClass;
  * @author Jonathan H. Wage <jonwage@gmail.com>
  * @since 2.0
  */
-class ClassMetadataInfo
+class ClassMetadataInfo implements ClassMetadata
 {
     /* The inheritance mapping types */
     /**
@@ -202,6 +203,13 @@ class ClassMetadataInfo
      * @var array
      */
     public $subClasses = array();
+
+    /**
+     * READ-ONLY: The named queries allowed to be called directly from Repository.
+     * 
+     * @var array
+     */
+    public $namedQueries = array();
 
     /**
      * READ-ONLY: The field names of all fields that are part of the identifier/primary key
@@ -376,6 +384,11 @@ class ClassMetadataInfo
      * Only valid for many-to-many mappings. Note that one-to-many associations can be mapped
      * through a join table by simply mapping the association as many-to-many with a unique
      * constraint on the join table.
+     *
+     * - <b>indexBy</b> (string, optional, to-many only)
+     * Specification of a field on target-entity that is used to index the collection by.
+     * This field HAS to be either the primary key or a unique column. Otherwise the collection
+     * does not contain all the entities that are actually related.
      * 
      * A join table definition has the following structure:
      * <pre>
@@ -650,6 +663,32 @@ class ClassMetadataInfo
     }
 
     /**
+     * Gets the named query.
+     *
+     * @see ClassMetadataInfo::$namedQueries
+     * @throws MappingException
+     * @param string $queryName The query name
+     * @return string
+     */
+    public function getNamedQuery($queryName)
+    {
+        if ( ! isset($this->namedQueries[$queryName])) {
+            throw MappingException::queryNotFound($this->name, $queryName);
+        }
+        return $this->namedQueries[$queryName];
+    }
+
+    /**
+     * Gets all named queries of the class.
+     *
+     * @return array
+     */
+    public function getNamedQueries()
+    {
+        return $this->namedQueries;
+    }
+
+    /**
      * Validates & completes the given field mapping.
      *
      * @param array $mapping  The field mapping to validated & complete.
@@ -717,6 +756,11 @@ class ClassMetadataInfo
         }
         $mapping['isOwningSide'] = true; // assume owning side until we hit mappedBy
 
+        // unset optional indexBy attribute if its empty
+        if (!isset($mapping['indexBy']) || !$mapping['indexBy']) {
+            unset($mapping['indexBy']);
+        }
+
         // If targetEntity is unqualified, assume it is in the same namespace as
         // the sourceEntity.
         $mapping['sourceEntity'] = $this->name;
@@ -768,7 +812,7 @@ class ClassMetadataInfo
             $mapping['isOwningSide'] = false;
         }
 
-        if (isset($mapping['id']) && $mapping['id'] === true && $mapping['type'] & ClassMetadata::TO_MANY) {
+        if (isset($mapping['id']) && $mapping['id'] === true && $mapping['type'] & self::TO_MANY) {
             throw MappingException::illegalToManyIdentifierAssoaction($this->name, $mapping['fieldName']);
         }
         
@@ -1012,6 +1056,16 @@ class ClassMetadataInfo
     {
         $this->identifier = $identifier;
         $this->isIdentifierComposite = (count($this->identifier) > 1);
+    }
+
+    /**
+     * Gets the mapped identifier field of this class.
+     *
+     * @return string $identifier
+     */
+    public function getIdentifier()
+    {
+        return $this->identifier;
     }
 
     /**
@@ -1347,8 +1401,7 @@ class ClassMetadataInfo
      * Adds an association mapping without completing/validating it.
      * This is mainly used to add inherited association mappings to derived classes.
      *
-     * @param AssociationMapping $mapping
-     * @param string $owningClassName The name of the class that defined this mapping.
+     * @param array $mapping
      */
     public function addInheritedAssociationMapping(array $mapping/*, $owningClassName = null*/)
     {
@@ -1364,13 +1417,28 @@ class ClassMetadataInfo
      * This is mainly used to add inherited field mappings to derived classes.
      *
      * @param array $mapping
-     * @todo Rename: addInheritedFieldMapping
      */
     public function addInheritedFieldMapping(array $fieldMapping)
     {
         $this->fieldMappings[$fieldMapping['fieldName']] = $fieldMapping;
         $this->columnNames[$fieldMapping['fieldName']] = $fieldMapping['columnName'];
         $this->fieldNames[$fieldMapping['columnName']] = $fieldMapping['fieldName'];
+    }
+
+    /**
+     * INTERNAL:
+     * Adds a named query to this class.
+     *
+     * @throws MappingException
+     * @param array $queryMapping
+     */
+    public function addNamedQuery(array $queryMapping)
+    {
+        if (isset($this->namedQueries[$queryMapping['name']])) {
+            throw MappingException::duplicateQueryMapping($this->name, $queryMapping['name']);
+        }
+        $query = str_replace('__CLASS__', $this->name, $queryMapping['query']);
+        $this->namedQueries[$queryMapping['name']] = $query;
     }
 
     /**
@@ -1561,6 +1629,17 @@ class ClassMetadataInfo
                 }
             }
         }
+    }
+
+    /**
+     * Checks whether the class has a named query with the given query name.
+     *
+     * @param string $fieldName
+     * @return boolean
+     */
+    public function hasNamedQuery($queryName)
+    {
+        return isset($this->namedQueries[$queryName]);
     }
 
     /**

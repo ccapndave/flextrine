@@ -44,7 +44,5 @@ metadata:
   driver: Doctrine\ORM\Mapping\Driver\AnnotationDriver
   paths: entities
 
-#autoGenerateProxies: true
-
-# On production servers set this to false to disable the Flextrine manager on your project
-flextrineManagerEnabled: true
+# Whether to automatically generate proxies on each call.  This should be enabled in development and disabled in production.
+autoGenerateProxies: true

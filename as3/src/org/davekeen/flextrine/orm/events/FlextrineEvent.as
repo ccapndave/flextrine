@@ -30,26 +30,37 @@ package org.davekeen.flextrine.orm.events {
 	 */
 	public class FlextrineEvent extends Event {
 		
+		public static const LOADING:String = "loading";
+		public static const FLUSHING:String = "flushing";
+		
 		public static const LOAD_COMPLETE:String = "load_complete";
 		public static const FLUSH_COMPLETE:String = "flush_complete";
 		
-		public var data:Object;
+		public var _data:Object;
 		
-		public var resultEvent:ResultEvent;
+		public var _resultEvent:ResultEvent;
 		
-		public function FlextrineEvent(type:String, data:Object, resultEvent:ResultEvent, bubbles:Boolean=false, cancelable:Boolean=false) { 
+		public function FlextrineEvent(type:String, data:Object = null, resultEvent:ResultEvent = null, bubbles:Boolean=false, cancelable:Boolean=false) { 
 			super(type, bubbles, cancelable);
 			
-			this.data = data;
-			this.resultEvent = resultEvent;
-		} 
+			this._data = data;
+			this._resultEvent = resultEvent;
+		}
+		
+		public function get data():Object {
+			return _data;
+		}
+		
+		public function get resultEvent():ResultEvent {
+			return _resultEvent;
+		}
 		
 		public override function clone():Event { 
 			return new FlextrineEvent(type, data, resultEvent, bubbles, cancelable);
 		} 
 		
 		public override function toString():String { 
-			return formatToString("FlextrineEvent", "type", "data", "resultEvent", "bubbles", "cancelable", "eventPhase"); 
+			return formatToString("FlextrineEvent", "type", "data", "resultEvent", "bubbles", "cancelable", "eventPhase");
 		}
 		
 	}

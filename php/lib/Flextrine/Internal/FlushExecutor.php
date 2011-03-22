@@ -102,9 +102,9 @@ class FlushExecutor {
 	private function doPersists() {
 		foreach ($this->persistRemoteOperations as $persist) {
 			$data = (object)$persist->data;
-
+			
 			$data->entity = $this->deserializationWalker->walk($data->entity);
-
+			
 			// Persist the entity
 			$this->em->persist($data->entity);
 			
@@ -116,9 +116,9 @@ class FlushExecutor {
 	private function doMerges() {
 		foreach ($this->mergeRemoteOperations as $merge) {
 			$data = (object)$merge->data;
-
+			
 			$data->entity = $this->deserializationWalker->walk($data->entity);
-
+			
 			// Merge the entity
 			$this->em->merge($data->entity);
 		}
