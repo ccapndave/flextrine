@@ -1,17 +1,21 @@
 ﻿package tests.suites.onetomany {
 	import flash.events.Event;
+	
 	import flexunit.framework.Assert;
+	
 	import mx.rpc.AsyncResponder;
 	import mx.rpc.AsyncToken;
 	import mx.rpc.events.FaultEvent;
 	import mx.rpc.events.ResultEvent;
 	import mx.utils.ObjectUtil;
+	
 	import org.davekeen.flextrine.orm.EntityRepository;
 	import org.flexunit.async.Async;
 	import org.flexunit.async.TestResponder;
+	
 	import tests.AbstractTest;
-	import tests.vo.garden.*
-	import tests.vo.*
+	import tests.vo.*;
+	import tests.vo.garden.*;
 	
 	/**
 	 * ...
@@ -100,6 +104,36 @@
 			Assert.assertStrictlyEquals(em.getRepository(Patient).entities.getItemAt(1), doctor.patients.getItemAt(1));
 			Assert.assertStrictlyEquals(em.getRepository(Patient).entities.getItemAt(2), doctor.patients.getItemAt(2));
 			Assert.assertStrictlyEquals(em.getRepository(Patient).entities.getItemAt(3), doctor.patients.getItemAt(3));
+		}
+		
+		[Test(async, description = "Test updating properties in interlinked objects within a single flush.")]
+		public function o2mUpdatePropertiesTest():void {
+			// Load all doctors - this will also pull in associated patients
+			em.getRepository(Doctor).load(1).addResponder(Async.asyncResponder(this, new TestResponder(result2_1, remoteFault), 10000));
+		}
+		
+		private function result2_1(e:ResultEvent, token:AsyncToken):void {
+			d1 = em.getRepository(Doctor).entities.getItemAt(0) as Doctor;
+			p1 = em.getRepository(Patient).entities.getItemAt(0) as Patient;
+			
+			// Update both the doctor and the patient
+			d1.name = "Changed doctor 1 name";
+			p1.name = "Changed patient 1 name";
+			
+			em.flush().addResponder(Async.asyncResponder(this, new TestResponder(result2_2, remoteFault), 5000));
+		}
+		
+		private function result2_2(e:ResultEvent, token:AsyncToken):void {
+			em.clear();
+			em.getRepository(Doctor).load(1).addResponder(Async.asyncResponder(this, new TestResponder(result2_3, remoteFault), 5000));
+		}
+		
+		private function result2_3(e:ResultEvent, token:AsyncToken):void {
+			d1 = em.getRepository(Doctor).entities.getItemAt(0) as Doctor;
+			p1 = em.getRepository(Patient).entities.getItemAt(0) as Patient;
+			
+			Assert.assertEquals("Changed doctor 1 name", d1.name);
+			Assert.assertEquals("Changed patient 1 name", p1.name);
 		}
 		
 	}

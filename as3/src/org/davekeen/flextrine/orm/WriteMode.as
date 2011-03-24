@@ -21,6 +21,7 @@
  */
 
 package org.davekeen.flextrine.orm {
+	
 	/**
 	 * 
 	 * 
@@ -29,12 +30,12 @@ package org.davekeen.flextrine.orm {
 	public class WriteMode {
 		
 		/**
-		 * 
+		 * The default write mode.
 		 */
 		public static const PUSH:String = "push";
 		
 		/**
-		 * 
+		 * This feature is experimental and unsupported.  For the moment only ever use WriteMode.PUSH
 		 */
 		public static const PULL:String = "pull";
 		

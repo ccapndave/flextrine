@@ -4,7 +4,7 @@
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <link rel="stylesheet" href="../../../../style.css" type="text/css" media="screen">
 <link rel="stylesheet" href="../../../../print.css" type="text/css" media="print">
-<meta content="Query,org.davekeen.flextrine.orm.Query,dql,firstResult,maxResults,params,setParameter" name="keywords">
+<meta content="Query,org.davekeen.flextrine.orm.Query,HYDRATE_ARRAY,HYDRATE_OBJECT,HYDRATE_SCALAR,HYDRATE_SINGLE_SCALAR,dql,firstResult,hydrationMode,maxResults,params,setHydrationMode,setParameter" name="keywords">
 <title>org.davekeen.flextrine.orm.Query</title>
 </head>
 <body>
@@ -19,7 +19,7 @@
 <td align="left" class="titleTableTitle">Flextrine</td><td align="right" class="titleTableTopNav"><a onclick="loadClassListFrame('../../../../all-classes.html')" href="../../../../package-summary.html">All&nbsp;Packages</a>&nbsp;|&nbsp;<a onclick="loadClassListFrame('../../../../all-classes.html')" href="../../../../class-summary.html">All&nbsp;Classes</a>&nbsp;|&nbsp;<a onclick="loadClassListFrame('../../../../index-list.html')" href="../../../../all-index-A.html">Index</a>&nbsp;|&nbsp;<a href="../../../../index.html?org/davekeen/flextrine/orm/Query.html&amp;org/davekeen/flextrine/orm/class-list.html" id="framesLink1">Frames</a><a onclick="parent.location=document.location" href="" style="display:none" id="noFramesLink1">No&nbsp;Frames</a></td><td rowspan="3" align="right" class="titleTableLogo"><img alt="Adobe Logo" title="Adobe Logo" class="logoImage" src="../../../../images/logo.jpg"></td>
 </tr>
 <tr class="titleTableRow2">
-<td align="left" id="subTitle" class="titleTableSubTitle">Class&nbsp;Query</td><td align="right" id="subNav" class="titleTableSubNav"><a href="#propertySummary">Properties</a>&nbsp;| <a href="#methodSummary">Methods</a></td>
+<td align="left" id="subTitle" class="titleTableSubTitle">Class&nbsp;Query</td><td align="right" id="subNav" class="titleTableSubNav"><a href="#propertySummary">Properties</a>&nbsp;| <a href="#methodSummary">Methods</a>&nbsp;| <a href="#constantSummary">Constants</a></td>
 </tr>
 <tr class="titleTableRow3">
 <td colspan="2">&nbsp;</td>
@@ -27,7 +27,7 @@
 </table>
 <script type="text/javascript" language="javascript">
 <!--
-if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Class Query"); titleBar_setSubNav(false,true,false,false,false,false,true,false,false,false,false,false,false,false);}
+if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Class Query"); titleBar_setSubNav(true,true,false,false,false,false,true,false,false,false,false,false,false,false);}
 --></script>
 <div class="MainContent">
 <table cellspacing="0" cellpadding="0" class="classHeaderTable">
@@ -51,19 +51,29 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <th>&nbsp;</th><th colspan="2">Property</th><th class="summaryTableOwnerCol">Defined&nbsp;by</th>
 </tr>
 <tr class="">
-<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#dql">dql</a> : String<div class="summaryTableDescription"></div>
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#dql">dql</a> : String<div class="summaryTableDescription">
+   The DQL query to execute.</div>
 </td><td class="summaryTableOwnerCol">Query</td>
 </tr>
 <tr class="">
-<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#firstResult">firstResult</a> : uint<div class="summaryTableDescription"></div>
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#firstResult">firstResult</a> : uint<div class="summaryTableDescription">
+   The index of the first result to return.</div>
 </td><td class="summaryTableOwnerCol">Query</td>
 </tr>
 <tr class="">
-<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#maxResults">maxResults</a> : uint<div class="summaryTableDescription"></div>
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#hydrationMode">hydrationMode</a> : uint = 1<div class="summaryTableDescription">
+   The hydration mode to use for the query result.</div>
 </td><td class="summaryTableOwnerCol">Query</td>
 </tr>
 <tr class="">
-<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#params">params</a> : Object<div class="summaryTableDescription"></div>
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#maxResults">maxResults</a> : uint<div class="summaryTableDescription">
+   The maximum number of results to returns.</div>
+</td><td class="summaryTableOwnerCol">Query</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#params">params</a> : Object<div class="summaryTableDescription">
+   Named parameters referenced in the DQL query 
+   </div>
 </td><td class="summaryTableOwnerCol">Query</td>
 </tr>
 </table>
@@ -85,8 +95,44 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
 <div class="summarySignature">
+<a class="signatureLink" href="#setHydrationMode()">setHydrationMode</a>(hydrationMode:uint):void</div>
+<div class="summaryTableDescription"></div>
+</td><td class="summaryTableOwnerCol">Query</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
+<div class="summarySignature">
 <a class="signatureLink" href="#setParameter()">setParameter</a>(name:String, value:Object):void</div>
 <div class="summaryTableDescription"></div>
+</td><td class="summaryTableOwnerCol">Query</td>
+</tr>
+</table>
+</div>
+<a name="constantSummary"></a>
+<div class="summarySection">
+<div class="summaryTableTitle">Public Constants</div>
+<table id="summaryTableConstant" class="summaryTable " cellpadding="3" cellspacing="0">
+<tr>
+<th>&nbsp;</th><th colspan="2">Constant</th><th class="summaryTableOwnerCol">Defined&nbsp;by</th>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#HYDRATE_ARRAY">HYDRATE_ARRAY</a> : uint = 2<div class="summaryTableDescription">[static]
+   Hydrates an array graph.</div>
+</td><td class="summaryTableOwnerCol">Query</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#HYDRATE_OBJECT">HYDRATE_OBJECT</a> : uint = 1<div class="summaryTableDescription">[static]
+   Hydrates an object graph.</div>
+</td><td class="summaryTableOwnerCol">Query</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#HYDRATE_SCALAR">HYDRATE_SCALAR</a> : uint = 3<div class="summaryTableDescription">[static]
+   Hydrates a flat, rectangular result set with scalar values.</div>
+</td><td class="summaryTableOwnerCol">Query</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#HYDRATE_SINGLE_SCALAR">HYDRATE_SINGLE_SCALAR</a> : uint = 4<div class="summaryTableDescription">[static]
+   Hydrates a single scalar value.</div>
 </td><td class="summaryTableOwnerCol">Query</td>
 </tr>
 </table>
@@ -105,8 +151,9 @@ showHideInherited();
 </tr>
 </table>
 <div class="detailBody">
-<code>public var dql:String</code>
-</div>
+<code>public var dql:String</code><p>
+   The DQL query to execute. 
+   </p></div>
 <a name="firstResult"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
@@ -114,8 +161,19 @@ showHideInherited();
 </tr>
 </table>
 <div class="detailBody">
-<code>public var firstResult:uint</code>
-</div>
+<code>public var firstResult:uint</code><p>
+   The index of the first result to return.  Used when paging query results. 
+   </p></div>
+<a name="hydrationMode"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">hydrationMode</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var hydrationMode:uint = 1</code><p>
+   The hydration mode to use for the query result.  By default this is HYDRATE_OBJECT. 
+   </p></div>
 <a name="maxResults"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
@@ -123,8 +181,9 @@ showHideInherited();
 </tr>
 </table>
 <div class="detailBody">
-<code>public var maxResults:uint</code>
-</div>
+<code>public var maxResults:uint</code><p>
+   The maximum number of results to returns.  Used when paging query results. 
+   </p></div>
 <a name="params"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
@@ -132,8 +191,9 @@ showHideInherited();
 </tr>
 </table>
 <div class="detailBody">
-<code>public var params:Object</code>
-</div>
+<code>public var params:Object</code><p>
+   Named parameters referenced in the DQL query 
+   </p></div>
 <a name="constructorDetail"></a>
 <div class="detailSectionHeader">Constructor detail</div>
 <a name="Query()"></a>
@@ -170,10 +230,24 @@ showHideInherited();
 </div>
 <a name="methodDetail"></a>
 <div class="detailSectionHeader">Method detail</div>
+<a name="setHydrationMode()"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">setHydrationMode</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public function setHydrationMode(hydrationMode:uint):void</code><span class="label">Parameters</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20px"></td><td><code><span class="label">hydrationMode</span>:uint</code></td>
+</tr>
+</table>
+</div>
 <a name="setParameter()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
-<td class="detailHeaderName">setParameter</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td>
+<td class="detailHeaderName">setParameter</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td><td class="detailHeaderRule">&nbsp;</td>
 </tr>
 </table>
 <div class="detailBody">
@@ -190,6 +264,48 @@ showHideInherited();
 </tr>
 </table>
 </div>
+<a name="constantDetail"></a>
+<div class="detailSectionHeader">Constant detail</div>
+<a name="HYDRATE_ARRAY"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">HYDRATE_ARRAY</td><td class="detailHeaderType">constant</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public static const HYDRATE_ARRAY:uint = 2</code><p>
+   Hydrates an array graph.
+   </p></div>
+<a name="HYDRATE_OBJECT"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">HYDRATE_OBJECT</td><td class="detailHeaderType">constant</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public static const HYDRATE_OBJECT:uint = 1</code><p>
+   Hydrates an object graph. This is the default behavior.
+   </p></div>
+<a name="HYDRATE_SCALAR"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">HYDRATE_SCALAR</td><td class="detailHeaderType">constant</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public static const HYDRATE_SCALAR:uint = 3</code><p>
+   Hydrates a flat, rectangular result set with scalar values.
+   </p></div>
+<a name="HYDRATE_SINGLE_SCALAR"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">HYDRATE_SINGLE_SCALAR</td><td class="detailHeaderType">constant</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public static const HYDRATE_SINGLE_SCALAR:uint = 4</code><p>
+   Hydrates a single scalar value.
+   </p></div>
 <br>
 <br>
 <hr>

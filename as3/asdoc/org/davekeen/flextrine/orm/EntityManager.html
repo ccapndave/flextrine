@@ -4,7 +4,7 @@
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <link rel="stylesheet" href="../../../../style.css" type="text/css" media="screen">
 <link rel="stylesheet" href="../../../../print.css" type="text/css" media="print">
-<meta content="EntityManager,org.davekeen.flextrine.orm.EntityManager,callRemoteMethod,clear,detach,flush,getConfiguration,getInstance,getRepository,getUnitOfWork,load,loadAll,loadBy,loadOneBy,merge,persist,remove,requireMany,requireOne,rollback,select,selectOne,selectPaged,setConfiguration" name="keywords">
+<meta content="EntityManager,org.davekeen.flextrine.orm.EntityManager,callRemoteEntityMethod,callRemoteMethod,clear,detach,flush,getConfiguration,getInstance,getRepository,getUnitOfWork,load,loadAll,loadBy,loadOneBy,merge,persist,remove,requireMany,requireOne,rollback,select,selectOne,selectPaged,setConfiguration" name="keywords">
 <title>org.davekeen.flextrine.orm.EntityManager</title>
 </head>
 <body>
@@ -54,6 +54,14 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <table id="summaryTableMethod" class="summaryTable " cellpadding="3" cellspacing="0">
 <tr>
 <th>&nbsp;</th><th colspan="2">Method</th><th class="summaryTableOwnerCol">Defined&nbsp;by</th>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
+<div class="summarySignature">
+<a class="signatureLink" href="#callRemoteEntityMethod()">callRemoteEntityMethod</a>(methodName:String, ... args):AsyncToken</div>
+<div class="summaryTableDescription">
+   This is identical to callRemoteMethod, except that this expects a response from the server that is either an entity or an array of entities.</div>
+</td><td class="summaryTableOwnerCol">EntityManager</td>
 </tr>
 <tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
@@ -198,7 +206,7 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
 <div class="summarySignature">
-<a class="signatureLink" href="#rollback()">rollback</a>():void</div>
+<a class="signatureLink" href="#rollback()">rollback</a>():Boolean</div>
 <div class="summaryTableDescription">
    Rollback any entities to the state they were in when last loaded from the database.</div>
 </td><td class="summaryTableOwnerCol">EntityManager</td>
@@ -222,8 +230,7 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
 <div class="summarySignature">
-<a class="signatureLink" href="#selectPaged()">selectPaged</a>(query:<a href="Query.html">Query</a>, pageSize:uint, fetchMode:String = null):<a href="collections/PagedCollection.html">PagedCollection</a>
-</div>
+<a class="signatureLink" href="#selectPaged()">selectPaged</a>(query:<a href="Query.html">Query</a>, pageSize:uint, fetchMode:String = null):PagedCollection</div>
 <div class="summaryTableDescription"></div>
 </td><td class="summaryTableOwnerCol">EntityManager</td>
 </tr>
@@ -244,10 +251,49 @@ showHideInherited();
 <div class="MainContent">
 <a name="methodDetail"></a>
 <div class="detailSectionHeader">Method detail</div>
+<a name="callRemoteEntityMethod()"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">callRemoteEntityMethod</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public function callRemoteEntityMethod(methodName:String, ... args):AsyncToken</code><p>
+   This is identical to callRemoteMethod, except that this expects a response from the server that is either an entity or an array of entities.
+   
+   On the server it is essential to prepare the return value for Flextrine using the <pre>flextrinize</pre> method:
+   
+   <pre>
+   public function myRemoteEntityMethod($id) {
+     $entity = $this->em->getRepository("vo\User")->load($id);
+     return $this->flextrinize($entity);
+   }
+   </pre>
+    
+   </p><span class="label">Parameters</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20px"></td><td><code><span class="label">methodName</span>:String</code></td>
+</tr>
+<tr>
+<td class="paramSpacer">&nbsp;</td>
+</tr>
+<tr>
+<td width="20px"></td><td><code>... <span class="label">args</span></code></td>
+</tr>
+</table>
+<p></p>
+<span class="label">Returns</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20"></td><td><code>AsyncToken</code></td>
+</tr>
+</table>
+</div>
 <a name="callRemoteMethod()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
-<td class="detailHeaderName">callRemoteMethod</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td>
+<td class="detailHeaderName">callRemoteMethod</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td><td class="detailHeaderRule">&nbsp;</td>
 </tr>
 </table>
 <div class="detailBody">
@@ -866,10 +912,17 @@ showHideInherited();
 </tr>
 </table>
 <div class="detailBody">
-<code>public function rollback():void</code><p>
+<code>public function rollback():Boolean</code><p>
    Rollback any entities to the state they were in when last loaded from the database.  This will discard any changes to properties or associations
-   since the last load or flush.
-   </p></div>
+   since the last load or flush.  Return true if there was anything to rollback (this is mainly for use in unit tests).
+   </p><p></p>
+<span class="label">Returns</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20"></td><td><code>Boolean</code></td>
+</tr>
+</table>
+</div>
 <a name="select()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
@@ -939,7 +992,7 @@ showHideInherited();
 </tr>
 </table>
 <div class="detailBody">
-<code>public function selectPaged(query:<a href="Query.html">Query</a>, pageSize:uint, fetchMode:String = null):<a href="collections/PagedCollection.html">PagedCollection</a></code><span class="label">Parameters</span>
+<code>public function selectPaged(query:<a href="Query.html">Query</a>, pageSize:uint, fetchMode:String = null):PagedCollection</code><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">query</span>:<a href="Query.html">Query</a></code></td>
@@ -961,7 +1014,7 @@ showHideInherited();
 <span class="label">Returns</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
-<td width="20"></td><td><code><a href="collections/PagedCollection.html">PagedCollection</a></code></td>
+<td width="20"></td><td><code>PagedCollection</code></td>
 </tr>
 </table>
 </div>

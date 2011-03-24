@@ -19,7 +19,10 @@ package org.davekeen.flextrine.orm.collections {
 	import org.davekeen.flextrine.orm.delegates.FlextrineDelegate;
 	
 	[Event(name="collectionContentsChanged", type="flash.events.Event")]
-
+	/**
+	 * @private 
+	 * @author Dave Keen
+	 */
 	public class PagedCollection extends ListCollectionView {
 
 		private var pageQueue:Array = new Array();
@@ -36,7 +39,7 @@ package org.davekeen.flextrine.orm.collections {
 		private var _startOffset:int = 0;
 		
 		private var _paginatedList:ArrayCollection = new ArrayCollection();
-
+		
 		public function PagedCollection(list:IList = null) {
 			super(list);		
 			
@@ -91,6 +94,7 @@ package org.davekeen.flextrine.orm.collections {
 			addToQueue();
 		}
 		
+		[Bindable("collectionContentsChanged")]
 		[Bindable("collectionChange")]
 		public override function get length():int {
 			return _count;
@@ -220,7 +224,6 @@ package org.davekeen.flextrine.orm.collections {
 		}
 		
 		private function processQueue():void {
-			//trace('workQueue length', workQueue.length);
 			if (this.workQueue.length > 0) {
 				// process the most recent record fetch request packet first
 				workQueue.sortOn("priority", Array.NUMERIC);
@@ -228,7 +231,6 @@ package org.davekeen.flextrine.orm.collections {
 
 				if (this.PROCESS_MOST_RECENT_ONLY) {
 					while (this.workQueue.length > 0) {
-						//trace('popping');
 						var tq:Object = this.workQueue.pop();
 						for (var n:int = tq.start; n < tq.end; n++) {
 							if (loadedRecords[n] && loadedRecords[n] != 2)
@@ -246,7 +248,7 @@ package org.davekeen.flextrine.orm.collections {
 				var endidx:int = workUnit.end;
 				//if( endidx - startidx < this.pageSize)
 				//	endidx = startidx + this.pageSize;
-				trace("Loading:", startidx, endidx);
+				//trace("Loading:", startidx, endidx);
 				var asyncToken:AsyncToken = delegate.select(query, startidx, endidx, FetchMode.LAZY);
 				asyncToken.addResponder(new ItemResponder(onAsyncResult, onAsyncFault, {start: startidx, end: endidx}));
 			}

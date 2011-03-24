@@ -4,7 +4,7 @@
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <link rel="stylesheet" href="../../../../style.css" type="text/css" media="screen">
 <link rel="stylesheet" href="../../../../print.css" type="text/css" media="print">
-<meta content="FlextrineError,org.davekeen.flextrine.orm.FlextrineError,ACCESSED_UNITIALIZED_COLLECTION,ACCESSED_UNITIALIZED_ENTITY,ATTEMPTED_WRITE_TO_REPOSITORY_ENTITY,ENTITY_CHANGE_IN_PULL_MODE,ILLEGAL_REQUIRE" name="keywords">
+<meta content="FlextrineError,org.davekeen.flextrine.orm.FlextrineError,ACCESSED_UNINITIALIZED_COLLECTION,ACCESSED_UNINITIALIZED_ENTITY,ATTEMPTED_WRITE_TO_REPOSITORY_ENTITY,ENTITY_CHANGE_IN_PULL_MODE,ILLEGAL_REQUIRE" name="keywords">
 <title>org.davekeen.flextrine.orm.FlextrineError</title>
 </head>
 <body>
@@ -72,12 +72,12 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <th>&nbsp;</th><th colspan="2">Constant</th><th class="summaryTableOwnerCol">Defined&nbsp;by</th>
 </tr>
 <tr class="">
-<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#ACCESSED_UNITIALIZED_COLLECTION">ACCESSED_UNITIALIZED_COLLECTION</a> : int = 3<div class="summaryTableDescription">[static]
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#ACCESSED_UNINITIALIZED_COLLECTION">ACCESSED_UNINITIALIZED_COLLECTION</a> : int = 3<div class="summaryTableDescription">[static]
    An attempt was made to perform an operation on an unitialized collection.</div>
 </td><td class="summaryTableOwnerCol">FlextrineError</td>
 </tr>
 <tr class="">
-<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#ACCESSED_UNITIALIZED_ENTITY">ACCESSED_UNITIALIZED_ENTITY</a> : int = 2<div class="summaryTableDescription">[static]
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#ACCESSED_UNINITIALIZED_ENTITY">ACCESSED_UNINITIALIZED_ENTITY</a> : int = 2<div class="summaryTableDescription">[static]
    An attempt was made to access an lazily loaded association that has not been initialised.</div>
 </td><td class="summaryTableOwnerCol">FlextrineError</td>
 </tr>
@@ -128,24 +128,24 @@ showHideInherited();
 </div>
 <a name="constantDetail"></a>
 <div class="detailSectionHeader">Constant detail</div>
-<a name="ACCESSED_UNITIALIZED_COLLECTION"></a>
+<a name="ACCESSED_UNINITIALIZED_COLLECTION"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
-<td class="detailHeaderName">ACCESSED_UNITIALIZED_COLLECTION</td><td class="detailHeaderType">constant</td>
+<td class="detailHeaderName">ACCESSED_UNINITIALIZED_COLLECTION</td><td class="detailHeaderType">constant</td>
 </tr>
 </table>
 <div class="detailBody">
-<code>public static const ACCESSED_UNITIALIZED_COLLECTION:int = 3</code><p>
+<code>public static const ACCESSED_UNINITIALIZED_COLLECTION:int = 3</code><p>
    An attempt was made to perform an operation on an unitialized collection.
    </p></div>
-<a name="ACCESSED_UNITIALIZED_ENTITY"></a>
+<a name="ACCESSED_UNINITIALIZED_ENTITY"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
-<td class="detailHeaderName">ACCESSED_UNITIALIZED_ENTITY</td><td class="detailHeaderType">constant</td><td class="detailHeaderRule">&nbsp;</td>
+<td class="detailHeaderName">ACCESSED_UNINITIALIZED_ENTITY</td><td class="detailHeaderType">constant</td><td class="detailHeaderRule">&nbsp;</td>
 </tr>
 </table>
 <div class="detailBody">
-<code>public static const ACCESSED_UNITIALIZED_ENTITY:int = 2</code><p>
+<code>public static const ACCESSED_UNINITIALIZED_ENTITY:int = 2</code><p>
    An attempt was made to access an lazily loaded association that has not been initialised.  This means it is necessary to use
    <code>EntityManager.requireOne</code> or <code>EntityManager.requireMany</code> to load the association from the database.
    </p></div>

@@ -259,6 +259,13 @@ class RemoteOperations {
 	public function toObject():Object {
 		var remoteEntityFactory:RemoteEntityFactory = new RemoteEntityFactory();
 		
+		// We need to pass the persists and merges to the remote entity factory so it knows not to uninitialize these entities
+		for each (var persist:RemoteOperation in persists)
+			remoteEntityFactory.addTopLevelEntity(persist.data.entity);
+		
+		for each (var merge:RemoteOperation in merges)
+			remoteEntityFactory.addTopLevelEntity(merge.data.entity);
+		
 		var object:Object = { persists: dictionaryToArray(persists, remoteEntityFactory),
 				 			  merges: dictionaryToArray(merges, remoteEntityFactory),
 				 			  removes: dictionaryToArray(removes, remoteEntityFactory)

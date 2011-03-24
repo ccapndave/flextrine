@@ -59,8 +59,8 @@ class EntityManagerFactory {
 		// Setup the proxies
 		$config->setProxyDir(APP_PATH."/".$options['directories']['proxies']);
 		$config->setProxyNamespace("Proxies");
-		$config->setAutoGenerateProxyClasses(isset($options['metadata']['autoGenerateProxies']) && $options['metadata']['autoGenerateProxies']);
-
+		$config->setAutoGenerateProxyClasses(isset($options['autoGenerateProxies']) && $options['autoGenerateProxies']);
+		
 		// Get the paths from the metadata.paths configuration entry.  This can either be a single item (paths: entities), or a
 		// list of paths (paths: [path1, path2]).  The code below deals with both cases, and prepends the APP_PATH to them.
 		$paths = is_array($options['metadata']['paths']) ? $options['metadata']['paths'] : array($options['metadata']['paths']);
