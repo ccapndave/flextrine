@@ -24,8 +24,6 @@
 			super.setUp();
 			
 			useFixture("doctorsandpatients1");
-			
-			em.getConfiguration().enabledRollback = true;
 		}
 		
 		[Test(async, description = "Test that removed entities can be rolled back.")]

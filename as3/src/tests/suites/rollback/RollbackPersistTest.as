@@ -21,12 +21,12 @@
 		[Before]
 		override public function setUp():void {
 			super.setUp();
-			
-			em.getConfiguration().enabledRollback = true;
 		}
 		
 		[Test(description = "Test that persisted entities can be rolled back.")]
 		public function persistRollbackTest():void {
+			em.beginTransaction();
+			
 			var d1:Doctor = new Doctor();
 			d1.name = "Doctor 1";
 			
@@ -41,6 +41,8 @@
 		
 		[Test(description = "Test that persisted and associated entities can be rolled back.")]
 		public function persist2RollbackTest():void {
+			em.beginTransaction();
+			
 			var d1:Doctor = new Doctor();
 			d1.name = "Doctor 1";
 			

@@ -24,7 +24,7 @@
 		public function setUp():void {
 			var configuration:Configuration = new Configuration();
 			//configuration.gateway = "http://localhost./testsuite/gateway.php";
-			configuration.gateway = "http://multime.localhost/gateway.php?app=testsuite";
+			configuration.gateway = "http://multime.localhost/gateway.php?app=testsuite&env=test";
 			configuration.service = "FlextrineService";
 			
 			em = EntityManager.getInstance();

@@ -21,7 +21,8 @@
  *
  */
 
-use Doctrine\Common\DataFixtures\Purger\ORMPurger;
+use Doctrine\Common\DataFixtures\Purger\ORMPurger,
+	tests\vo;
 
 class FlextrineService extends \Flextrine\AbstractFlextrineService {
 	
@@ -67,6 +68,93 @@ class FlextrineService extends \Flextrine\AbstractFlextrineService {
 		
 		if ($fixture)
 			exec("mysql -u".$conn->getUsername()." ".$passwordOption." < ".dirname(__FILE__)."/fixtures/$fixture.sql");*/
+		
+		/*$tool = new \Doctrine\ORM\Tools\SchemaTool($this->em);
+		$tool->dropSchema($this->em->getMetadataFactory()->getAllMetadata());
+		$tool->createSchema($this->em->getMetadataFactory()->getAllMetadata());
+		$conn = $this->em->getConnection();
+		if ($fixture)
+			$conn->exec(file_get_contents(dirname(__FILE__)."/fixtures/$fixture.sql"));*/
+	}
+	
+	public function persistDoctors() {
+		$d1 = new vo\Doctor();
+		$d1->setName("Doctor 1");
+		$this->em->persist($d1);
+		
+		return $this->flush();
+	}
+	
+	public function persistDoctorsAndPatients() {
+		$d1 = new vo\Doctor();
+		$d1->setName("Doctor 1");
+		
+		$p1 = new vo\Patient();
+		$p1->setName("Patient 1");
+		
+		$p2 = new vo\Patient();
+		$p2->setName("Patient 2");
+		
+		$d1->addPatient($p1); $p1->setDoctor($d1);
+		$d1->addPatient($p2); $p2->setDoctor($d1);
+		
+		$this->em->persist($d1);
+		$this->em->persist($p1);
+		$this->em->persist($p2);
+		
+		return $this->flush();
+	}
+	
+	public function persistPatientsWithLoad() {
+		$d1 = $this->em->getReference('tests\vo\Doctor', 1);
+		
+		$p1 = new vo\Patient();
+		$p1->setName("Patient 1");
+		$d1->addPatient($p1); $p1->setDoctor($d1);
+		
+		$p2 = new vo\Patient();
+		$p2->setName("Patient 2");
+		$d1->addPatient($p2); $p2->setDoctor($d1);
+		
+		$this->em->persist($p1);
+		$this->em->persist($p2);
+		
+		return $this->flush();
+	}
+	
+	public function persistDoctorWithLoad() {
+		$p1 = $this->em->getReference('tests\vo\Patient', 1);
+		$p2 = $this->em->getReference('tests\vo\Patient', 2);
+		
+		$d1 = new vo\Doctor();
+		$d1->setName("Doctor 1");
+		
+		$d1->addPatient($p1); $p1->setDoctor($d1);
+		$d1->addPatient($p2); $p2->setDoctor($d1);
+		
+		$this->em->persist($d1);
+		
+		return $this->flush();
+	}
+	
+	public function persistReference() {
+		$tree1 = $this->em->getReference('tests\vo\garden\Tree', 1);
+		
+		$newTree = new tests\vo\garden\Tree();
+		$newTree->setType("NewTree");
+		$newTree->setGarden($tree1->getGarden());
+		
+		$this->em->persist($newTree);
+		
+		return $this->flush();
+	}
+	
+	public function remoteRemove() {
+		$p1 = $this->em->getReference('tests\vo\Patient', 1);
+		
+		$this->em->remove($p1);
+		
+		return $this->flush();
 	}
 	
 }

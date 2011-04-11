@@ -53,7 +53,7 @@ class Flextrine_Amf_Parse_Amf3_Serializer extends Zend_Amf_Parse_Amf3_Serializer
 		
 		if ($object instanceof \Doctrine\ORM\PersistentCollection) {
 			$wrappedObject->source = $object->unwrap()->toArray();
-			$wrappedObject->isInitialized__ = $object->isInitialized();
+			$wrappedObject->isInitialized__ = $object->isInitialized() || (sizeof($wrappedObject->source) > 0);
 		} else {
 			$wrappedObject->source = $object->toArray();
 			$wrappedObject->isInitialized__ = true;

@@ -15,8 +15,6 @@ package tests.vo.garden {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -86,22 +84,25 @@ package tests.vo.garden {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["length"] = length;
-				leaves.flextrine::saveState();
-				flextrine::savedState["tree"] = tree;
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["length"] = length;
+				memento["leaves"] = leaves.flextrine::saveState();
+				memento["tree"] = tree;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				length = flextrine::savedState["length"];
-				leaves.flextrine::restoreState();
-				tree = flextrine::savedState["tree"];
+				id = memento["id"];
+				length = memento["length"];
+				leaves.flextrine::restoreState(memento["leaves"]);
+				tree = memento["tree"];
 			}
 		}
 		

@@ -14,8 +14,6 @@ package tests.vo.types {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -106,34 +104,37 @@ package tests.vo.types {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["integerField"] = integerField;
-				flextrine::savedState["smallIntField"] = smallIntField;
-				flextrine::savedState["bigIntField"] = bigIntField;
-				flextrine::savedState["decimalField"] = decimalField;
-				flextrine::savedState["booleanField"] = booleanField;
-				flextrine::savedState["textField"] = textField;
-				flextrine::savedState["stringField"] = stringField;
-				flextrine::savedState["dateField"] = dateField;
-				flextrine::savedState["dateTimeField"] = dateTimeField;
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["integerField"] = integerField;
+				memento["smallIntField"] = smallIntField;
+				memento["bigIntField"] = bigIntField;
+				memento["decimalField"] = decimalField;
+				memento["booleanField"] = booleanField;
+				memento["textField"] = textField;
+				memento["stringField"] = stringField;
+				memento["dateField"] = dateField;
+				memento["dateTimeField"] = dateTimeField;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				integerField = flextrine::savedState["integerField"];
-				smallIntField = flextrine::savedState["smallIntField"];
-				bigIntField = flextrine::savedState["bigIntField"];
-				decimalField = flextrine::savedState["decimalField"];
-				booleanField = (flextrine::savedState["booleanField"] == true);
-				textField = flextrine::savedState["textField"];
-				stringField = flextrine::savedState["stringField"];
-				dateField = flextrine::savedState["dateField"];
-				dateTimeField = flextrine::savedState["dateTimeField"];
+				id = memento["id"];
+				integerField = memento["integerField"];
+				smallIntField = memento["smallIntField"];
+				bigIntField = memento["bigIntField"];
+				decimalField = memento["decimalField"];
+				booleanField = (memento["booleanField"] == true);
+				textField = memento["textField"];
+				stringField = memento["stringField"];
+				dateField = memento["dateField"];
+				dateTimeField = memento["dateTimeField"];
 			}
 		}
 		

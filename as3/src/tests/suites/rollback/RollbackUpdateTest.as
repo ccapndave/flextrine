@@ -23,8 +23,6 @@
 			super.setUp();
 			
 			useFixture("doctorsandpatients1");
-			
-			em.getConfiguration().enabledRollback = true;
 		}
 		
 		[Test(async, description = "Test that property changes can be rolled back.")]

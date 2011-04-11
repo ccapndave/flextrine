@@ -19,8 +19,6 @@ package {tmpl_var name='package'} {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 <tmpl_loop name='fieldsloop'>
@@ -93,25 +91,28 @@ package {tmpl_var name='package'} {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-<tmpl_loop name='fieldsloop'>				flextrine::savedState["{tmpl_var name='name'}"] = {tmpl_var name='name'};
+				var memento:Dictionary = new Dictionary(true);
+<tmpl_loop name='fieldsloop'>				memento["{tmpl_var name='name'}"] = {tmpl_var name='name'};
 </tmpl_loop>
-<tmpl_loop name='associationsloop'>				<tmpl_if name='type' op='==' value='PersistentCollection'>{tmpl_var name='name'}.flextrine::saveState();
-<tmpl_else>flextrine::savedState["{tmpl_var name='name'}"] = {tmpl_var name='name'};
+<tmpl_loop name='associationsloop'>				<tmpl_if name='type' op='==' value='PersistentCollection'>memento["{tmpl_var name='name'}"] = {tmpl_var name='name'}.flextrine::saveState();
+<tmpl_else>memento["{tmpl_var name='name'}"] = {tmpl_var name='name'};
 </tmpl_if></tmpl_loop>
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-<tmpl_loop name='fieldsloop'>				<tmpl_if name='type' op='==' value='Boolean'>{tmpl_var name='name'} = (flextrine::savedState["{tmpl_var name='name'}"] == true);
-<tmpl_else>{tmpl_var name='name'} = flextrine::savedState["{tmpl_var name='name'}"];
+<tmpl_loop name='fieldsloop'>				<tmpl_if name='type' op='==' value='Boolean'>{tmpl_var name='name'} = (memento["{tmpl_var name='name'}"] == true);
+<tmpl_else>{tmpl_var name='name'} = memento["{tmpl_var name='name'}"];
 </tmpl_if>
 </tmpl_loop>
-<tmpl_loop name='associationsloop'>				<tmpl_if name='type' op='==' value='PersistentCollection'>{tmpl_var name='name'}.flextrine::restoreState();
-<tmpl_else>{tmpl_var name='name'} = flextrine::savedState["{tmpl_var name='name'}"];
+<tmpl_loop name='associationsloop'>				<tmpl_if name='type' op='==' value='PersistentCollection'>{tmpl_var name='name'}.flextrine::restoreState(memento["{tmpl_var name='name'}"]);
+<tmpl_else>{tmpl_var name='name'} = memento["{tmpl_var name='name'}"];
 </tmpl_if></tmpl_loop>
 			}
 		}

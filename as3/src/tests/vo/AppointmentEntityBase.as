@@ -16,8 +16,6 @@ package tests.vo {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -29,14 +27,14 @@ package tests.vo {
 		public function set date(value:*):void { _date = (value is Date) ? value : new Date(value); }
 		private var _date:Date;
 		
-		[Association(side="owning", oppositeAttribute="appointment", oppositeCardinality="1")]
+		[Association(side="owning", oppositeAttribute="appointments", oppositeCardinality="*")]
 		public function get doctor():Doctor { checkIsInitialized("doctor"); return _doctor; }
-		public function set doctor(value:Doctor):void { (value) ? value.flextrine::setValue('appointment', this) : ((_doctor) ? _doctor.flextrine::setValue('appointment', null) : null); _doctor = value; }
+		public function set doctor(value:Doctor):void { (value) ? value.flextrine::addValue('appointments', this) : ((_doctor) ? _doctor.flextrine::removeValue('appointments', this) : null); _doctor = value; }
 		private var _doctor:Doctor;
 		
-		[Association(side="owning", oppositeAttribute="appointment", oppositeCardinality="1")]
+		[Association(side="owning", oppositeAttribute="appointments", oppositeCardinality="*")]
 		public function get patient():Patient { checkIsInitialized("patient"); return _patient; }
-		public function set patient(value:Patient):void { (value) ? value.flextrine::setValue('appointment', this) : ((_patient) ? _patient.flextrine::setValue('appointment', null) : null); _patient = value; }
+		public function set patient(value:Patient):void { (value) ? value.flextrine::addValue('appointments', this) : ((_patient) ? _patient.flextrine::removeValue('appointments', this) : null); _patient = value; }
 		private var _patient:Patient;
 		
 		public function AppointmentEntityBase() {
@@ -86,22 +84,25 @@ package tests.vo {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["date"] = date;
-				flextrine::savedState["doctor"] = doctor;
-				flextrine::savedState["patient"] = patient;
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["date"] = date;
+				memento["doctor"] = doctor;
+				memento["patient"] = patient;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				date = flextrine::savedState["date"];
-				doctor = flextrine::savedState["doctor"];
-				patient = flextrine::savedState["patient"];
+				id = memento["id"];
+				date = memento["date"];
+				doctor = memento["doctor"];
+				patient = memento["patient"];
 			}
 		}
 		

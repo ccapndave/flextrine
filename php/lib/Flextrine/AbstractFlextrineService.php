@@ -154,8 +154,10 @@ abstract class AbstractFlextrineService {
 		return (sizeof($result) > 0) ? $this->flextrinize($result[0]) : null;
 	}
 	
-	public function flush($remoteOperations, $fetchMode) {
-		$this->em->clear();
+	public function flush($remoteOperations = null, $fetchMode = null) {
+		// If $remoteOperations is null, flush() has been called from a server-side method so we don't want to clear the em
+		if ($remoteOperations)
+			$this->em->clear();
 		
 		// Start the transaction
 		$this->em->getConnection()->beginTransaction();
@@ -165,7 +167,7 @@ abstract class AbstractFlextrineService {
 			$changeSets = $flushExecutor->flush();
 			
 			// Go through the elements in the change sets making the entities Flextrine ready (apart from temporaryUidMap and entityDeletionIdMap which are not entities)
-			$this->setFetchMode($fetchMode);
+			if ($fetchMode) $this->setFetchMode($fetchMode);
 			foreach ($changeSets as $changeSetType => $changeSet)
 				if ($changeSetType != "temporaryUidMap" && $changeSetType != "entityDeletionIdMap")
 					foreach ($changeSet as $oid => $entity)

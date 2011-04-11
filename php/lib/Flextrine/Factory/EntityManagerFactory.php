@@ -27,7 +27,8 @@ use Doctrine\ORM\EntityManager,
 	Doctrine\ORM\Configuration,
 	Doctrine\Common\Cache\ApcCache,
 	Doctrine\Common\Cache\ArrayCache,
-	Doctrine\Common\Annotations\AnnotationReader;
+	Doctrine\Common\Annotations\AnnotationReader,
+	\Zend_Registry;
 
 class EntityManagerFactory {
 
@@ -82,8 +83,9 @@ class EntityManagerFactory {
 		// Set the metadata driver implementation
 		$config->setMetadataDriverImpl($driverImpl);
 
-		// Finally create and return the EntityManager
-		return EntityManager::create($options['connection_options'], $config);
+		// Finally create and return the EntityManager.  If a $connectionOptions variable is set in the registry this takes precedence over
+		// config.yml, which allows us to override database setting for test suites
+		return EntityManager::create(Zend_Registry::isRegistered("connectionOptions") ? Zend_Registry::get("connectionOptions") : $options['connection_options'], $config);
 	}
 
 }

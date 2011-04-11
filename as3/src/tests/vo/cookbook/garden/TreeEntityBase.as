@@ -15,8 +15,6 @@ package tests.vo.cookbook.garden {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -88,24 +86,27 @@ package tests.vo.cookbook.garden {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["name"] = name;
-				flextrine::savedState["age"] = age;
-				flextrine::savedState["isFlowering"] = isFlowering;
-				flextrine::savedState["garden"] = garden;
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["name"] = name;
+				memento["age"] = age;
+				memento["isFlowering"] = isFlowering;
+				memento["garden"] = garden;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				name = flextrine::savedState["name"];
-				age = flextrine::savedState["age"];
-				isFlowering = (flextrine::savedState["isFlowering"] == true);
-				garden = flextrine::savedState["garden"];
+				id = memento["id"];
+				name = memento["name"];
+				age = memento["age"];
+				isFlowering = (memento["isFlowering"] == true);
+				garden = memento["garden"];
 			}
 		}
 		

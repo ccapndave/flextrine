@@ -14,8 +14,6 @@ package tests.vo.cookbook.garden {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -88,24 +86,27 @@ package tests.vo.cookbook.garden {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["name"] = name;
-				flextrine::savedState["area"] = area;
-				flextrine::savedState["grassLastCutDate"] = grassLastCutDate;
-				trees.flextrine::saveState();
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["name"] = name;
+				memento["area"] = area;
+				memento["grassLastCutDate"] = grassLastCutDate;
+				memento["trees"] = trees.flextrine::saveState();
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				name = flextrine::savedState["name"];
-				area = flextrine::savedState["area"];
-				grassLastCutDate = flextrine::savedState["grassLastCutDate"];
-				trees.flextrine::restoreState();
+				id = memento["id"];
+				name = memento["name"];
+				area = memento["area"];
+				grassLastCutDate = memento["grassLastCutDate"];
+				trees.flextrine::restoreState(memento["trees"]);
 			}
 		}
 		

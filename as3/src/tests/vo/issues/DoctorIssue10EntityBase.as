@@ -14,8 +14,6 @@ package tests.vo.issues {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -74,18 +72,21 @@ package tests.vo.issues {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["identifier"] = identifier;
-				flextrine::savedState["name"] = name;
+				var memento:Dictionary = new Dictionary(true);
+				memento["identifier"] = identifier;
+				memento["name"] = name;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				identifier = flextrine::savedState["identifier"];
-				name = flextrine::savedState["name"];
+				identifier = memento["identifier"];
+				name = memento["name"];
 			}
 		}
 		

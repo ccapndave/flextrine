@@ -14,6 +14,8 @@ class Patient {
 	
     /** @Column(length=100, type="string") */
     public $name;
+    public function setName($name) { $this->name = $name; }
+    public function getName() { return $this->name; }
 	
 	/** @Column(length=100, type="string", nullable=true) */
     public $address;
@@ -27,7 +29,7 @@ class Patient {
 	public $appointments;
 	
 	/**
-     * @OneToOne(targetEntity="PhoneNumber", mappedBy="patient")
+     * @OneToMany(targetEntity="PhoneNumber", mappedBy="patient")
      */
 	public $phoneNumbers;
 	
@@ -35,6 +37,8 @@ class Patient {
      * @ManyToOne(targetEntity="Doctor", inversedBy="patients")
      */
 	public $doctor;
+    public function setDoctor($doctor) { $this->doctor = $doctor; }
+    public function getDoctor() { return $this->doctor; }
 	
 	public function __construct() {
 		$this->appointments = new ArrayCollection();

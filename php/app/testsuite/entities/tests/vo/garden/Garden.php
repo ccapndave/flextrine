@@ -6,7 +6,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 /**
  * @Entity
  */
-
 class Garden {
 	
     /** @Id @Column(type="integer") @GeneratedValue(strategy="IDENTITY") */
@@ -19,6 +18,8 @@ class Garden {
      * @OneToMany(targetEntity="Tree", mappedBy="garden")
      */
 	public $trees;
+	public function getTrees() { return $this->trees; }
+	public function addTree($tree) { $this->trees->add($tree); }
 	
 	/**
      * @OneToMany(targetEntity="Flower", mappedBy="garden")
@@ -30,5 +31,3 @@ class Garden {
 	}
 	
 }
-
-?>

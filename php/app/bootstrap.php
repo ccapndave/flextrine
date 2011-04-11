@@ -29,6 +29,9 @@ use Symfony\Component\HttpFoundation\UniversalClassLoader,
 // Define a constant pointing to the root of the application
 define('ROOT_PATH', dirname(dirname(__FILE__)));
 
+// And anoher pointing to the web-accessible directory
+define('WEB_PATH', ROOT_PATH.DIRECTORY_SEPARATOR."web");
+
 // Set the include path to the lib folder included in the framework
 set_include_path(get_include_path().PATH_SEPARATOR.ROOT_PATH."/lib");
 
@@ -48,6 +51,10 @@ $loader->registerPrefixes(array(
 ));
 $loader->register();
 
+// Set the session id if it is in the GET parameters
+if (isset($_GET["PHPSESSID"]))
+	session_id($_GET["PHPSESSID"]);
+
 // Load the main configuration file
 $mainConfig = Yaml::load(ROOT_PATH."/config/config.yml");
 Zend_Registry::set("mainConfig", $mainConfig);
@@ -56,7 +63,6 @@ Zend_Registry::set("mainConfig", $mainConfig);
 //  - If there is a GET parameter called 'app' this takes precedence (e.g. gateway.php?app=myflextrineproject)
 //  - Otherwise use default_app in the main config.yml
 //  - Otherwise throw an error
-
 if (isset($_GET['app'])) {
 	$appName = $_GET['app'];
 } else if (isset($mainConfig['default_app'])) {
@@ -65,6 +71,27 @@ if (isset($_GET['app'])) {
 	throw new \Exception("bootstrap.php was invoked without specifying an application name (\$appName)");
 }
 
+// We also need to decide what environment we are running in (this will be production, development or test).  The logic goes like this:
+//  - If there is an environment variable called FLEXTRINE_ENV this takes precedence (either in $_ENV or $_SERVER to allow .htaccess SetEnv)
+//  - If there is a GET parameter called 'env' use this (e.g. gateway.php?env=test)
+//  - Otherwise use default_env in the main config.yml
+//  - Otherwise throw an error
+if (isset($_ENV["FLEXTRINE_ENV"])) {
+	$env = $_ENV["FLEXTRINE_ENV"];
+} else if (isset($_SERVER["FLEXTRINE_ENV"])) {
+	$env = $_SERVER["FLEXTRINE_ENV"];
+} else if (isset($_GET['env'])) {
+	$env = $_GET['env'];
+} else if (isset($mainConfig['default_env'])) {
+	$env = $mainConfig['default_env'];
+} else {
+	throw new \Exception("bootstrap.php was invoked without an environment");
+}
+
+// Make sure env is a valid value (this also protects against directory traversal attacks)
+if (!in_array($env, array("production", "staging", "development", "test")))
+	throw new \Exception("The environment must be production, staging, development or test");
+
 define('APP_PATH', ROOT_PATH.DIRECTORY_SEPARATOR."app".DIRECTORY_SEPARATOR.$appName);
 
 if (!file_exists(APP_PATH)) {
@@ -72,7 +99,12 @@ if (!file_exists(APP_PATH)) {
 		throw new \Exception("The application '$appName' does not exist.  Generate it using the flextrine console tool (flextrine app:create <app_name>)");
 } else {
 	// Load the application specific configuration file
-	$appConfig =  Yaml::load(APP_PATH."/config/config.yml");
+	$appConfigFile = APP_PATH."/config/".$env.".yml";
+	
+	if (!file_exists($appConfigFile))
+		throw new \Exception("The configuration file for this application was not found (".$appConfigFile.")");
+	
+	$appConfig =  Yaml::load($appConfigFile);
 	Zend_Registry::set("appConfig", $appConfig);
 	
 	// We need an extra class loader for the entities and services directory themselves; use empty namespace as there could be anything in here
@@ -86,3 +118,4 @@ if (!file_exists(APP_PATH)) {
 	if ($appConfig["acl"]["enable"])
 		Zend_Registry::set("acl", Flextrine\Factory\AclFactory::create(Zend_Registry::get("appConfig")));
 }
+

@@ -16,7 +16,7 @@ class PhoneNumber {
     public $phoneNumber;
 	
 	/**
-	 * @OneToOne(targetEntity="Patient", inversedBy="phoneNumbers")
+	 * @ManyToOne(targetEntity="Patient", inversedBy="phoneNumbers")
 	 * @JoinColumn(name="patient_id", referencedColumnName="id")
 	 */
 	public $patient;

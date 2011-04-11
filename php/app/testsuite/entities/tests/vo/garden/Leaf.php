@@ -6,7 +6,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 /**
  * @Entity
  */
-
 class Leaf {
 	
     /** @Id @Column(type="integer") @GeneratedValue(strategy="IDENTITY") */
@@ -22,5 +21,3 @@ class Leaf {
 	}
 	
 }
-
-?>

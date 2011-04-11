@@ -76,13 +76,6 @@ package org.davekeen.flextrine.orm {
 		public var loadCollectionsOnDemand:Boolean = true;
 		
 		/**
-		 * Enable em.rollback().  When enabled entities will store their original states allowing you to discard changes (e.g. on user cancel or network
-		 * error).  In general you will want to leave this on (the default), but rollback uses slightly more memory so if you are sure you don't need to
-		 * use it you can turn it off.
-		 */
-		public var enabledRollback:Boolean = true;
-		
-		/**
 		 * Determines how long entities are stored in repositories before they are garbage collection.  If this is set to -1 entities will never be garbage
 		 * collected; this is useful if you are sure that you will never have too much information in your database and want to use the entities property
 		 * of EntityRepository directly.  It is not advised to set this value to less than 5 seconds (5000).

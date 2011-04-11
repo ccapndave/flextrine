@@ -50,15 +50,17 @@ class FlushExecutor {
 
 		$this->deserializationWalker = $deserializationWalker;
 
-		// Get the remote operations out of the flushset for each operation type
-		foreach ($flushSet->persists as $persistRemoteOperation)
-			$this->persistRemoteOperations[] = (object)$persistRemoteOperation;
-			
-		foreach ($flushSet->merges as $mergeRemoteOperation)
-			$this->mergeRemoteOperations[] = (object)$mergeRemoteOperation;
-			
-		foreach ($flushSet->removes as $removeRemoteOperation)
-			$this->removeRemoteOperations[] = (object)$removeRemoteOperation;
+		if ($flushSet) {
+			// Get the remote operations out of the flushset for each operation type
+			foreach ($flushSet->persists as $persistRemoteOperation)
+				$this->persistRemoteOperations[] = (object)$persistRemoteOperation;
+				
+			foreach ($flushSet->merges as $mergeRemoteOperation)
+				$this->mergeRemoteOperations[] = (object)$mergeRemoteOperation;
+				
+			foreach ($flushSet->removes as $removeRemoteOperation)
+				$this->removeRemoteOperations[] = (object)$removeRemoteOperation;
+		}
 		
 	}
 	

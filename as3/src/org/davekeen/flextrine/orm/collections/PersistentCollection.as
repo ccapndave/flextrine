@@ -262,12 +262,22 @@ package org.davekeen.flextrine.orm.collections {
 				throw new FlextrineError("Attempt to execute " + operation + " on an uninitialized collection.", FlextrineError.ACCESSED_UNINITIALIZED_COLLECTION);
 		}
 		
-		flextrine function saveState():void {
-			savedState = source;
+		/**
+		 * Save the state of this PersistentCollection to an array
+		 * 
+		 * @return 
+		 */
+		flextrine function saveState():Array {
+			return source;
 		}
 		
-		flextrine function restoreState():void {
-			source = savedState;
+		/**
+		 * Restore the state of this PersistentCollection from an array
+		 * 
+		 * @param source 
+		 */
+		flextrine function restoreState(source:Array):void {
+			this.source = source;
 		}
 		
 	}

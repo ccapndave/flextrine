@@ -14,8 +14,6 @@ package tests.vo {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -80,20 +78,23 @@ package tests.vo {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["name"] = name;
-				movies.flextrine::saveState();
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["name"] = name;
+				memento["movies"] = movies.flextrine::saveState();
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				name = flextrine::savedState["name"];
-				movies.flextrine::restoreState();
+				id = memento["id"];
+				name = memento["name"];
+				movies.flextrine::restoreState(memento["movies"]);
 			}
 		}
 		

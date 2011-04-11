@@ -55,19 +55,38 @@ package org.davekeen.flextrine.orm {
 	 */
 	public class EntityManager extends EventDispatcher {
 		
+		/**
+		 * Singleton management for EntityManager 
+		 */
 		private static var _instance:EntityManager;
 		private static var singletonInstantiation:Boolean;
 		
+		/**
+		 * This contains the EntityRepositories 
+		 */
 		private var repositories:Dictionary;
 		
 		private var unitOfWork:UnitOfWork;
 		
+		/**
+		 * The server delegate. 
+		 */
 		private var flextrineDelegate:FlextrineDelegate;
 		
-		// The configuration of this EntityManager
+		/**
+		 * Flextrine allows nested transactions; this counter records the transaction level the EntityManager is currently on.  If the user does not
+		 * explicitly open a new transaction this will always be 0.
+		 */
+		private var transactionNestingLevel:uint = 0;
+		
+		/**
+		 * The configuration of this EntityManager
+		 */
 		private var configuration:Configuration;
 		
-		// This object is used to track cyclical references and ensure we don't get into an inifinite loop when adding heirarchical objects to the repositories
+		/**
+		 * This object is used to track cyclical references and ensure we don't get into an inifinite loop when adding heirarchical objects to the repositories
+		 */
 		private var visited:Object;
 		
 		/**
@@ -448,6 +467,12 @@ package org.davekeen.flextrine.orm {
 			return getDelegate().callRemoteEntityMethod(methodName, args);
 		}
 		
+		public function callRemoteFlushMethod(methodName:String, ...args):AsyncToken {
+			log.info("Calling remote flush method " + methodName + " " + ObjectUtil.toString(args));
+			
+			return getDelegate().callRemoteFlushMethod(methodName, args);
+		}
+		
 		/**
 		 * Ensure that a single valued association is loaded before taking an action.  If the association is already loaded this
 		 * calls <code>onResult</code> instantly.
@@ -580,7 +605,13 @@ package org.davekeen.flextrine.orm {
 			for each (var repository:EntityRepository in repositories)
 				repository.clear();
 			
-			unitOfWork = new UnitOfWork(this); // TODO: This should probably call unitOfWork.clear() instead
+			//unitOfWork = new UnitOfWork(this); // TODO: This should probably call unitOfWork.clear() instead
+			unitOfWork.clear(true);
+		}
+		
+		public function beginTransaction():void {
+			// Start a new transaction
+			//throw new Error("Not yet implemented");
 		}
 		
 		/**
@@ -588,19 +619,43 @@ package org.davekeen.flextrine.orm {
 		 * since the last load or flush.  Return true if there was anything to rollback (this is mainly for use in unit tests).
 		 */
 		public function rollback():Boolean {
-			if (!configuration.enabledRollback)
-				throw new Error("In order to use em.rollback() you must set enabledRollback in the configuration to true");
+			//if (transactionNestingLevel == 0)
+			//	throw new FlextrineError("Unable to rollback without explicitly beginning a new transaction with em.beginTransaction()", FlextrineError.NO_ACTIVE_TRANSACTION);
 			
-			log.info("Rolling back");
+			log.info("Rolling back transaction " + transactionNestingLevel);
 			
-			var rolledBackEntities:Boolean;
+			var rolledBack:Boolean;
+			var entity:Object;
 			
-			for each (var repository:EntityRepository in repositories)
-				rolledBackEntities = repository.rollback() ? true : rolledBackEntities;
+			// Add any removed entities
+			for (entity in unitOfWork.removedEntities) {
+				rolledBack = true;
+				(getRepository(ClassUtil.getClass(entity)) as EntityRepository).addEntity(entity);
+			}
+			
+			// Restore any dirty entities using the memento stored in the dictionary
+			for (entity in unitOfWork.dirtyEntities) {
+				rolledBack = true;
+				entity.flextrine::restoreState(unitOfWork.dirtyEntities[entity]);
+			}
+			
+			// Remove any persisted entities
+			for (entity in unitOfWork.persistedEntities) {
+				rolledBack = true;
+				(getRepository(ClassUtil.getClass(entity)) as EntityRepository).deleteEntity(entity);
+			}
 			
 			unitOfWork.clear();
 			
-			return rolledBackEntities;
+			return rolledBack;
+		}
+		
+		public function commit():Boolean {
+			if (transactionNestingLevel == 0)
+				throw new FlextrineError("Unable to commit without explicitly beginning a new transaction with em.beginTransaction()", FlextrineError.NO_ACTIVE_TRANSACTION);
+			
+			// Commit a transaction
+			throw new Error("Not yet implemented");
 		}
 		
 		private function onFlextrineLoadComplete(e:FlextrineEvent):void {
@@ -653,8 +708,8 @@ package org.davekeen.flextrine.orm {
 		private function doAddLoadedEntityToRepository(loadedEntity:Object, checkForPropertyChanges:Boolean = false):Object {
 			var oid:String;
 			try {
-				// If we get a reference error when trying to get the unique hash, then this isn't an entity.  Assume that this is a query result with a hydration mode other than
-				// HYDRATE_OBJECT and just silently return.
+				// If we get a reference error when trying to get the unique hash, then this isn't an entity.  Assume that this is a query result with a 
+				// hydration mode other than HYDRATE_OBJECT and just silently return.
 				oid = EntityUtil.getUniqueHash(loadedEntity);
 			} catch (e:ReferenceError) {
 				log.info("Received a non-entity result; not adding to repository.");
@@ -721,7 +776,14 @@ package org.davekeen.flextrine.orm {
 									} else {
 										// Otherwise they are the same instance so we just add it to the repository without adding it to repoEntity
 										// (since repoEntity IS loadedEntity so its already there!)
-										doAddLoadedEntityToRepository(associatedObject, checkForPropertyChanges);
+										if (EntityUtil.isInitialized(associatedObject)) {
+											doAddLoadedEntityToRepository(associatedObject, checkForPropertyChanges);
+										} else {
+											// If the entity is uninitialized we may want to replace it with an initialized copy from the repository
+											var addedObject:Object = doAddLoadedEntityToRepository(associatedObject, checkForPropertyChanges);
+											if (addedObject !== associatedObject)
+												value.setItemAt(addedObject, n);
+										}
 									}									
 								}
 							}
@@ -737,7 +799,7 @@ package org.davekeen.flextrine.orm {
 				
 				// Return the entity we just added to the repository
 				var returnEntity:Object = getRepository(ClassUtil.getClass(loadedEntity)).findOneBy(EntityUtil.getIdObject(repoEntity));
-				if (configuration.enabledRollback) returnEntity.flextrine::saveState();
+				
 				return returnEntity;
 			} else {
 				// If we have already visited the entity then just return it directly
@@ -746,21 +808,16 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		private function onFlextrineFlushComplete(e:FlextrineEvent):void {
-			// Clear the unit of work
-			unitOfWork.clear();
-			
 			var changeSet:ChangeSet = new ChangeSet(e.data);
 			
 			// Execute the change set against the repositories, and get back a changes object with arrays of what has been persisted, removed and updated
 			var changes:Object = executeChangeSet(changeSet);
 			
-			// Make sure no objects are marked persisted, dirty or removed (this effectively resets the rollback state).  Calling clear with a true parameter
-			// empties the dirty markers without emptying the repository itself.
-			for each (var entityRepository:EntityRepository in repositories)
-				entityRepository.clear(true);
-			
 			// Apply changes to the result event
 			e.resultEvent.setResult(changes);
+			
+			// Clear the unit of work
+			unitOfWork.clear();
 		}
 		
 		/**
@@ -808,7 +865,7 @@ package org.davekeen.flextrine.orm {
 			
 			for each (var serverInsertion:Object in serverInsertions) {
 				log.info("Got a new persisted entity from the server " + serverInsertion);
-				changedEntity = addLoadedEntityToRepository(entityInsertions[oid]);
+				changedEntity = addLoadedEntityToRepository(serverInsertion);
 				persists.push(repo.findOneBy(EntityUtil.getIdObject(changedEntity)));
 			}
 			
@@ -823,20 +880,22 @@ package org.davekeen.flextrine.orm {
 			for (var oid:String in entityUpdates) {
 				var repo:EntityRepository = getRepository(ClassUtil.getClass(entityUpdates[oid])) as EntityRepository;
 				
+				// Since we can run server-side flushes even in PUSH mode we always need to integrate into the repository
 				switch (configuration.writeMode) {
 					case WriteMode.PUSH:
 						// In push mode the entity graph will already be updated in the repository, so just call updateEntity (this probably isn't even
-						// necessary)
-						changedEntity = repo.updateEntity(entityUpdates[oid]);
-						break;
+						// necessary).
+						//changedEntity = repo.updateEntity(entityUpdates[oid]);
+						//break;
 					case WriteMode.PULL:
-						// In pull mode we are actually integrating the graph into the repository
+						// In both push and pull mode we need to integrate the graph into the repository
 						changedEntity = addLoadedEntityToRepository(entityUpdates[oid]);
 						break;
 				}
 				
 				// Get the real repository object and put it in changes
-				updates.push(repo.findOneBy(EntityUtil.getIdObject(changedEntity)));
+				if (changedEntity)
+					updates.push(repo.findOneBy(EntityUtil.getIdObject(changedEntity)));
 			}
 			
 			return updates;
@@ -850,14 +909,21 @@ package org.davekeen.flextrine.orm {
 				var repo:EntityRepository = getRepository(ClassUtil.getClass(entityDeletions[oid])) as EntityRepository;
 				
 				if (!unitOfWork.hasRemovedEntity(entityDeletions[oid])) {
-					// Since there is no data push at the moment this is currently unused so throw an error for now
-					throw new Error("This block should be unreachable until data push is implemented");
+					// This implies that an entity has been removed using remoteFlushMethod.  If the entity exists in the repositories then remove it,
+					// otherwise ignore it.
+					var repoEntity:Object = repo.findOneBy(EntityUtil.getIdObject(entityDeletions[oid]));
+					if (repoEntity) {
+						log.info("Entity removed on server and also in local repository " + repoEntity);
+						repo.deleteEntity(repoEntity);
+					} else {
+						log.info("Entity removed on server - not in local repository so ignoring " + entityDeletions[oid]);
+					}
 				} else {
 					unitOfWork.removeEntityFromRemoveMap(entityDeletions[oid]);
 					
 					if (configuration.writeMode == WriteMode.PULL) {
 						// If we are in WriteMode.PULL we need to match up the entity deletion with a real repo entity and remove it
-						var repoEntity:Object = repo.findOneBy(EntityUtil.getIdObject(entityDeletions[oid]));
+						repoEntity = repo.findOneBy(EntityUtil.getIdObject(entityDeletions[oid]));
 						repo.deleteEntity(repoEntity);
 					}
 				}

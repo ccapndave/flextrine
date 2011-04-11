@@ -14,6 +14,8 @@ class Doctor {
 	
     /** @Column(length=100, type="string") */
     public $name;
+    public function setName($name) { $this->name = $name; }
+    public function getName() { return $this->name; }
 	
     /**
      * @OneToMany(targetEntity="Appointment", mappedBy="doctor")
@@ -24,6 +26,8 @@ class Doctor {
      * @OneToMany(targetEntity="Patient", mappedBy="doctor")
      */
 	public $patients;
+	public function addPatient($patient) { $this->patients->add($patient); }
+	public function getPatients() { return $this->patients; }
 	
 	public function __construct() {
 		$this->appointments = new ArrayCollection();

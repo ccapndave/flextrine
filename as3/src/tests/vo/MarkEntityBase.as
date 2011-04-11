@@ -16,8 +16,6 @@ package tests.vo {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -86,22 +84,25 @@ package tests.vo {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["mark"] = mark;
-				flextrine::savedState["student"] = student;
-				flextrine::savedState["course"] = course;
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["mark"] = mark;
+				memento["student"] = student;
+				memento["course"] = course;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				mark = flextrine::savedState["mark"];
-				student = flextrine::savedState["student"];
-				course = flextrine::savedState["course"];
+				id = memento["id"];
+				mark = memento["mark"];
+				student = memento["student"];
+				course = memento["course"];
 			}
 		}
 		

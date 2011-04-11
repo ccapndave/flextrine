@@ -14,13 +14,13 @@ class Appointment {
     public $date;
 	
 	/**
-     * @OneToOne(targetEntity="Doctor", inversedBy="appointment")
+     * @ManyToOne(targetEntity="Doctor", inversedBy="appointments")
 	 * @JoinColumn(name="doctor_id", referencedColumnName="id")
      */
 	public $doctor;
 	
 	/**
-     * @OneToOne(targetEntity="Patient", inversedBy="appointment")
+     * @ManyToOne(targetEntity="Patient", inversedBy="appointments")
 	 * @JoinColumn(name="patient_id", referencedColumnName="id")
      */
 	public $patient;

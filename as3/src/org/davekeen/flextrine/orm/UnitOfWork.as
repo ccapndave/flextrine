@@ -21,6 +21,8 @@
  */
 
 package org.davekeen.flextrine.orm {
+	import flash.utils.Dictionary;
+	
 	import mx.logging.ILogger;
 	import mx.logging.Log;
 	import mx.rpc.AsyncToken;
@@ -38,8 +40,34 @@ package org.davekeen.flextrine.orm {
 	 */
 	public class UnitOfWork {
 		
+		/**
+		 * The EntityManager
+		 */
 		private var em:EntityManager;
 		
+		/**
+		 * This maintains a map of temporary uids (for persisted objects without real ids) to the objects themselves
+		 */
+		public var temporaryUidMap:Object;
+		
+		/**
+		 * Keep a dictionary of persisted entities so we can make sure we don't persist the same entity twice, and also for rollback
+		 */
+		public var persistedEntities:Dictionary;
+		
+		/**
+		 * Keep a dictionary of dirty entities so we know what to rollback
+		 */
+		public var dirtyEntities:Dictionary;
+		
+		/**
+		 * Keep a dictionary of removed entities so we know what to add back in on rollback
+		 */
+		public var removedEntities:Dictionary;
+		
+		/**
+		 * This builds up a list of remote operations which need to be executed against the server  
+		 */
 		private var remoteOperations:RemoteOperations;
 		
 		/**
@@ -61,8 +89,25 @@ package org.davekeen.flextrine.orm {
 		public function UnitOfWork(em:EntityManager) {
 			this.em = em;
 			
+			// Initialize the UoW
+			clear(true);
+		}
+		
+		/**
+		 * Clear the unit of work
+		 * 
+		 * @private 
+		 */
+		internal function clear(clearAll:Boolean = false):void {
 			remoteOperations = new RemoteOperations();
-			removedEntitiesMap = new Object();
+			
+			temporaryUidMap = new Object();
+			persistedEntities = new Dictionary(false);
+			dirtyEntities = new Dictionary(false);
+			removedEntities = new Dictionary(false);
+			
+			if (clearAll)
+				removedEntitiesMap = new Object();
 		}
 		
 		/**
@@ -163,40 +208,6 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		/**
-		 * Add a custom operation to the flush queue.  This has no default implementation in FlextrineService, but you can add functionality by extending
-		 * FlextrineService in a new class and overiding the runCustomOperation method.
-		 * 
-		 * @depreciated
-		 * @private 
-		 * @param	operation
-		 * @param	data
-		 */
-		internal function beforeFlushCustomOperation(operation:String, data:Object = null):void {
-			throw new Error("beforeFlushCustomOperation is depreciated");
-			//remoteOperations.beforeFlushCustoms.push(new RemoteOperation(data, operation));
-		}
-		
-		/**
-		 * @depreciated
-		 * @private 
-		 * @param	operation
-		 * @param	data
-		 */
-		internal function afterFlushCustomOperation(operation:String, data:Object = null):void {
-			throw new Error("afterFlushCustomOperation is depreciated");
-			//remoteOperations.afterFlushCustoms.push(new RemoteOperation(data, operation));
-		}
-		
-		/**
-		 * Clear the flush queue.  All remote operations since the last flush will be discarded.
-		 * 
-		 * @private 
-		 */
-		internal function clear():void {
-			remoteOperations = new RemoteOperations();
-		}
-		
-		/**
 		 * Flush the queue - all remote operations will be executed on the server in the order they were added.
 		 * 
 		 * @private 
@@ -246,7 +257,7 @@ class RemoteOperations {
 	 * 
 	 */
 	public function size():int {
-		return getDictionarySize(persists) + getDictionarySize(merges) + getDictionarySize(removes) /*+ beforeFlushCustoms.length + afterFlushCustoms.length*/;
+		return getDictionarySize(persists) + getDictionarySize(merges) + getDictionarySize(removes);
 	}
 	
 	/**

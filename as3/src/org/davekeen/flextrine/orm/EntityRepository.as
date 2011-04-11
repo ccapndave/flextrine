@@ -57,32 +57,13 @@ package org.davekeen.flextrine.orm {
 		public static const STATE_DETACHED:String = "state_detached";
 		
 		private var em:EntityManager;
+		
 		private var entityClass:Class;
 		
 		[Bindable]
 		public function set entities(value:EntityCollection):void { _entities = value; }
 		public function get entities():EntityCollection { return _entities; }
 		private var _entities:EntityCollection;
-		
-		/**
-		 * This maintains a map of temporary uids (for persisted objects without real ids) to the objects themselves
-		 */
-		private var temporaryUidMap:Object;
-		
-		/**
-		 * Keep a dictionary of persisted entities so we can make sure we don't persist the same entity twice, and also for rollback
-		 */
-		private var persistedEntities:Dictionary;
-		
-		/**
-		 * Keep a dictionary of dirty entities so we know what to rollback
-		 */
-		private var dirtyEntities:Dictionary;
-		
-		/**
-		 * Keep a dictionary of removed entities so we know what to add back in on rollback
-		 */
-		private var removedEntities:Dictionary;
 		
 		/**
 		 * Standard flex logger
@@ -106,10 +87,7 @@ package org.davekeen.flextrine.orm {
 			this.em = em;
 			this.entityClass = entityClass;
 			
-			temporaryUidMap = new Object();
-			
 			// Initialize the repository
-			clear();
 			entities = new EntityCollection(null, (isNaN(entityTimeToLive)) ? em.getConfiguration().entityTimeToLive : entityTimeToLive);
 			
 			// Add the id fields as an index
@@ -117,17 +95,46 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		/**
+		 * Returns the temporaryUidMap from the current transaction
+		 * 
+		 * @return 
+		 */
+		private function get temporaryUidMap():Object {
+			return em.getUnitOfWork().temporaryUidMap;
+		}
+		
+		/**
+		 * Returns the persistedEntities from the current transaction
+		 * 
+		 * @return 
+		 */
+		private function get persistedEntities():Dictionary {
+			return em.getUnitOfWork().persistedEntities;
+		}
+		
+		/**
+		 * Returns the dirtyEntities from the current transaction
+		 * 
+		 * @return 
+		 */
+		private function get dirtyEntities():Dictionary {
+			return em.getUnitOfWork().dirtyEntities;
+		}
+		
+		/**
+		 * Returns the removedEntities from the current transaction
+		 * 
+		 * @return 
+		 */
+		private function get removedEntities():Dictionary {
+			return em.getUnitOfWork().removedEntities;
+		}
+		
+		/**
 		 * @private 
 		 */
-		internal function clear(keepEntities:Boolean = false):void {
-			if (entities && !keepEntities)
-				entities.removeAll();
-			
-			// We need strong keys to edits as we don't want them getting garbage collected before a flush(), clear() or rollback()
-			temporaryUidMap = new Object();
-			persistedEntities = new Dictionary(false);
-			dirtyEntities = new Dictionary(false);
-			removedEntities = new Dictionary(false);
+		internal function clear():void {
+			entities.removeAll();
 		}
 		
 		/**
@@ -281,11 +288,14 @@ package org.davekeen.flextrine.orm {
 			// Find the existing entity
 			var existingEntity:Object = entities.findOneBy(EntityUtil.getIdObject(entity));
 			
-			log.info("Updating " + existingEntity + " to " +  entity + " {repository=" + ClassUtil.formatClassAsString(entityClass) + ", idHash=" + idHash + "}");
-			
-			if (!checkForPropertyChanges) isUpdating = true;
-			existingEntity = EntityUtil.mergeEntity(entity, existingEntity);
-			if (!checkForPropertyChanges) isUpdating = false;
+			// Only update if the entity actually exists
+			if (existingEntity) {
+				log.info("Updating " + existingEntity + " to " +  entity + " {repository=" + ClassUtil.formatClassAsString(entityClass) + ", idHash=" + idHash + "}");
+				
+				if (!checkForPropertyChanges) isUpdating = true;
+				existingEntity = EntityUtil.mergeEntity(entity, existingEntity);
+				if (!checkForPropertyChanges) isUpdating = false;
+			}
 			
 			return existingEntity;
 		}
@@ -404,40 +414,6 @@ package org.davekeen.flextrine.orm {
 			if (!checkForPropertyChanges) isUpdating = true;
 			entity[associationName].addItem(entityToAdd);
 			if (!checkForPropertyChanges) isUpdating = false;
-		}
-		
-		/**
-		 * Rollback any persisted, updated or removed entities to their original states.  Return true if there was anything to rollback (this is for use
-		 * in unit tests).
-		 * 
-		 * @private
-		 */
-		internal function rollback():Boolean {
-			var entity:*;
-			
-			var rolledBackEntities:Boolean;
-			
-			// Add any removed entities
-			for (entity in removedEntities) {
-				rolledBackEntities = true;
-				addEntity(entity);
-			}
-			
-			// Restore any dirty entities
-			for (entity in dirtyEntities) {
-				rolledBackEntities = true;
-				entity.flextrine::restoreState();
-			}
-			
-			// Remove any persisted entities
-			for (entity in persistedEntities) {
-				rolledBackEntities = true;
-				deleteEntity(entity);
-			}
-			
-			clear(true);
-			
-			return rolledBackEntities;
 		}
 		
 		public function find(id:Number):Object {			
@@ -604,8 +580,14 @@ package org.davekeen.flextrine.orm {
 							if (e.oldValue && e.newValue && e.newValue.time == e.oldValue.time)
 								return;
 						
-						// Mark the entity as dirty in the dirtyEntities map so we know what to do on an em.rollback()
-						dirtyEntities[e.source] = true;
+						// Mark the entity as dirty in the dirtyEntities map so we know what to do on an em.rollback() within the current transaction.
+						if (dirtyEntities[e.source] == null) {
+							// Get a memento for the entity
+							dirtyEntities[e.source] = e.source.flextrine::saveState();
+							
+							// and since we are in onPropertyChange change back the property that caused this handler to be fired, giving us the original
+							dirtyEntities[e.source][e.property] = e.oldValue;
+						}
 						
 						// If this is a property, or the owning side of an association we need to mark for server-side merging
 						if (!EntityUtil.isAssociation(e.source, e.property.toString()) || isOwningAssociation(e.source, e.property.toString())) {

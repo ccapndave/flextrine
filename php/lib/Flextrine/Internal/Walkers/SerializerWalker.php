@@ -59,8 +59,21 @@ class SerializerWalker extends AbstractWalker {
 					throw new FlextrineException("Unauthorized 'load' access to ".get_class($entity));
 		}
 	}
-
+	
 	protected function replaceEntity($entity) {
+		return $this->prepareEntity($entity);
+	}
+	
+	protected function replaceCollectionEntity($entity, $collection) {
+		return $this->prepareEntity($entity);
+	}
+	
+	/**
+	 * If the received entity is a Proxy fill in the id
+	 * 
+	 * @param unknown_type $entity
+	 */
+	private function prepareEntity($entity) {
 		if ($entity instanceof Proxy && !$entity->__isInitialized__) {
 			$reflectionClass = new \ReflectionClass($entity);
 

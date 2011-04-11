@@ -54,6 +54,11 @@ package org.davekeen.flextrine.orm {
 		 */
 		public static const ENTITY_CHANGE_IN_PULL_MODE:int = 5;
 		
+		/**
+		 * An attempt was made to perform an operation (i.e. commit(), rollback()) without explicitly beginning a transaction
+		 */ 
+		public static const NO_ACTIVE_TRANSACTION:int = 6;
+		
 		function FlextrineError(message:String, errorID:int = 0) {
 			super(message, errorID);
 		}

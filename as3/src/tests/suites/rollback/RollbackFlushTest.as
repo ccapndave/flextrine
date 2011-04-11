@@ -26,8 +26,6 @@
 			super.setUp();
 			
 			useFixture(null);
-			
-			em.getConfiguration().enabledRollback = true;
 		}
 		
 		[Test(async, description = "Test that flushing clears the rollback queue.")]
@@ -50,7 +48,8 @@
 		}
 		
 		private function result2(e:ResultEvent, token:AsyncToken):void {
-			assertFalse(em.rollback());
+			var rolledBack:Boolean = em.rollback();
+			assertFalse(rolledBack);
 		}
 		
 	}

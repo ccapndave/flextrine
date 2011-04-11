@@ -15,8 +15,6 @@ package tests.vo {
 		
 		public var isInitialized__:Boolean = true;
 		
-		flextrine var savedState:Dictionary;
-		
 		flextrine var itemPendingError:ItemPendingError;
 		
 		[Id]
@@ -28,9 +26,9 @@ package tests.vo {
 		public function set phoneNumber(value:String):void { _phoneNumber = value; }
 		private var _phoneNumber:String;
 		
-		[Association(side="owning", oppositeAttribute="phoneNumbers", oppositeCardinality="1")]
+		[Association(side="owning", oppositeAttribute="phoneNumbers", oppositeCardinality="*")]
 		public function get patient():Patient { checkIsInitialized("patient"); return _patient; }
-		public function set patient(value:Patient):void { (value) ? value.flextrine::setValue('phoneNumbers', this) : ((_patient) ? _patient.flextrine::setValue('phoneNumbers', null) : null); _patient = value; }
+		public function set patient(value:Patient):void { (value) ? value.flextrine::addValue('phoneNumbers', this) : ((_patient) ? _patient.flextrine::removeValue('phoneNumbers', this) : null); _patient = value; }
 		private var _patient:Patient;
 		
 		public function PhoneNumberEntityBase() {
@@ -80,20 +78,23 @@ package tests.vo {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["phoneNumber"] = phoneNumber;
-				flextrine::savedState["patient"] = patient;
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["phoneNumber"] = phoneNumber;
+				memento["patient"] = patient;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				phoneNumber = flextrine::savedState["phoneNumber"];
-				patient = flextrine::savedState["patient"];
+				id = memento["id"];
+				phoneNumber = memento["phoneNumber"];
+				patient = memento["patient"];
 			}
 		}
 		

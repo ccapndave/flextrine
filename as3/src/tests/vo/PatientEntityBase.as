@@ -6,7 +6,6 @@ package tests.vo {
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.flextrine;
-	import tests.vo.PhoneNumber;
 	import tests.vo.Doctor;
 
 	[Bindable]
@@ -15,8 +14,6 @@ package tests.vo {
 		public var isUnserialized__:Boolean;
 		
 		public var isInitialized__:Boolean = true;
-		
-		flextrine var savedState:Dictionary;
 		
 		flextrine var itemPendingError:ItemPendingError;
 		
@@ -43,9 +40,9 @@ package tests.vo {
 		private var _appointments:PersistentCollection;
 		
 		[Association(side="inverse", oppositeAttribute="patient", oppositeCardinality="1")]
-		public function get phoneNumbers():PhoneNumber { checkIsInitialized("phoneNumbers"); return _phoneNumbers; }
-		public function set phoneNumbers(value:PhoneNumber):void { (value) ? value.flextrine::setValue('patient', this) : ((_phoneNumbers) ? _phoneNumbers.flextrine::setValue('patient', null) : null); _phoneNumbers = value; }
-		private var _phoneNumbers:PhoneNumber;
+		public function get phoneNumbers():PersistentCollection { checkIsInitialized("phoneNumbers"); return _phoneNumbers; }
+		public function set phoneNumbers(value:PersistentCollection):void { _phoneNumbers = value; }
+		private var _phoneNumbers:PersistentCollection;
 		
 		[Association(side="owning", oppositeAttribute="patients", oppositeCardinality="*")]
 		public function get doctor():Doctor { checkIsInitialized("doctor"); return _doctor; }
@@ -54,6 +51,7 @@ package tests.vo {
 		
 		public function PatientEntityBase() {
 			if (!_appointments) _appointments = new PersistentCollection(null, true, "appointments", this);
+			if (!_phoneNumbers) _phoneNumbers = new PersistentCollection(null, true, "phoneNumbers", this);
 		}
 		
 		override public function toString():String {
@@ -100,28 +98,31 @@ package tests.vo {
 			}
 		}
 		
-		flextrine function saveState():void {
+		flextrine function saveState():Dictionary {
 			if (isInitialized__) {
-				flextrine::savedState = new Dictionary(true);
-				flextrine::savedState["id"] = id;
-				flextrine::savedState["name"] = name;
-				flextrine::savedState["address"] = address;
-				flextrine::savedState["postcode"] = postcode;
-				appointments.flextrine::saveState();
-				flextrine::savedState["phoneNumbers"] = phoneNumbers;
-				flextrine::savedState["doctor"] = doctor;
+				var memento:Dictionary = new Dictionary(true);
+				memento["id"] = id;
+				memento["name"] = name;
+				memento["address"] = address;
+				memento["postcode"] = postcode;
+				memento["appointments"] = appointments.flextrine::saveState();
+				memento["phoneNumbers"] = phoneNumbers.flextrine::saveState();
+				memento["doctor"] = doctor;
+				return memento;
 			}
+			
+			return null;
 		}
 		
-		flextrine function restoreState():void {
+		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
-				id = flextrine::savedState["id"];
-				name = flextrine::savedState["name"];
-				address = flextrine::savedState["address"];
-				postcode = flextrine::savedState["postcode"];
-				appointments.flextrine::restoreState();
-				phoneNumbers = flextrine::savedState["phoneNumbers"];
-				doctor = flextrine::savedState["doctor"];
+				id = memento["id"];
+				name = memento["name"];
+				address = memento["address"];
+				postcode = memento["postcode"];
+				appointments.flextrine::restoreState(memento["appointments"]);
+				phoneNumbers.flextrine::restoreState(memento["phoneNumbers"]);
+				doctor = memento["doctor"];
 			}
 		}
 		
