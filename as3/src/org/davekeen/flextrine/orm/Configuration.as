@@ -64,6 +64,11 @@ package org.davekeen.flextrine.orm {
 		public var writeMode:String = WriteMode.PUSH;
 		
 		/**
+		 * For future implementation
+		 */ 
+		public var transactionMode:String = TransactionMode.FLAT;
+		
+		/**
 		 * Whether or not to automatically load uninitialized entities when any of their properties are accessed.  This works well with Flex binding, but is less
 		 * use when using entities in AS3 code.
 		 */

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright 2011 Dave Keen
  * http://www.actionscriptdeveloper.co.uk
  * 
@@ -20,30 +20,18 @@
  * 
  */
 
-package org.davekeen.flextrine.orm.events {
-	import flash.events.Event;
-	
+package org.davekeen.flextrine.orm {
 	/**
-	 * @private 
+	 * For future implementation
+	 * 
 	 * @author Dave Keen
 	 */
-	public class FlextrineEvent extends Event {
+	public class TransactionMode {
 		
-		public static const LOADING:String = "loading";
-		public static const FLUSHING:String = "flushing";
+		public static const FLAT:String = "flat";
 		
-		public function FlextrineEvent(type:String, bubbles:Boolean=false, cancelable:Boolean=false) { 
-			super(type, bubbles, cancelable);
-		}
-		
-		public override function clone():Event { 
-			return new FlextrineEvent(type, bubbles, cancelable);
-		} 
-		
-		public override function toString():String { 
-			return formatToString("FlextrineEvent", "type", "bubbles", "cancelable", "eventPhase");
-		}
+		public static const NESTED:String = "nested";
 		
 	}
-	
+
 }

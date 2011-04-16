@@ -32,6 +32,8 @@ package org.davekeen.flextrine.orm.delegates {
 	import org.davekeen.delegates.RemoteDelegate;
 	import org.davekeen.flextrine.orm.Query;
 	import org.davekeen.flextrine.orm.events.FlextrineEvent;
+	import org.davekeen.flextrine.orm.events.FlextrineFaultEvent;
+	import org.davekeen.flextrine.orm.events.FlextrineResultEvent;
 	import org.davekeen.flextrine.orm.rpc.FlextrineAsyncResponder;
 	
 	/**
@@ -110,7 +112,10 @@ package org.davekeen.flextrine.orm.delegates {
 			var asyncToken:AsyncToken = new RemoteDelegate(methodName, args, null, gateway, selectedService).execute();
 			asyncToken.addResponder(new FlextrineAsyncResponder(
 				function (e:ResultEvent, token:Object = null):void {
-					dispatchEvent(new FlextrineEvent(FlextrineEvent.LOAD_COMPLETE, e.result, e));
+					dispatchEvent(new FlextrineResultEvent(FlextrineResultEvent.LOAD_COMPLETE, e.result, e));
+				},
+				function (e:FaultEvent, token:Object = null):void {
+					dispatchEvent(new FlextrineFaultEvent(FlextrineFaultEvent.LOAD_FAULT, null, e));
 				}
 			));
 			return asyncToken;
@@ -130,7 +135,10 @@ package org.davekeen.flextrine.orm.delegates {
 			var asyncToken:AsyncToken = new RemoteDelegate(methodName, args, null, gateway, selectedService).execute();
 			asyncToken.addResponder(new FlextrineAsyncResponder(
 				function (e:ResultEvent, token:Object = null):void {
-					dispatchEvent(new FlextrineEvent(FlextrineEvent.FLUSH_COMPLETE, e.result, e));
+					dispatchEvent(new FlextrineResultEvent(FlextrineResultEvent.FLUSH_COMPLETE, e.result, e));
+				},
+				function (e:FaultEvent, token:Object = null):void {
+					dispatchEvent(new FlextrineFaultEvent(FlextrineFaultEvent.FLUSH_FAULT, null, e));
 				}
 			));
 			return asyncToken;
@@ -150,18 +158,32 @@ package org.davekeen.flextrine.orm.delegates {
 				case "loadAll":
 				case "select":
 				case "selectOne":
-					dispatchEvent(new FlextrineEvent(FlextrineEvent.LOAD_COMPLETE, data, resultEvent));
+					dispatchEvent(new FlextrineResultEvent(FlextrineResultEvent.LOAD_COMPLETE, data, resultEvent));
 					break;
 				case "flush":
-					dispatchEvent(new FlextrineEvent(FlextrineEvent.FLUSH_COMPLETE, data, resultEvent));
+					dispatchEvent(new FlextrineResultEvent(FlextrineResultEvent.FLUSH_COMPLETE, data, resultEvent));
 					break;
 				default:
-					throw new Error("Unknown result from operation " + operation + " (" + data + ")");
+					throw new Error("Result from unknown operation " + operation + " (" + data + ")");
 			}
 		}
 		
 		public function onDelegateFault(operation:String, data:Object, faultEvent:FaultEvent = null):void {
-			trace("Fault");
+			switch (operation) {
+				case "load":
+				case "loadBy":
+				case "loadOneBy":
+				case "loadAll":
+				case "select":
+				case "selectOne":
+					dispatchEvent(new FlextrineFaultEvent(FlextrineFaultEvent.LOAD_FAULT, data, faultEvent));
+					break;
+				case "flush":
+					dispatchEvent(new FlextrineFaultEvent(FlextrineFaultEvent.FLUSH_FAULT, data, faultEvent));
+					break;
+				default:
+					throw new Error("Fault from unknown operation " + operation + " (" + data + ")");
+			}
 		}
 		
 	}

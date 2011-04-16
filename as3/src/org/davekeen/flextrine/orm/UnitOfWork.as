@@ -71,13 +71,6 @@ package org.davekeen.flextrine.orm {
 		private var remoteOperations:RemoteOperations;
 		
 		/**
-		 * The unit of work maintains a map of entities that it expects to be removed on the next flush.  When the changeset is received from the server we
-		 * check deletions against removedEntitiesMap to work out whether or not to remove them from the repository.  After a flush we would expect this to
-		 * be empty, but it must NOT be emptied in clear()!
-		 */
-		private var removedEntitiesMap:Object;
-		
-		/**
 		 * Standard flex logger
 		 */
 		private var log:ILogger = Log.getLogger(ClassUtil.getQualifiedClassNameAsString(this));
@@ -90,7 +83,7 @@ package org.davekeen.flextrine.orm {
 			this.em = em;
 			
 			// Initialize the UoW
-			clear(true);
+			clear();
 		}
 		
 		/**
@@ -98,16 +91,13 @@ package org.davekeen.flextrine.orm {
 		 * 
 		 * @private 
 		 */
-		internal function clear(clearAll:Boolean = false):void {
+		internal function clear():void {
 			remoteOperations = new RemoteOperations();
 			
 			temporaryUidMap = new Object();
 			persistedEntities = new Dictionary(false);
 			dirtyEntities = new Dictionary(false);
 			removedEntities = new Dictionary(false);
-			
-			if (clearAll)
-				removedEntitiesMap = new Object();
 		}
 		
 		/**
@@ -160,51 +150,10 @@ package org.davekeen.flextrine.orm {
 		 * @param	entity	The entity to remove
 		 */
 		internal function remove(entity:Object):void {
-			// Add the entity to the list of entities that we expect to be deleted on the next flush
-			removedEntitiesMap[EntityUtil.getUniqueHash(entity)] = entity;
-			
 			// If the entity is in the merge queue remove it as there is no point merging an entity that is about to be removed
 			delete remoteOperations.merges[EntityUtil.getUniqueHash(entity)];
 			
 			remoteOperations.removes[EntityUtil.getUniqueHash(entity)] = new RemoteOperation( { entity: entity }, RemoteOperation.REMOVE);
-		}
-		
-		/**
-		 * Check whether the given entity was something we expected to be removed.  This is called when the changeset is returned from the server to decide
-		 * whether or not to execute the delete against the repository or not.
-		 * 
-		 * @param	entity		  The entity that we are checking
-		 * 
-		 * @private 
-		 * @return
-		 */
-		internal function hasRemovedEntity(entity:Object):Boolean {
-			return removedEntitiesMap[EntityUtil.getUniqueHash(entity)]
-		}
-		
-		/**
-		 * Remove an entity from the removedEntitiesMap
-		 * 
-		 * @private 
-		 * @param	entity
-		 */
-		internal function removeEntityFromRemoveMap(entity:Object):void {
-			delete removedEntitiesMap[EntityUtil.getUniqueHash(entity)];
-		}
-		
-		/**
-		 * Checks whether there are any entities in the expected removals map.  Used as a sanity check; after a flush this should always return false or
-		 * something has gone wrong.
-		 * 
-		 * @private 
-		 * @return
-		 */
-		internal function hasRemovedEntities():Boolean {
-			// If there are any keys in the entity map this returns true
-			for (var uniqueHash:String in removedEntitiesMap)
-				return true;
-			
-			return false;
 		}
 		
 		/**

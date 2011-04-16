@@ -79,6 +79,10 @@ package org.davekeen.flextrine.orm.collections {
 			this.associationName = associationName;
 		}
 		
+		public function getAssociationName():String {
+			return associationName;
+		}
+		
 		public function getOwner():Object {
 			return owner;
 		}

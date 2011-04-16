@@ -68,7 +68,7 @@ EOT
 
 			$output->write("New Flextrine application created successfully in $destPath.", true);
 			$output->write("", true);
-			$output->write("To get started edit config/config.yml with your database details and create some entities.", true);
+			$output->write("To get started edit config/development.yml with your database details and create some entities.", true);
 			
 			// Update the default application in the main config.yml file to the application we just created
 			$configContents = file_get_contents(ROOT_PATH.DIRECTORY_SEPARATOR."config/config.yml");

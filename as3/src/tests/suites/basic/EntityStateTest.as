@@ -53,10 +53,11 @@
 			
 			Assert.assertEquals(EntityRepository.STATE_MANAGED, doctorRepository.getEntityState(d1));
 			
-			var detachedDoctor:Doctor = em.detach(doctorRepository.entities.getItemAt(0)) as Doctor;
-			Assert.assertEquals(EntityRepository.STATE_DETACHED, doctorRepository.getEntityState(detachedDoctor));
+			var doctor:Doctor = doctorRepository.entities.getItemAt(0) as Doctor;
+			em.detach(doctor);
+			Assert.assertEquals(EntityRepository.STATE_DETACHED, doctorRepository.getEntityState(doctor));
 			
-			var mergedDoctor:Doctor = em.merge(detachedDoctor) as Doctor;
+			var mergedDoctor:Doctor = em.merge(doctor) as Doctor;
 			Assert.assertEquals(EntityRepository.STATE_MANAGED, doctorRepository.getEntityState(mergedDoctor));
 			
 			em.remove(d1);

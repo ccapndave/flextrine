@@ -16,7 +16,6 @@
 		public var remove2Test:Remove2Test;
 		public var updateTest:UpdateTest;
 		public var updateChangeTest:UpdateChangeTest;
-		public var detachMergeTest:DetachMergeTest;
 		
 	}
 

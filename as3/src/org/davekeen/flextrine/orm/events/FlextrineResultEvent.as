@@ -23,25 +23,42 @@
 package org.davekeen.flextrine.orm.events {
 	import flash.events.Event;
 	
+	import mx.rpc.events.ResultEvent;
+	
 	/**
 	 * @private 
 	 * @author Dave Keen
 	 */
-	public class FlextrineEvent extends Event {
+	public class FlextrineResultEvent extends Event {
 		
-		public static const LOADING:String = "loading";
-		public static const FLUSHING:String = "flushing";
+		public static const LOAD_COMPLETE:String = "load_complete";
+		public static const FLUSH_COMPLETE:String = "flush_complete";
 		
-		public function FlextrineEvent(type:String, bubbles:Boolean=false, cancelable:Boolean=false) { 
+		public var _data:Object;
+		
+		public var _resultEvent:ResultEvent;
+		
+		public function FlextrineResultEvent(type:String, data:Object = null, resultEvent:ResultEvent = null, bubbles:Boolean=false, cancelable:Boolean=false) { 
 			super(type, bubbles, cancelable);
+			
+			this._data = data;
+			this._resultEvent = resultEvent;
+		}
+		
+		public function get data():Object {
+			return _data;
+		}
+		
+		public function get resultEvent():ResultEvent {
+			return _resultEvent;
 		}
 		
 		public override function clone():Event { 
-			return new FlextrineEvent(type, bubbles, cancelable);
+			return new FlextrineResultEvent(type, data, resultEvent, bubbles, cancelable);
 		} 
 		
 		public override function toString():String { 
-			return formatToString("FlextrineEvent", "type", "bubbles", "cancelable", "eventPhase");
+			return formatToString("FlextrineResultEvent", "type", "data", "resultEvent", "bubbles", "cancelable", "eventPhase");
 		}
 		
 	}

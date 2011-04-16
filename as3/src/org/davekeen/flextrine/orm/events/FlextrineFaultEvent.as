@@ -23,25 +23,42 @@
 package org.davekeen.flextrine.orm.events {
 	import flash.events.Event;
 	
+	import mx.rpc.events.FaultEvent;
+	
 	/**
 	 * @private 
 	 * @author Dave Keen
 	 */
-	public class FlextrineEvent extends Event {
+	public class FlextrineFaultEvent extends Event {
 		
-		public static const LOADING:String = "loading";
-		public static const FLUSHING:String = "flushing";
+		public static const LOAD_FAULT:String = "load_fault";
+		public static const FLUSH_FAULT:String = "flush_fault";
 		
-		public function FlextrineEvent(type:String, bubbles:Boolean=false, cancelable:Boolean=false) { 
+		public var _data:Object;
+		
+		public var _faultEvent:FaultEvent;
+		
+		public function FlextrineFaultEvent(type:String, data:Object = null, faultEvent:FaultEvent = null, bubbles:Boolean=false, cancelable:Boolean=false) { 
 			super(type, bubbles, cancelable);
+			
+			this._data = data;
+			this._faultEvent = faultEvent;
+		}
+		
+		public function get data():Object {
+			return _data;
+		}
+		
+		public function get faultEvent():FaultEvent {
+			return _faultEvent;
 		}
 		
 		public override function clone():Event { 
-			return new FlextrineEvent(type, bubbles, cancelable);
+			return new FlextrineFaultEvent(type, data, faultEvent, bubbles, cancelable);
 		} 
 		
 		public override function toString():String { 
-			return formatToString("FlextrineEvent", "type", "bubbles", "cancelable", "eventPhase");
+			return formatToString("FlextrineFaultEvent", "type", "data", "faultEvent", "bubbles", "cancelable", "eventPhase");
 		}
 		
 	}
