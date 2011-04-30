@@ -5,8 +5,8 @@
 	 * @author Dave Keen
 	 */
 	
-	[Suite]
-	[RunWith("org.flexunit.runners.Suite")]
+	/*[Suite]
+	[RunWith("org.flexunit.runners.Suite")]*/
 	public class MemorySuite {
 		
 	}

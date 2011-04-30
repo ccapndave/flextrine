@@ -87,6 +87,11 @@ package org.davekeen.flextrine.orm {
 		 */
 		public var entityTimeToLive:int = 5000;
 		
+		/**
+		 * Whether to bundle together multiple requests into single calls, or to make them one after the other.  Setting this to true can give a significant
+		 * performance boost, especially with on demand loading.  However, this may cause problems if you use multiple remote service files.
+		 */
+		public var useConcurrentRequests:Boolean = true;
 	}
 
 }

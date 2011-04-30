@@ -60,20 +60,12 @@ class SerializerWalker extends AbstractWalker {
 		}
 	}
 	
-	protected function replaceEntity($entity) {
-		return $this->prepareEntity($entity);
-	}
-	
-	protected function replaceCollectionEntity($entity, $collection) {
-		return $this->prepareEntity($entity);
-	}
-	
 	/**
 	 * If the received entity is a Proxy fill in the id
 	 * 
 	 * @param unknown_type $entity
 	 */
-	private function prepareEntity($entity) {
+	protected function replaceEntity($entity) {
 		if ($entity instanceof Proxy && !$entity->__isInitialized__) {
 			$reflectionClass = new \ReflectionClass($entity);
 

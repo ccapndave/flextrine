@@ -28,7 +28,7 @@ package org.davekeen.delegates {
 	 */
 	public interface IDelegate {
 		
-		function execute():AsyncToken;
+		function execute(token:Object = null):AsyncToken;
 		
 	}
 	

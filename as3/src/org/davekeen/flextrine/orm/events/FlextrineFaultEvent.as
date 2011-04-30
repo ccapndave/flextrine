@@ -34,9 +34,9 @@ package org.davekeen.flextrine.orm.events {
 		public static const LOAD_FAULT:String = "load_fault";
 		public static const FLUSH_FAULT:String = "flush_fault";
 		
-		public var _data:Object;
+		private var _data:Object;
 		
-		public var _faultEvent:FaultEvent;
+		private var _faultEvent:FaultEvent;
 		
 		public function FlextrineFaultEvent(type:String, data:Object = null, faultEvent:FaultEvent = null, bubbles:Boolean=false, cancelable:Boolean=false) { 
 			super(type, bubbles, cancelable);

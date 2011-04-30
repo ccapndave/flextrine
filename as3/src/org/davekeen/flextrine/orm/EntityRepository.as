@@ -45,6 +45,8 @@ package org.davekeen.flextrine.orm {
 	import org.davekeen.flextrine.util.Closure;
 	import org.davekeen.flextrine.util.EntityUtil;
 
+	use namespace flextrine;
+	
 	/**
 	 * @private
 	 * @author Dave Keen
@@ -135,6 +137,8 @@ package org.davekeen.flextrine.orm {
 		 */
 		internal function clear():void {
 			entities.removeAll();
+			
+			isUpdating = false;
 		}
 		
 		/**
@@ -158,7 +162,7 @@ package org.davekeen.flextrine.orm {
 				// The entity has an id, so if it is in the array collection it is MANAGED, otherwise it is REMOVED or DETACHED
 				var foundEntity:Object = findOneBy(EntityUtil.getIdObject(entity));
 				if (foundEntity) {
-					return STATE_MANAGED;
+					return (foundEntity === entity) ? STATE_MANAGED : STATE_DETACHED;
 				} else {
 					return (removedEntities[entity]) ? STATE_REMOVED : STATE_DETACHED;
 				}
@@ -173,14 +177,14 @@ package org.davekeen.flextrine.orm {
 		 * @param   temporaryUid This is the temporary uid for entities that have been persisted and not yet flushed.  This is only for debug purposes
 		 * 						 and is not used by addEntity.
 		 */
-		internal function addEntity(entity:Object, temporaryUid:String = null):Object {
+		flextrine function addEntity(entity:Object, temporaryUid:String = null):Object {
 			var idHash:String = EntityUtil.getIdHash(entity);
 			
 			log.info("Adding " + entity + " {repository=" + ClassUtil.formatClassAsString(entityClass) + ", " + ((temporaryUid) ? "tempUid=" + temporaryUid : "idHash=" + idHash) + "}");
 			
 			entities.addItem(entity);
 			
-			addEventListenerToEntity(entity);
+			addDefaultListenerToManagedEntity(entity);
 			
 			return entity;
 		}
@@ -228,7 +232,7 @@ package org.davekeen.flextrine.orm {
 		 * @param	entity
 		 * @return
 		 */
-		internal function updateEntity(entity:Object, checkForPropertyChanges:Boolean = false):Object {
+		flextrine function updateEntity(entity:Object, checkForPropertyChanges:Boolean = false):Object {
 			var idHash:String = EntityUtil.getIdHash(entity);
 			
 			// Find the existing entity
@@ -244,7 +248,7 @@ package org.davekeen.flextrine.orm {
 				// Refresh the listeners on the entity
 				// TODO: A future performance enhancement could be to only do this if an entity or one of its collections has changed from being uninitialized
 				// to initialized.
-				addEventListenerToEntity(existingEntity);
+				addDefaultListenerToManagedEntity(existingEntity);
 				
 				if (!checkForPropertyChanges) isUpdating = false;
 			}
@@ -318,7 +322,7 @@ package org.davekeen.flextrine.orm {
 		 * @param checkForPropertyChanges
 		 * @return 
 		 */
-		internal function updateEntityProperty(entity:Object, property:String, value:*, checkForPropertyChanges:Boolean = false):void {
+		flextrine function updateEntityProperty(entity:Object, property:String, value:*, checkForPropertyChanges:Boolean = false):void {
 			if (!checkForPropertyChanges) isUpdating = true;
 			entity[property] = value;
 			if (!checkForPropertyChanges) isUpdating = false;
@@ -387,8 +391,8 @@ package org.davekeen.flextrine.orm {
 			
 			log.info("Deleting " + entityToRemove +  " {repository=" + ClassUtil.formatClassAsString(entityClass) + ", idHash=" + idHash + "}");
 			
-			// Remove the change listener
-			removeEventListenerFromEntity(entityToRemove)
+			// Remove the property change listener
+			entityToRemove.removeEventListener(PropertyChangeEvent.PROPERTY_CHANGE, onPropertyChange);
 			
 			// Add to removed entities
 			removedEntities[entityToRemove] = true;
@@ -423,9 +427,10 @@ package org.davekeen.flextrine.orm {
 		 * @param	persistentCollection
 		 * @param	associationName
 		 */
-		internal function resetManyAssociation(persistentCollection:PersistentCollection):void {
+		flextrine function resetManyAssociation(persistentCollection:PersistentCollection):void {
 			isUpdating = true;
 			persistentCollection.removeAll();
+			//persistentCollection.removeAllNonRecursive();
 			isUpdating = false;
 		}
 		
@@ -439,9 +444,10 @@ package org.davekeen.flextrine.orm {
 		 * @param	associationName
 		 * @param	entityToAdd
 		 */
-		internal function addEntityToManyAssociation(entity:Object, associationName:String, entityToAdd:Object, checkForPropertyChanges:Boolean = false):void {
+		flextrine function addEntityToManyAssociation(entity:Object, associationName:String, entityToAdd:Object, checkForPropertyChanges:Boolean = false):void {
 			if (!checkForPropertyChanges) isUpdating = true;
 			entity[associationName].addItem(entityToAdd);
+			//entity[associationName].addItemNonRecursive(entityToAdd);
 			if (!checkForPropertyChanges) isUpdating = false;
 		}
 		
@@ -486,43 +492,70 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		/**
-		 * Add a listener for property change events; objects in the repository are read only and if there is a property change then we need to dispatch
-		 * an error.  We remove the listener first just in case it already has one for some reason, and make sure that we use a weak referenced event
-		 * listener to avoid entities staying in memory after they are removed.
-		 * 
-		 * We also remove all listeners before adding them to make double sure we don't add the same listener twice
+		 * Add the default listeners for a managed entity
 		 * 
 		 * @param	entity
 		 */
-		private function addEventListenerToEntity(entity:Object):void {
-			removeEventListenerFromEntity(entity);
-			entity.addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, onPropertyChange, false, 0, false);
+		private function addDefaultListenerToManagedEntity(entity:Object):void {
+			addEntityListeners(entity, em.getOnDemandListener().onInitializeEntity, em.getOnDemandListener().onInitializeCollection, onPropertyChange, onCollectionChange);
+		}
+		
+		/**
+		 * Add various event listeners to the given entity.
+		 * 
+		 * @param entity The entity to add the event listeners to
+		 * @param initializeEntityListener The listener to invoke when a lazily loaded entity asks to be initialized
+		 * @param initializeCollectionListener The listener to invoke when a lazily loaded collection asks to be initialized
+		 * @param propertyChangeListener The listener to invoke when a property changes on the entity
+		 * @param collectionChangeListener The listener to invoke when a collection changes on the entity
+		 */
+		private function addEntityListeners(entity:Object, initializeEntityListener:Function = null, initializeCollectionListener:Function = null, propertyChangeListener:Function = null, collectionChangeListener:Function = null):void {
+			// TODO: Use a walker here
+			
+			if (propertyChangeListener != null) {
+				entity.removeEventListener(PropertyChangeEvent.PROPERTY_CHANGE, propertyChangeListener);
+				entity.addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, propertyChangeListener, false, 0, false);
+			}
 			
 			// Go through the associations and when we find one that is a collection add an event listener to mark this object as dirty if elements are
 			// added or removed from the collection.  We don't care about UPDATE events within the collection as these will be taken care of by the contained
 			// entity's own repository.
-			if (EntityUtil.isInitialized(entity)) {
-				for each (var associationAttribute:XML in EntityUtil.getAttributesWithTag(entity, MetaTags.ASSOCIATION)) {
-					if (entity[associationAttribute] is PersistentCollection) {
-						if (EntityUtil.isCollectionInitialized(entity[associationAttribute])) {
-							// Only add a listener if this is the owning side, as there is no point listening to an inverse side
-							if (isOwningAssociation(entity, associationAttribute))
-								entity[associationAttribute].removeEventListener(CollectionEvent.COLLECTION_CHANGE, onCollectionChange);
-								entity[associationAttribute].addEventListener(CollectionEvent.COLLECTION_CHANGE, onCollectionChange, false, 0, true);
-						} else {
-							// If the collection is not initialized add a listener to see if we need to initialize it on demand
-							entity[associationAttribute].removeEventListener(EntityEvent.INITIALIZE_COLLECTION, onInitializeCollection);
-							entity[associationAttribute].addEventListener(EntityEvent.INITIALIZE_COLLECTION, onInitializeCollection, false, int.MAX_VALUE, true);
+			if (initializeEntityListener != null || initializeCollectionListener != null || collectionChangeListener != null) {
+				if (EntityUtil.isInitialized(entity)) {
+					for each (var associationAttribute:XML in EntityUtil.getAttributesWithTag(entity, MetaTags.ASSOCIATION)) {
+						if (entity[associationAttribute] is PersistentCollection) {
+							if (EntityUtil.isCollectionInitialized(entity[associationAttribute])) {
+								if (collectionChangeListener != null) {
+									// Only add a listener if this is the owning side, as there is no point listening to an inverse side
+									if (isOwningAssociation(entity, associationAttribute)) {
+										entity[associationAttribute].removeEventListener(CollectionEvent.COLLECTION_CHANGE, collectionChangeListener);
+										entity[associationAttribute].addEventListener(CollectionEvent.COLLECTION_CHANGE, collectionChangeListener, false, 0, true);
+									}
+								}
+							} else {
+								if (initializeCollectionListener != null) {
+									// If the collection is not initialized add a listener to see if we need to initialize it on demand
+									entity[associationAttribute].removeEventListener(EntityEvent.INITIALIZE_COLLECTION, initializeCollectionListener);
+									entity[associationAttribute].addEventListener(EntityEvent.INITIALIZE_COLLECTION, initializeCollectionListener, false, int.MAX_VALUE, true);
+								}
+							}
 						}
 					}
+				} else {
+					if (initializeEntityListener != null) {
+						// If the entity is not initialized add a listener to see if we need to initialize it on demand
+						entity.removeEventListener(EntityEvent.INITIALIZE_ENTITY, initializeEntityListener);
+						entity.addEventListener(EntityEvent.INITIALIZE_ENTITY, initializeEntityListener, false, int.MAX_VALUE, true);
+					}
 				}
-			} else {
-				// If the entity is not initialized add a listener to see if we need to initialize it on demand
-				entity.removeEventListener(EntityEvent.INITIALIZE_ENTITY, onInitializeEntity);
-				entity.addEventListener(EntityEvent.INITIALIZE_ENTITY, onInitializeEntity, false, int.MAX_VALUE, true);
 			}
 		}
 		
+		/**
+		 * Detected a change on a collection.  This may need to trigger an update event on the containing entity.
+		 * 
+		 * @param e
+		 */
 		private function onCollectionChange(e:CollectionEvent):void {
 			var persistentCollection:PersistentCollection = e.target as PersistentCollection;
 			
@@ -531,63 +564,6 @@ package org.davekeen.flextrine.orm {
 			
 			if (e.kind == CollectionEventKind.ADD || e.kind == CollectionEventKind.REMOVE || e.kind == CollectionEventKind.RESET || e.kind == CollectionEventKind.REPLACE)
 				entity.dispatchEvent(PropertyChangeEvent.createUpdateEvent(entity, attributeName, "Collection: " + e.kind, e.items));
-		}
-		
-		private function removeEventListenerFromEntity(entity:Object):void {
-			entity.removeEventListener(PropertyChangeEvent.PROPERTY_CHANGE, onPropertyChange);
-		}
-		
-		/**
-		 * Load an entity on demand
-		 * 
-		 * @param e
-		 */
-		private function onInitializeEntity(e:EntityEvent):void {
-			var entity:Object = e.currentTarget;
-			
-			if (!em.getConfiguration().loadEntitiesOnDemand)
-				throw new FlextrineError("Attempt to get property '" + e.property + "' on unitialized entity '" + entity + "'.  Consider using EntityManager::require, FetchMode.EAGER or configuration.loadEntitiesOnDemand.", FlextrineError.ACCESSED_UNINITIALIZED_ENTITY);
-			
-			log.info("Loading on demand: entity " + entity);
-			
-			em.requireOne(entity).addResponder(new AsyncResponder(onInitializeResult, onInitializeFault, e.itemPendingError));
-		}
-		
-		/**
-		 * Load a persistent collection on demand
-		 * 
-		 * @param e
-		 */
-		private function onInitializeCollection(e:EntityEvent):void {
-			var persistentCollection:PersistentCollection = e.currentTarget as PersistentCollection;
-			
-			if (!em.getConfiguration().loadCollectionsOnDemand)
-				throw new FlextrineError("Attempt to access uninitialized collection '" + e.property + "' on entity '" + persistentCollection.getOwner() + "'.  Consider using EntityManager::require, eager loading or configuration.loadCollectionsOnDemand.", FlextrineError.ACCESSED_UNINITIALIZED_ENTITY);
-			
-			if (!e.itemPendingError)
-				e.itemPendingError = new ItemPendingError("ItemPendingError - initializing collection " + persistentCollection.getOwner() + "." + e.property);
-			
-			log.info("Loading on demand: collection '" + e.property + "' on entity '" + persistentCollection.getOwner());
-			
-			em.requireMany(persistentCollection.getOwner(), e.property).addResponder(new AsyncResponder(onInitializeResult, onInitializeFault, e.itemPendingError));
-		}
-
-		private function onInitializeResult(e:ResultEvent, itemPendingError:ItemPendingError):void {
-			if (itemPendingError && itemPendingError.responders)
-				for each (var responder:IResponder in itemPendingError.responders)
-					responder.result(e);
-			
-			// This does fix some issues for on-demand loading, but not when requireMany or requireOne are used directly
-			//addEventListenerToEntity(e.result);
-			
-			// TODO: For a collection this might need to dispatch a COLLECTION_CHANGE event (although so far it seems to work without it)...
-			// dispatchEvent(new CollectionEvent(CollectionEvent.COLLECTION_CHANGE, false, false, CollectionEventKind.REFRESH));
-		}
-		
-		private function onInitializeFault(e:FaultEvent, itemPendingError:ItemPendingError):void {
-			if (itemPendingError && itemPendingError.responders)
-				for each (var responder:IResponder in itemPendingError.responders)
-					responder.fault(e);
 		}
 		
 		/**
@@ -640,7 +616,7 @@ package org.davekeen.flextrine.orm {
 						throw new Error("A change was detected on a removed entity; this is an error as there shouldn't be any listeners on the entity anymore!");
 						break;
 					case STATE_DETACHED:
-						throw new Error("A change was detected on a detached entity; this is an error as there shouldn't be any listeners on the entity!");
+						throw new Error("A change was detected on a detached entity; this is an error as there shouldn't be any property listeners on the entity!");
 						break;
 				}
 			}

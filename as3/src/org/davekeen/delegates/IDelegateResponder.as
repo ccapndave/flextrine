@@ -32,8 +32,8 @@ package org.davekeen.delegates {
 	
 	public interface IDelegateResponder {
 		
-		function onDelegateResult(operation:String, data:Object, resultEvent:ResultEvent = null):void;
-		function onDelegateFault(operation:String, data:Object, faultEvent:FaultEvent = null):void;
+		function onDelegateResult(operation:String, data:Object, resultEvent:ResultEvent = null, token:Object = null):void;
+		function onDelegateFault(operation:String, data:Object, faultEvent:FaultEvent = null, token:Object = null):void;
 		
 	}
 	

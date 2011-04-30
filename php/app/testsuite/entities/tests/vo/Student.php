@@ -28,6 +28,11 @@ class Student {
 	 * @OneToMany(targetEntity="Mark", mappedBy="student")
 	 */
 	public $marks;
+	
+	/**
+	 * @OneToOne(targetEntity="Photo")
+	 */
+	public $photo;
     
     public function __construct() {
     	$this->marks = new ArrayCollection();

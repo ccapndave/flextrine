@@ -22,13 +22,15 @@
 
 package org.davekeen.delegates {
 	import flash.events.EventDispatcher;
-	import mx.messaging.channels.AMFChannel;
+	
 	import mx.messaging.ChannelSet;
+	import mx.messaging.channels.AMFChannel;
 	import mx.rpc.AbstractOperation;
 	import mx.rpc.AsyncToken;
 	import mx.rpc.events.FaultEvent;
 	import mx.rpc.events.ResultEvent;
 	import mx.rpc.remoting.mxml.RemoteObject;
+	
 	import org.davekeen.flextrine.orm.rpc.FlextrineAsyncResponder;
 	
 	/**
@@ -43,14 +45,20 @@ package org.davekeen.delegates {
 		public static const E_WARNING:int = 1;
 		public static const E_NOTICE:int = 8;
 		
+		private static var useConcurrentRequests:Boolean;
+		
+		private static var concurrentRemoteObject:RemoteObject;
+		
+		private var remoteObject:RemoteObject;
+		
 		private var responder:IDelegateResponder;
 		private var operationName:String;
 		private var args:Array;
-		private var remoteObject:RemoteObject;
-		private var dispatchEvents:Boolean;
 		
 		private var channelSet:ChannelSet;
 		private var service:String;
+		
+		private var dispatchEvents:Boolean;
 		
 		public function RemoteDelegate(operationName:String = "", args:Array = null, responder:IDelegateResponder = null, gateway:String = null, service:String = null, dispatchEvents:Boolean = false) {
 			super();
@@ -67,6 +75,15 @@ package org.davekeen.delegates {
 			
 			// Set the service
 			this.service = service;
+			
+			if (useConcurrentRequests && !concurrentRemoteObject) {
+				concurrentRemoteObject = new RemoteObject();
+				
+				// Set the gateway and service of the remote object
+				concurrentRemoteObject.channelSet = channelSet;
+				concurrentRemoteObject.destination = "zendamf";
+				concurrentRemoteObject.source = service;
+			}
 		}
 		
 		public function setOperationName(operationName:String):void {
@@ -85,26 +102,38 @@ package org.davekeen.delegates {
 			this.dispatchEvents = dispatchEvents;
 		}
 		
+		public static function setUseConcurrentRequests(useConcurrentRequests:Boolean):void {
+			RemoteDelegate.useConcurrentRequests = useConcurrentRequests;
+		}
+		
 		/**
 		 * Make the remote function call.
 		 */
-		public function execute():AsyncToken {
-			remoteObject = new RemoteObject();
+		public function execute(token:Object = null):AsyncToken {
+			var operation:AbstractOperation;
 			
-			// Set the gateway and service of the remote object
-			remoteObject.channelSet = channelSet;
-			remoteObject.destination = "zendamf";
-			remoteObject.source = service;
+			if (useConcurrentRequests) {
+				// Use the same remote object
+				// TODO: This needs to be examined with regards to concurrently calling different services
+				operation = concurrentRemoteObject.getOperation(operationName);
+			} else {
+				// Create a new remote object
+				remoteObject = new RemoteObject();
+				
+				remoteObject.channelSet = channelSet;
+				remoteObject.destination = "zendamf";
+				remoteObject.source = service;
+				
+				operation = remoteObject.getOperation(operationName);
+			}
 			
-			// Make the remote function call
-			var operation:AbstractOperation = remoteObject.getOperation(operationName);
-			
-			if (args) operation.arguments = args;
+			if (args)
+				operation.arguments = args;
 			
 			// Add a responder to this async token first - this ensure that any listeners on responder are called before listeners added to the returned
 			// AsyncToken.
 			var asyncToken:AsyncToken = operation.send();
-			asyncToken.addResponder(new FlextrineAsyncResponder(onResult, onFault));
+			asyncToken.addResponder(new FlextrineAsyncResponder(onResult, onFault, token));
 			return asyncToken;
 		}
 		
@@ -122,7 +151,7 @@ package org.davekeen.delegates {
 		 */
 		private function onResult(event:ResultEvent, token:Object = null):void {
 			closeRemoteObject();
-			if (responder) responder.onDelegateResult(operationName, event.result, event);
+			if (responder) responder.onDelegateResult(operationName, event.result, event, token);
 			if (dispatchEvents) dispatchEvent(event);
 		}
 		
@@ -134,7 +163,7 @@ package org.davekeen.delegates {
 		private function onFault(event:FaultEvent, token:Object = null):void {
 			closeRemoteObject();
 			trace("RemoteDelegate:" + event.fault);
-			if (responder) responder.onDelegateFault(operationName, event.fault.faultString, event);
+			if (responder) responder.onDelegateFault(operationName, event.fault.faultString, event, token);
 			if (dispatchEvents) dispatchEvent(event);
 		}
 		

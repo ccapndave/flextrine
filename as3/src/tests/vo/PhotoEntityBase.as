@@ -6,11 +6,9 @@ package tests.vo {
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.flextrine;
-	import tests.vo.Country;
-	import tests.vo.Photo;
 
 	[Bindable]
-	public class StudentEntityBase extends EventDispatcher {
+	public class PhotoEntityBase extends EventDispatcher {
 		
 		public var isUnserialized__:Boolean;
 		
@@ -23,31 +21,15 @@ package tests.vo {
 		public function set id(value:String):void { _id = value; }
 		private var _id:String;
 		
-		public function get name():String { checkIsInitialized("name"); return _name; }
-		public function set name(value:String):void { _name = value; }
-		private var _name:String;
+		public function get url():String { checkIsInitialized("url"); return _url; }
+		public function set url(value:String):void { _url = value; }
+		private var _url:String;
 		
-		[Association(side="owning")]
-		public function get country():Country { checkIsInitialized("country"); return _country; }
-		public function set country(value:Country):void { _country = value; }
-		private var _country:Country;
-		
-		[Association(side="inverse", oppositeAttribute="student", oppositeCardinality="1")]
-		public function get marks():PersistentCollection { checkIsInitialized("marks"); return _marks; }
-		public function set marks(value:PersistentCollection):void { _marks = value; }
-		private var _marks:PersistentCollection;
-		
-		[Association(side="owning")]
-		public function get photo():Photo { checkIsInitialized("photo"); return _photo; }
-		public function set photo(value:Photo):void { _photo = value; }
-		private var _photo:Photo;
-		
-		public function StudentEntityBase() {
-			if (!_marks) _marks = new PersistentCollection(null, true, "marks", this);
+		public function PhotoEntityBase() {
 		}
 		
 		override public function toString():String {
-			return "[Student id=" + id + "]";
+			return "[Photo id=" + id + "]";
 		}
 		
 		private function checkIsInitialized(property:String):void {
@@ -94,10 +76,7 @@ package tests.vo {
 			if (isInitialized__) {
 				var memento:Dictionary = new Dictionary(true);
 				memento["id"] = id;
-				memento["name"] = name;
-				memento["country"] = country;
-				memento["marks"] = marks.flextrine::saveState();
-				memento["photo"] = photo;
+				memento["url"] = url;
 				return memento;
 			}
 			
@@ -107,10 +86,7 @@ package tests.vo {
 		flextrine function restoreState(memento:Dictionary):void {
 			if (isInitialized__) {
 				id = memento["id"];
-				name = memento["name"];
-				country = memento["country"];
-				marks.flextrine::restoreState(memento["marks"]);
-				photo = memento["photo"];
+				url = memento["url"];
 			}
 		}
 		

@@ -1,23 +1,23 @@
 ﻿/**
  * Copyright 2011 Dave Keen
  * http://www.actionscriptdeveloper.co.uk
- * 
+ *
  * This file is part of Flextrine.
- * 
+ *
  * Flextrine is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * and the Lesser GNU General Public License along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 package org.davekeen.flextrine.orm {
@@ -31,7 +31,6 @@ package org.davekeen.flextrine.orm {
 	import mx.logging.targets.TraceTarget;
 	import mx.rpc.AsyncResponder;
 	import mx.rpc.AsyncToken;
-	import mx.rpc.events.ResultEvent;
 	import mx.utils.ObjectUtil;
 	
 	import org.davekeen.flextrine.flextrine;
@@ -42,36 +41,37 @@ package org.davekeen.flextrine.orm {
 	import org.davekeen.flextrine.orm.events.FlextrineFaultEvent;
 	import org.davekeen.flextrine.orm.events.FlextrineResultEvent;
 	import org.davekeen.flextrine.orm.metadata.MetaTags;
-	import org.davekeen.flextrine.orm.rpc.FlextrineAsyncResponder;
+	import org.davekeen.flextrine.orm.walkers.DetachCopyWalker;
+	import org.davekeen.flextrine.orm.walkers.LocalMergeWalker;
 	import org.davekeen.flextrine.util.ClassUtil;
 	import org.davekeen.flextrine.util.EntityUtil;
 	import org.davekeen.flextrine.util.QueryUtil;
 	
-	// Required for token.applyResult
 	use namespace mx_internal;
+	use namespace flextrine;
 	
 	/**
 	 * The EntityManager is the central access point to the ORM functionality provided by Flextrine.
-	 * 
+	 *
 	 * @author Dave Keen
 	 */
 	public class EntityManager extends EventDispatcher {
 		
 		/**
-		 * Singleton management for EntityManager 
+		 * Singleton management for EntityManager
 		 */
 		private static var _instance:EntityManager;
 		private static var singletonInstantiation:Boolean;
 		
 		/**
-		 * This contains the EntityRepositories 
+		 * This contains the EntityRepositories
 		 */
 		private var repositories:Dictionary;
 		
 		private var unitOfWork:UnitOfWork;
 		
 		/**
-		 * The server delegate. 
+		 * The server delegate.
 		 */
 		private var flextrineDelegate:FlextrineDelegate;
 		
@@ -92,6 +92,11 @@ package org.davekeen.flextrine.orm {
 		private var visited:Object;
 		
 		/**
+		 * This is the listener for on-demand loading 
+		 */
+		private var onDemandListener:OnDemandListener;
+		
+		/**
 		 * Standard flex logger
 		 */
 		private var log:ILogger = Log.getLogger(ClassUtil.getQualifiedClassNameAsString(this));
@@ -106,7 +111,7 @@ package org.davekeen.flextrine.orm {
 			
 			// Configure logging for use within Flextrine
 			var logTarget:TraceTarget = new TraceTarget();
-			logTarget.filters = [ "org.davekeen.*" ];
+			logTarget.filters = ["org.davekeen.*"];
 			logTarget.level = LogEventLevel.ALL;
 			logTarget.includeDate = false;
 			logTarget.includeTime = false;
@@ -114,8 +119,10 @@ package org.davekeen.flextrine.orm {
 			logTarget.includeLevel = true;
 			Log.addTarget(logTarget);
 			
+			// Create instances of classes used by the EntityManager
 			unitOfWork = new UnitOfWork(this);
-			repositories = new Dictionary(true);
+			repositories = new Dictionary(false);
+			onDemandListener = new OnDemandListener(this);
 			
 			// Check the the required metadata is compiled into the class
 			MetaTags.checkKeepMetaData();
@@ -123,7 +130,7 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * Get a singleton instance of the EntityManager.
-		 * 
+		 *
 		 * @return
 		 */
 		public static function getInstance():EntityManager {
@@ -139,7 +146,7 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * Get direct access to the unit of work.  Public access to this might be removed in the future as, unlike Doctrine 2, changing
 		 * things directly in the UoW can potentially put Flextrine in an unstable state.
-		 * 
+		 *
 		 * @return
 		 */
 		public function getUnitOfWork():UnitOfWork {
@@ -147,7 +154,7 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		/**
-		 * @private 
+		 * @private
 		 * @return
 		 */
 		internal function getDelegate():FlextrineDelegate {
@@ -158,7 +165,7 @@ package org.davekeen.flextrine.orm {
 				// Create the delegate for RPC calls to PHP.  Since other programs can hook into these events we need to give these maximum priority as there
 				// are Flextrine specific tasks (e.g. populating the repositories) that need to be done before anything else.  Use a priority of int.MAX_VALUE
 				// to achieve this.
-				flextrineDelegate = new FlextrineDelegate(configuration.gateway, configuration.service);
+				flextrineDelegate = new FlextrineDelegate(configuration.gateway, configuration.service, configuration.useConcurrentRequests);
 				flextrineDelegate.addEventListener(FlextrineResultEvent.LOAD_COMPLETE, onFlextrineLoadComplete, false, int.MAX_VALUE, false);
 				flextrineDelegate.addEventListener(FlextrineResultEvent.FLUSH_COMPLETE, onFlextrineFlushComplete, false, int.MAX_VALUE, false);
 				flextrineDelegate.addEventListener(FlextrineFaultEvent.LOAD_FAULT, onFlextrineLoadFault, false, int.MAX_VALUE, false);
@@ -176,10 +183,14 @@ package org.davekeen.flextrine.orm {
 			return flextrineDelegate;
 		}
 		
+		internal function getOnDemandListener():OnDemandListener {
+			return onDemandListener;
+		}
+		
 		/**
 		 * Set the configuration of the EntityManager.  A configuration <b>must</b> be provided, and at least <code>configuration.gateway</code> must be set
 		 * in that configuration in order to use Flextrine.
-		 * 
+		 *
 		 * @param	configuration The configuration to apply to the <code>EntityManager</code>
 		 */
 		public function setConfiguration(configuration:Configuration):void {
@@ -188,7 +199,7 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * Get the currently set configuration on this <code>EntityManager</code>.
-		 * 
+		 *
 		 * @return The current configuration on the <code>EntityManager</code>
 		 */
 		public function getConfiguration():Configuration {
@@ -197,7 +208,7 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * Add the entity to its repository and mark it for insertion into the database on the next <code>flush</code>.
-		 * 
+		 *
 		 * @param	entity
 		 * @return
 		 */
@@ -226,17 +237,17 @@ package org.davekeen.flextrine.orm {
 		 * Return an unmanaged copy of the given entity.  This entity is not the same instance as that in the repository and
 		 * changes to its properties will not trigger updates on the database.  This has no effect on the entity given as a parameter -
 		 * it remains in its repository as a fully managed entity.
-		 * 
+		 *
 		 * <p>Typically <code>detach</code> would be used in situations where you want to make changes to an entity that might be
 		 * discarded; for example, an edit window with a <b>Save</b> and <b>Cancel</b> button.  If the user hits <b>cancel</b> the unmanaged entity can just be
 		 *  thrown away, or otherwise <code>EntityManager.merge</code> can be used to merge changes back into the repository.</p>
-		 * 
+		 *
 		 * @example To detach a <code>user</code> entity:
-		 * 
+		 *
 		 * <pre>
 		 * em.detach(user);
 		 * </pre>
-		 * 
+		 *
 		 * @param	entity The entity to detach.
 		 * @return
 		 */
@@ -250,27 +261,30 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		public function detachCopy(entity:Object):Object {
-			// TODO: This should still react to on-demand loading
-			return ObjectUtil.clone(entity);
+			// Make a fresh copy of the entity
+			var entityCopy:Object = EntityUtil.copyEntity(entity);
+			
+			// Use the DetachCopyWalker to walk through the entity adding on-demand loading listeners and adding private attributes back in
+			return new DetachCopyWalker(onDemandListener).walk(entityCopy);
 		}
 		
 		/**
 		 * Merge a detached entity back into Flextrine.  If the entity has changed compared to its merged counterpart the merged
 		 * object will be marked dirty and scheduled for update on the next flush.
-		 * 
+		 *
 		 * <p><code>merge</code> is the opposite operation to <code>detach</code>
-		 * 
+		 *
 		 * @example Thie following example detaches an entity, makes a change, then merges it back into the repository:
-		 * 
+		 *
 		 * <pre>
 		 * var unmanagedUser:User = em.detach(managedUser) as User;
 		 * unmanagedUser.name = "A different name";
 		 * em.merge(unmanagedUser);
-		 * 
+		 *
 		 * // This will write the changes that were made to the entity whilst it was detached
 		 * em.flush();
 		 * </pre>
-		 * 
+		 *
 		 * @param	entity The entity to merge
 		 * @return  The managed entity.  This will be a different instance to the entity that was passed into the method.
 		 */
@@ -282,7 +296,7 @@ package org.davekeen.flextrine.orm {
 			
 			switch (getConfiguration().writeMode) {
 				case WriteMode.PUSH:
-					addLoadedEntityToRepository(entity, true, true);
+					return addLoadedEntityToRepository(entity, true);
 				case WriteMode.PULL:
 					return unitOfWork.merge(entity);
 			}
@@ -292,14 +306,14 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * Remove an entity from the repository and mark it for deletion from the database on the next flush.
-		 * 
+		 *
 		 * @example The following example will remove the given user from the database
-		 * 
+		 *
 		 * <pre>
 		 * em.remove(user);
 		 * em.flush();
 		 * </pre>
-		 * 
+		 *
 		 * @param	entity The entity to remove
 		 * @return The entity that was removed
 		 */
@@ -319,7 +333,7 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * Run a DQL select query against the database.  Use <code>EntityManager.getDQLClass</code> to convert a Flextrine entity or entity class
 		 * into a DQL fully qualified class name.
-		 * 
+		 *
 		 * @param	query
 		 * @param	fetchMode
 		 * @return
@@ -344,7 +358,7 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * Run a DQL select query against the database.  Use <code>EntityManager.getDQLClass</code> to convert a Flextrine entity or entity class
 		 * into a DQL fully qualified class name.  Only returns the first results - all others are discarded on the server.
-		 * 
+		 *
 		 * @param	query
 		 * @param	fetchMode
 		 * @return
@@ -358,7 +372,7 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * This is a convenience method to save having to explicitly retrieve the repository.
 		 * It is equivalent to calling <code>em.getRepository(entityClass).load(id)</code>
-		 * 
+		 *
 		 * @param	entityClass
 		 * @param	id
 		 * @param	fetchMode
@@ -373,7 +387,7 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * This is a convenience method to save having to explicitly retrieve the repository.
 		 * It is equivalent to calling <code>em.getRepository(entityClass).loadOneBy(criteria)</code>
-		 * 
+		 *
 		 * @param	entityClass
 		 * @param	criteria
 		 * @param	fetchMode
@@ -388,7 +402,7 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * This is a convenience method to save having to explicitly retrieve the repository.
 		 * It is equivalent to calling <code>em.getRepository(entityClass).loadBy(criteria)</code>
-		 * 
+		 *
 		 * @param	entityClass
 		 * @param	criteria
 		 * @param	fetchMode
@@ -403,7 +417,7 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * This is a convenience method to save having to explicitly retrieve the repository.
 		 * It is equivalent to calling <code>em.getRepository(entityClass).loadAll()</code>
-		 * 
+		 *
 		 * @param	entityClass
 		 * @param	fetchMode
 		 * @return
@@ -416,7 +430,7 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * Flush all outstanding changes to the database.  Until <code>flush</code> is called, no changes will ever be written to the database.
-		 * 
+		 *
 		 * @param	fetchMode
 		 * @return
 		 */
@@ -429,37 +443,37 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * Call a custom method on a remote service.  By default this will call a remote method on the default <code>FlextrineService</code>, but its also
 		 * possible to specify a different service in the <code>services</code> folder by using the notation &lt;remoteServiceName&gt;.&lt;remoteMethodName&gt;
-		 * 
+		 *
 		 * <p>This method returns an <code>AsyncToken</code> to which you can attach responders in order to handle the result.</p>
-		 * 
+		 *
 		 * @example Call a <code>doSomething</code> remote method in <code>FlextrineService</code>
-		 * 
+		 *
 		 * <pre>
 		 * em.callRemoteMethod("doSomething");
 		 * </pre>
-		 * 
+		 *
 		 * @example Call a <code>doSomethingElse</code> remote method on a service called <code>MyNewService</code>
-		 * 
+		 *
 		 * <pre>
 		 * em.callRemoteMethod("MyNewService.doSomethingElse");
 		 * </pre>
-		 * 
+		 *
 		 * @example Call the <code>addTwoNumbers</code> method on FlextrineService and handle the result
-		 * 
+		 *
 		 * <pre>
 		 * em.callRemoteMethod("addTwoNumbers", 2, 3).addResponder(new AsyncResponder(onAddTwoNumbersResult, null));
-		 * 
+		 *
 		 * function onAddTwoNumbersResult(e:ResultEvent, token:Object):void {
 		 *   trace("The answer is " + e.result);
 		 * }
 		 * </pre>
-		 * 
+		 *
 		 * @param	methodName The name of the method.  This can either be in the form <code>&lt;remoteMethodName&gt;</code> or
 		 * 					   <code>&lt;remoteServiceName&gt;.&lt;remoteMethodName&gt;</code>
 		 * @param	...args    A variable length list of arguments that will be passed directly to the remote method.
 		 * @return  An AsyncToken which can be used to handle a result or fault.
 		 */
-		public function callRemoteMethod(methodName:String, ...args):AsyncToken {
+		public function callRemoteMethod(methodName:String, ... args):AsyncToken {
 			log.info("Calling remote method " + methodName + " " + ObjectUtil.toString(args));
 			
 			return getDelegate().callRemoteMethod(methodName, args);
@@ -467,28 +481,28 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * This is identical to callRemoteMethod, except that this expects a response from the server that is either an entity or an array of entities.
-		 * 
+		 *
 		 * On the server it is essential to prepare the return value for Flextrine using the <pre>flextrinize</pre> method:
-		 * 
+		 *
 		 * <pre>
 		 * public function myRemoteEntityMethod($id) {
 		 *   $entity = $this->em->getRepository("vo\User")->load($id);
 		 *   return $this->flextrinize($entity);
 		 * }
 		 * </pre>
-		 *  
+		 *
 		 * @param methodName
 		 * @param args
-		 * @return 
-		 * 
+		 * @return
+		 *
 		 */
-		public function callRemoteEntityMethod(methodName:String, ...args):AsyncToken {
+		public function callRemoteEntityMethod(methodName:String, ... args):AsyncToken {
 			log.info("Calling remote entity method " + methodName + " " + ObjectUtil.toString(args));
 			
 			return getDelegate().callRemoteEntityMethod(methodName, args);
 		}
 		
-		public function callRemoteFlushMethod(methodName:String, ...args):AsyncToken {
+		public function callRemoteFlushMethod(methodName:String, ... args):AsyncToken {
 			log.info("Calling remote flush method " + methodName + " " + ObjectUtil.toString(args));
 			
 			return getDelegate().callRemoteFlushMethod(methodName, args);
@@ -497,17 +511,17 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * Ensure that a single valued association is loaded before taking an action.  If the association is already loaded this
 		 * calls <code>onResult</code> instantly.
-		 * 
+		 *
 		 * @example To initalize a lazily loaded single valued association <code>owner</code> on a <code>dog</code> entity:
-		 * 
+		 *
 		 * <pre>
 		 * em.requireOne(dog.owner, onOwnerLoaded);
-		 * 
+		 *
 		 * function onOwnerLoaded():void {
 		 *   trace(dog.owner + " is now initialized");
 		 * }
 		 * </pre>
-		 * 
+		 *
 		 * @param	entity The uninitialized entity to load.
 		 * @param	onResult A callback to invoke when the single valued association has loaded.
 		 * @param	onFault A callback if the require fails.
@@ -520,12 +534,16 @@ package org.davekeen.flextrine.orm {
 			log.info("Requiring one " + entity);
 			
 			if (EntityUtil.isInitialized(entity)) {
-				if (onResult != null) onResult();
+				if (onResult != null)
+					onResult();
 				// TODO: This should return an AsyncToken that initializes instantly
 				return null;
 			} else {
-				var asyncToken:AsyncToken = getRepository(ClassUtil.getClass(entity)).loadOneBy(EntityUtil.getIdObject(entity), fetchMode);
-				if (onResult != null || onFault != null) asyncToken.addResponder(new AsyncResponder(onResult, onFault));
+				var entityIsDetached:Boolean = (getRepository(ClassUtil.getClass(entity)).getEntityState(entity) == EntityRepository.STATE_DETACHED);
+				
+				var asyncToken:AsyncToken = getDelegate().loadOneBy(ClassUtil.getClass(entity), EntityUtil.getIdObject(entity), (fetchMode) ? fetchMode : getConfiguration().fetchMode, (entityIsDetached) ? entity : null);
+				if (onResult != null || onFault != null)
+					asyncToken.addResponder(new AsyncResponder(onResult, onFault));
 				return asyncToken;
 			}
 		}
@@ -533,28 +551,28 @@ package org.davekeen.flextrine.orm {
 		/**
 		 * Ensure that a many valued collection is loaded before taking an action.  If the collection is already loaded this
 		 * calls <code>onResult</code> instantly.
-		 * 
+		 *
 		 * @example To initalize a lazily loaded collection association <code>toes</code> on a <code>foot</code> entity:
-		 * 
+		 *
 		 * <pre>
 		 * em.requireMany(foot, "toes", onToesLoaded);
-		 * 
+		 *
 		 * function onToesLoaded():void {
 		 *   trace("We loaded " + foot.toes.length + " toes");
 		 * }
 		 * </pre>
-		 * 
+		 *
 		 * It is also possible to use an array of attribute names if you need to required more than one association at a time.
 		 * A common usage of this would be to wrap a block that works on possibly uninitialized collections in a requireMany
 		 * call with all the associations:
-		 * 
+		 *
 		 * <pre>
 		 * em.requireMany(foot, [ "toes", "nails" ], function():void {
 		 * 	foot.toes.add(new Toe());
 		 *  foor.nails.add(new Nail());
 		 * } );
 		 * </pre>
-		 * 
+		 *
 		 * @param	entity The entity containing the unitialized collection.
 		 * @param	manyAttributeName The name of the collection attribute as a String, or an array of String attributes
 		 * @param	onResult A callback to invoke when the collection association has loaded.
@@ -564,11 +582,11 @@ package org.davekeen.flextrine.orm {
 		public function requireMany(parentEntity:Object, manyAttributeNames:*, onResult:Function = null, onFault:Function = null, fetchMode:String = null):AsyncToken {
 			log.info("Requiring many " + parentEntity + " - " + manyAttributeNames);
 			
-			return doRequireMany(parentEntity, (manyAttributeNames is Array) ? manyAttributeNames : [ manyAttributeNames ], onResult, onFault, fetchMode);
+			return doRequireMany(parentEntity, (manyAttributeNames is Array) ? manyAttributeNames : [manyAttributeNames], onResult, onFault, fetchMode);
 		}
 		
 		private function doRequireMany(parentEntity:Object, manyAttributeNames:Array, onResult:Function = null, onFault:Function = null, fetchMode:String = null):AsyncToken {
-			var associationsToLoad:Array = [ ];
+			var associationsToLoad:Array = [];
 			
 			for each (var manyAttributeName:String in manyAttributeNames) {
 				if (!(parentEntity[manyAttributeName] is PersistentCollection))
@@ -579,26 +597,33 @@ package org.davekeen.flextrine.orm {
 			}
 			
 			if (associationsToLoad.length == 0) {
-				if (onResult != null) onResult();
+				if (onResult != null)
+					onResult();
 				// TODO: This should return an AsyncToken that initializes instantly
 				return null;
 			} else {
 				// Build up the fetch query to refetch the parentEntity but fetch joined to the association we are requiring
-				var query:String = "SELECT p, " + associationsToLoad.join(", ") + " FROM " + QueryUtil.getDQLClass(parentEntity) + " p ";
+				var dql:String = "SELECT p, " + associationsToLoad.join(", ") + " FROM " + QueryUtil.getDQLClass(parentEntity) + " p ";
 				for each (var associationName:String in associationsToLoad)
-					query += "LEFT JOIN p." + associationName + " " + associationName + " ";
+				dql += "LEFT JOIN p." + associationName + " " + associationName + " ";
 				
-				query += "WHERE p.id=" + parentEntity.id;
+				dql += "WHERE p.id=:id";
 				
-				var asyncToken:AsyncToken = selectOne(new Query(query), fetchMode);
-				if (onResult != null || onFault != null) asyncToken.addResponder(new AsyncResponder(onResult, onFault));
+				var query:Query = new Query(dql, { id: parentEntity.id });
+				
+				var entityIsDetached:Boolean = (getRepository(ClassUtil.getClass(parentEntity)).getEntityState(parentEntity) == EntityRepository.STATE_DETACHED);
+				
+				//var asyncToken:AsyncToken = selectOne(new Query(query), fetchMode);
+				var asyncToken:AsyncToken = getDelegate().selectOne(query, (fetchMode) ? fetchMode : getConfiguration().fetchMode, (entityIsDetached) ? parentEntity : null);
+				if (onResult != null || onFault != null)
+					asyncToken.addResponder(new AsyncResponder(onResult, onFault));
 				return asyncToken;
 			}
 		}
 		
 		/**
 		 * Get the <code>EntityRepository</code> for the given class.  If the repository does not exist then create an empty one and return it.
-		 * 
+		 *
 		 * @param	entityClass
 		 * @param	entityTimeToLive An optional parameter that will override Configuration.entityTimeToLive for this particular repository.  This is useful
 		 * 			if you have a particular repository (e.g. Categories) that you are going to load on application startup and then never want to be garbage
@@ -623,6 +648,8 @@ package org.davekeen.flextrine.orm {
 		 * be managed.
 		 */
 		public function clear():void {
+			log.info("Clearing the EntityManager");
+			
 			for each (var repository:EntityRepository in repositories)
 				repository.clear();
 			
@@ -680,156 +707,34 @@ package org.davekeen.flextrine.orm {
 		
 		private function onFlextrineLoadComplete(e:FlextrineResultEvent):void {
 			// If we got nothing back then no changes are required on the server so we don't need to do anything
-			if (!e.data) return;
+			if (!e.data)
+				return;
 			
 			// Normal queries return an entity or an array of entities, but pages queries need to return the total count too so they return an object
 			// with 'results' and 'count'.  If e.data has a results property then make that the results, otherwise use e.data itself.
 			var results:* = e.data.hasOwnProperty("results") ? e.data.results : e.data;
 			
 			// Convert the result to an array (even if it is a single entity returned from load())
-			var entities:Array = (results is Array) ? results as Array : [ results ];
+			var entities:Array = (results is Array) ? results as Array : [results];
 			
-			// Loading objects that are already in the repository results in a merge which means that we can't just return e.data to any responders that were
-			// added to the original load call.  Instead we need to build up a new result (which will be an array or an array of entities) and replace the
-			// result in the AsyncToken with it.
-			var result:Object;
-			
-			// Add everything to the repository filling in result along the way
-			if (results is Array) {
-				result = [];
-				// If we have an array its a special case and we want to maintain the cyclical reference visited array between
-				// calls to addLoadedEntityToRepository, so clear it here and use doAddLoadedEntityToRepository directly
-				visited = new Object();
-				for each (var entity:Object in entities)
-					result.push(doAddLoadedEntityToRepository(entity));
-			} else {
-				result = addLoadedEntityToRepository(results);
-			}
+			// Add the resultset to the repository
+			var result:Object = addLoadedEntityToRepository(results, false, e.detachedEntity);
 			
 			// Re-apply the result to the token.
-			e.resultEvent.setResult(e.data.hasOwnProperty("results") ? { results: result, count: e.data.count } : result);
+			e.resultEvent.setResult(e.data.hasOwnProperty("results") ? {results: result, count: e.data.count} : result);
 		}
 		
 		/**
-		 * This adds an entity to the applicable EntityRepositories by recursively adding the object itself, followed by its [MappedAssociations].
-		 * Once this method has run the repositories will have been populated with the entity tree in the given entity allowing find, findBy and
-		 * findAll operations to run locally for each repository.  Note that this method tracks cyclical references so we don't end up in an infinite
-		 * loop.
-		 * 
-		 * @param	entity  The entity to add to the repository
+		 * This method is called on entities returned from the server.  Effectively it takes the DETACHED entities coming in and makes them MANAGED by
+		 * matching them up 
+		 *
+		 * @param	loadedEntity  The entity to make MANAGED
+		 * @param	isMerge  If true then add the entity to the unit of work's remote merge list.  This is used when calling em.merge() on a local detached entity
+		 * @param	entityIsDetached If true then we don't want to merge the root entity into the repository as it was originally detached
 		 */
-		private function addLoadedEntityToRepository(loadedEntity:Object, checkForPropertyChanges:Boolean = false, mergeToUnitOfWork:Boolean = false):Object {
-			// Clear the cyclical reference tracker
-			visited = new Object();
-			
-			return doAddLoadedEntityToRepository(loadedEntity, checkForPropertyChanges, mergeToUnitOfWork);
-		}
-		
-		private function doAddLoadedEntityToRepository(loadedEntity:Object, checkForPropertyChanges:Boolean = false, mergeToUnitOfWork:Boolean = false):Object {
-			var oid:String;
-			try {
-				// If we get a reference error when trying to get the unique hash, then this isn't an entity.  Assume that this is a query result with a 
-				// hydration mode other than HYDRATE_OBJECT and just silently return.
-				oid = EntityUtil.getUniqueHash(loadedEntity);
-			} catch (e:ReferenceError) {
-				log.info("Received a non-entity result; not adding to repository.");
-				return loadedEntity;
-			}
-			
-			// Add the entity itself to the appropriate repository
-			if (!visited[oid]) {
-				
-				// Add the entity to the list of visited entities to ensure we don't add the same entity twice
-				visited[oid] = true;
-				
-				// Check if this entity already exists in its repository
-				var repository:EntityRepository = getRepository(ClassUtil.getClass(loadedEntity)) as EntityRepository;
-				var foundEntity:Object = repository.findOneBy(EntityUtil.getIdObject(loadedEntity));
-				
-				var repoEntity:Object;
-				
-				if (!foundEntity) {
-					// If the entity doesn't already exist then add it
-					repoEntity = (getRepository(ClassUtil.getClass(loadedEntity)) as EntityRepository).addEntity(loadedEntity);
-				} else {
-					// Update the existing entity with the values from the entity that was just loaded
-					repoEntity = repository.updateEntity(loadedEntity, checkForPropertyChanges);
-				}
-				
-				// Get the repository for the repoEntity
-				var repoEntityRepository:EntityRepository = getRepository(ClassUtil.getClass(repoEntity)) as EntityRepository;
-			
-				// Go through the associations adding or remapping as appropriate.  If the entity is a lazily loaded stub we don't want to do this.
-				if (EntityUtil.isInitialized(loadedEntity)) {
-					for each (var associationAttribute:XML in EntityUtil.getAttributesWithTag(loadedEntity, MetaTags.ASSOCIATION)) {
-						// Cascade through the owning (mapped) associations calling doAddLoadedEntityToRepository on each associated entity.
-						var value:* = loadedEntity[associationAttribute];
-						
-						if (value is PersistentCollection) {
-							// The association is a collection
-							
-							// Inject some stuff into the PersistentCollection that it needs for lazy loading
-							(value as PersistentCollection).setOwner(repoEntity);
-							(value as PersistentCollection).setAssociationName(associationAttribute);
-							
-							// If the repoEntity is a different instance to the loadedEntity (i.e. we found a matching one in the repository) and
-							// this collection is initalized in the loadedEntity, we are going to totally replace the collection in the repoEntity so
-							// delete anything that is there.
-							
-							// TODO: This causes problems in many-many associations, not sure why yet
-							if (loadedEntity !== repoEntity && EntityUtil.isCollectionInitialized(value))
-								repoEntityRepository.resetManyAssociation(repoEntity[associationAttribute]);
-							
-							if (EntityUtil.isCollectionInitialized(value)) {
-								for (var n:uint = 0; n < value.source.length; n++) {
-									var associatedObject:Object = value.source[n];
-									
-									// If the repoEntity is a different instance to the loadedEntity we are replacing the collection (which was just
-									// deleted) so use addItem), otherwise they are the same instances so we don't use add.
-									if (loadedEntity !== repoEntity) {
-										// We only add related entities to a many association if they have not already been added (as they can be in
-										// a ManyToMany relationship) and the collection is initialized.
-										if (loadedEntity !== repoEntity || checkForPropertyChanges)
-											// Add the result of the recursion to repoEntity[associationAttribute].  We use a method in EntityRepository
-											// so that the change listeners can be disabled during the update.
-											repoEntityRepository.addEntityToManyAssociation(repoEntity, associationAttribute, doAddLoadedEntityToRepository(associatedObject, checkForPropertyChanges, mergeToUnitOfWork), checkForPropertyChanges);
-									} else {
-										// Otherwise they are the same instance so we just add it to the repository without adding it to repoEntity
-										// (since repoEntity IS loadedEntity so its already there!)
-										if (EntityUtil.isInitialized(associatedObject)) {
-											doAddLoadedEntityToRepository(associatedObject, checkForPropertyChanges, mergeToUnitOfWork);
-										} else {
-											// If the entity is uninitialized we may want to replace it with an initialized copy from the repository
-											var addedObject:Object = doAddLoadedEntityToRepository(associatedObject, checkForPropertyChanges, mergeToUnitOfWork);
-											if (addedObject !== associatedObject)
-												value.setItemAt(addedObject, n);
-										}
-									}									
-								}
-							}
-							
-						} else if (value is Object) {
-							// The association is single valued.  Update its value recursively (use updateEntityProperty so we don't trigger property change events)
-							repoEntityRepository.updateEntityProperty(repoEntity, associationAttribute, doAddLoadedEntityToRepository(value, checkForPropertyChanges, mergeToUnitOfWork), checkForPropertyChanges);
-						} else {
-							// Don't add a null attribute
-						}
-					}
-				}
-				
-				// Return the entity we just added to the repository
-				var returnEntity:Object = getRepository(ClassUtil.getClass(loadedEntity)).findOneBy(EntityUtil.getIdObject(repoEntity));
-				
-				// A naive implementation of em.merge that just adds all merges to the UoW and lets Doctrine worry about what has changed.
-				// TODO: Implement a better solution!
-				if (mergeToUnitOfWork)
-					unitOfWork.merge(returnEntity);
-				
-				return returnEntity;
-			} else {
-				// If we have already visited the entity then just return it directly
-				return getRepository(ClassUtil.getClass(loadedEntity)).findOneBy(EntityUtil.getIdObject(loadedEntity));
-			}
+		private function addLoadedEntityToRepository(loadedEntity:Object, isMerge:Boolean = false, detachedEntity:Object = null):Object {
+			// Our brand new walker
+			return new LocalMergeWalker(this, isMerge, detachedEntity).walk(loadedEntity);
 		}
 		
 		private function onFlextrineFlushComplete(e:FlextrineResultEvent):void {
@@ -855,12 +760,12 @@ package org.davekeen.flextrine.orm {
 		
 		/**
 		 * Execute a changeset returned from the server against the entity repositories.
-		 * 
+		 *
 		 * @param changeSet
-		 * @return 
+		 * @return
 		 */
 		private function executeChangeSet(changeSet:ChangeSet):Object {
-			var changes:Object = { };
+			var changes:Object = {};
 			
 			changes.persists = handleEntityInsertions(changeSet.entityInsertions, changeSet.temporaryUidMap);
 			changes.updates = handleEntityUpdates(changeSet.entityUpdates);
@@ -870,9 +775,9 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		private function handleEntityInsertions(entityInsertions:Object, temporaryUidMap:Object):Array {
-			var persists:Array = [ ];
+			var persists:Array = [];
 			
-			var serverInsertions:Array = [ ];
+			var serverInsertions:Array = [];
 			
 			for (var oid:String in entityInsertions) {
 				var repo:EntityRepository = getRepository(ClassUtil.getClass(entityInsertions[oid])) as EntityRepository;
@@ -881,7 +786,7 @@ package org.davekeen.flextrine.orm {
 				
 				if (changedEntity) {
 					// We found the temporary uid in the repository, so upate the existing entity and merge it into the repository
-					log.info("Updating persisted entity " + changedEntity + " with uid " + temporaryUidMap[oid]);
+					log.info("Updating persisted entity " + changedEntity + " with uid " + temporaryUidMap[oid] + " to " + entityInsertions[oid]);
 					
 					changedEntity = repo.mergeIdentifiers(changedEntity, entityInsertions[oid]);
 					changedEntity = addLoadedEntityToRepository(changedEntity);
@@ -906,7 +811,7 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		private function handleEntityUpdates(entityUpdates:Object):Array {
-			var updates:Array = [ ];
+			var updates:Array = [];
 			
 			var changedEntity:Object;
 			
@@ -931,7 +836,7 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		private function handleEntityDeletions(entityDeletions:Object):Array {
-			var removes:Array = [ ];
+			var removes:Array = [];
 			
 			// Remove the entities from the map and if in PULL mode actually remove the entities from the repository
 			for (var oid:String in entityDeletions) {
@@ -951,7 +856,7 @@ package org.davekeen.flextrine.orm {
 			
 			return removes;
 		}
-		
+	
 	}
 
 }

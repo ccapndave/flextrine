@@ -43,21 +43,14 @@ class DeserializerWalker extends AbstractWalker {
 		$this->role = $role;
 	}
 	
-	protected function replaceEntity($entity) {
-		return $this->prepareEntity($entity);
-	}
-	
-	protected function replaceCollectionEntity($entity, $collection) {
-		return $this->prepareEntity($entity);
-	}
-	
 	/**
 	 * If the received entity is uninitialized replace it with a Proxy
 	 * 
 	 * @param unknown_type $entity
 	 */
-	private function prepareEntity($entity) {
-		if ($entity && !$entity instanceof Proxy && !$entity->isInitialized__) {
+	protected function replaceEntity($entity) {
+		if ($entity && !$entity instanceof Proxy && isset($entity->isInitialized__) && !$entity->isInitialized__) {
+			// TODO: This assumes the identifier column is called id - instead this should use $this->em->getClassMetaData to determine the identifier column
 			return $this->em->getReference(get_class($entity), $entity->id);
 		} else {
 			return $entity;

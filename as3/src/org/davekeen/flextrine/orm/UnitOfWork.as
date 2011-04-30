@@ -28,8 +28,11 @@ package org.davekeen.flextrine.orm {
 	import mx.rpc.AsyncToken;
 	import mx.utils.ObjectUtil;
 	
+	import org.davekeen.flextrine.flextrine;
 	import org.davekeen.flextrine.util.ClassUtil;
 	import org.davekeen.flextrine.util.EntityUtil;
+	
+	use namespace flextrine;
 	
 	/**
 	 * The UnitOfWork is a standard enterprise design pattern used to delay writes to the database.  In some senses a UnitOfWork is similar to a database
@@ -138,7 +141,7 @@ package org.davekeen.flextrine.orm {
 		 * @param	entity	The entity to merge
 		 * @return
 		 */
-		internal function merge(entity:Object):Object {
+		flextrine function merge(entity:Object):Object {
 			remoteOperations.merges[EntityUtil.getUniqueHash(entity)] = new RemoteOperation( { entity: entity }, RemoteOperation.MERGE);
 			return entity;
 		}

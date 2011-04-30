@@ -34,17 +34,20 @@ package org.davekeen.flextrine.orm.events {
 		public static const LOAD_COMPLETE:String = "load_complete";
 		public static const FLUSH_COMPLETE:String = "flush_complete";
 		
-		public var _data:Object;
+		private var _data:Object;
 		
-		public var _resultEvent:ResultEvent;
+		private var _resultEvent:ResultEvent;
 		
-		public function FlextrineResultEvent(type:String, data:Object = null, resultEvent:ResultEvent = null, bubbles:Boolean=false, cancelable:Boolean=false) { 
+		private var _detachedEntity:Object;
+		
+		public function FlextrineResultEvent(type:String, data:Object = null, resultEvent:ResultEvent = null, detachedEntity:Object = null, bubbles:Boolean=false, cancelable:Boolean=false) { 
 			super(type, bubbles, cancelable);
 			
 			this._data = data;
 			this._resultEvent = resultEvent;
+			this._detachedEntity = detachedEntity;
 		}
-		
+
 		public function get data():Object {
 			return _data;
 		}
@@ -53,12 +56,16 @@ package org.davekeen.flextrine.orm.events {
 			return _resultEvent;
 		}
 		
+		public function get detachedEntity():Object {
+			return _detachedEntity;
+		}
+		
 		public override function clone():Event { 
-			return new FlextrineResultEvent(type, data, resultEvent, bubbles, cancelable);
+			return new FlextrineResultEvent(type, data, resultEvent, detachedEntity, bubbles, cancelable);
 		} 
 		
 		public override function toString():String { 
-			return formatToString("FlextrineResultEvent", "type", "data", "resultEvent", "bubbles", "cancelable", "eventPhase");
+			return formatToString("FlextrineResultEvent", "type", "data", "resultEvent", "detachedEntity", "bubbles", "cancelable", "eventPhase");
 		}
 		
 	}

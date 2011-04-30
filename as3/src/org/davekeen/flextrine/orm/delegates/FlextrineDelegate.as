@@ -46,11 +46,13 @@ package org.davekeen.flextrine.orm.delegates {
 		
 		private var service:String;
 		
-		public function FlextrineDelegate(gateway:String, service:String) {
+		public function FlextrineDelegate(gateway:String, service:String, useConcurrentRequests:Boolean) {
 			this.gateway = gateway;
 			this.service = service;
+			
+			RemoteDelegate.setUseConcurrentRequests(useConcurrentRequests);
 		}
-		 
+		
 		public function load(entityClass:Class, id:Number, fetchMode:String):AsyncToken {
 			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
 			return new RemoteDelegate("load", [ flextrineClassToDoctrineClass(entityClass), id, fetchMode ], this, gateway, service).execute();
@@ -61,9 +63,9 @@ package org.davekeen.flextrine.orm.delegates {
 			return new RemoteDelegate("loadBy", [ flextrineClassToDoctrineClass(entityClass), criteria, fetchMode ], this, gateway, service).execute();
 		}
 		
-		public function loadOneBy(entityClass:Class, criteria:Object, fetchMode:String):AsyncToken {
+		public function loadOneBy(entityClass:Class, criteria:Object, fetchMode:String, detachedEntity:Object = null):AsyncToken {
 			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
-			return new RemoteDelegate("loadOneBy", [ flextrineClassToDoctrineClass(entityClass), criteria, fetchMode ], this, gateway, service).execute();
+			return new RemoteDelegate("loadOneBy", [ flextrineClassToDoctrineClass(entityClass), criteria, fetchMode ], this, gateway, service).execute(detachedEntity);
 		}
 		
 		public function loadAll(entityClass:Class, fetchMode:String):AsyncToken {
@@ -76,9 +78,9 @@ package org.davekeen.flextrine.orm.delegates {
 			return new RemoteDelegate("select", [ query, firstIdx, lastIdx, fetchMode ], this, gateway, service).execute();
 		}
 		
-		public function selectOne(query:Query, fetchMode:String):AsyncToken {
+		public function selectOne(query:Query, fetchMode:String, detachedEntity:Object = null):AsyncToken {
 			dispatchEvent(new FlextrineEvent(FlextrineEvent.LOADING));
-			return new RemoteDelegate("selectOne", [ query, fetchMode ], this, gateway, service).execute();
+			return new RemoteDelegate("selectOne", [ query, fetchMode ], this, gateway, service).execute(detachedEntity);
 		}
 		
 		public function flush(remoteOperations:Object, fetchMode:String):AsyncToken {
@@ -150,7 +152,21 @@ package org.davekeen.flextrine.orm.delegates {
 		}
 		
 		/* INTERFACE org.davekeen.delegates.IDelegateResponder */
-		public function onDelegateResult(operation:String, data:Object, resultEvent:ResultEvent = null):void {
+		
+		/**
+		 * This is called on a successful return from a remote method.  The token is a pass-through object that is set when the remote method was called.
+		 * In this case token is used to set detachedEntity on FlextrineResultEvent, which lets Flextrine know that the root of the returned entity should
+		 * be merged into detachedEntity instead of into the repository equivalent.
+		 * 
+		 * This is used by on-demand loading of entities and collections within a detached entity, ensuring that the entity doesn't become
+		 * managed as a result of an automatic requireOne or requireMany call.
+		 * 
+		 * @param operation
+		 * @param data
+		 * @param resultEvent
+		 * @param token
+		 */
+		public function onDelegateResult(operation:String, data:Object, resultEvent:ResultEvent = null, token:Object = null):void {
 			switch (operation) {
 				case "load":
 				case "loadBy":
@@ -158,7 +174,7 @@ package org.davekeen.flextrine.orm.delegates {
 				case "loadAll":
 				case "select":
 				case "selectOne":
-					dispatchEvent(new FlextrineResultEvent(FlextrineResultEvent.LOAD_COMPLETE, data, resultEvent));
+					dispatchEvent(new FlextrineResultEvent(FlextrineResultEvent.LOAD_COMPLETE, data, resultEvent, token));
 					break;
 				case "flush":
 					dispatchEvent(new FlextrineResultEvent(FlextrineResultEvent.FLUSH_COMPLETE, data, resultEvent));
@@ -168,7 +184,7 @@ package org.davekeen.flextrine.orm.delegates {
 			}
 		}
 		
-		public function onDelegateFault(operation:String, data:Object, faultEvent:FaultEvent = null):void {
+		public function onDelegateFault(operation:String, data:Object, faultEvent:FaultEvent = null, token:Object = null):void {
 			switch (operation) {
 				case "load":
 				case "loadBy":

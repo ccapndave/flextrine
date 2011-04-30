@@ -225,6 +225,10 @@ package org.davekeen.flextrine.orm.collections {
 			return null;
 		}
 		
+		flextrine function removeAllNonRecursive():void {
+			super.removeAll();
+		}
+		
 		public override function addItemAt(item:Object, index:int):void {
 			// TODO: This method should probably not be available to PersistentCollections...
 			checkIsInitialized("addItemAt");

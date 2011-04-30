@@ -73,14 +73,14 @@ abstract class AbstractFlextrineService {
 	protected function flextrinize($entityOrArray) {
 		return $this->serializationWalker->walk($entityOrArray, $this->em);
 	}
-
+	
 	private function setFetchMode($fetchMode) {
 		foreach ($this->em->getMetadataFactory()->getAllMetadata() as $metadata) {
-			foreach ($metadata->associationMappings as $key => $associationMapping) {
-				if ($fetchMode == self::EAGER) {
+			foreach ($metadata->associationMappings as $key => $associationMapping)
+				if ($fetchMode == self::EAGER)
 					$metadata->associationMappings[$key]["fetch"] = ClassMetadataInfo::FETCH_EAGER;
-				}
-			}
+			
+			$this->em->getMetadataFactory()->setMetaDataFor($metadata->name, clone $metadata);
 		}
 	}
 	

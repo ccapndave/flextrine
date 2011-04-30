@@ -29,6 +29,7 @@ package org.davekeen.flextrine.util {
 	
 	import org.davekeen.flextrine.cache.DictionaryCache;
 	import org.davekeen.flextrine.cache.ICache;
+	import org.davekeen.flextrine.flextrine;
 	import org.davekeen.flextrine.orm.FlextrineError;
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.metadata.MetaTags;
@@ -40,6 +41,8 @@ package org.davekeen.flextrine.util {
 	public class EntityUtil {
 		
 		private static var entityAttributeTagCache:ICache = new DictionaryCache();
+		
+		flextrine static var isCopying:Boolean = false; 
 		
 		/**
 		 * Return an xml list of the attributes in the entity that have the given metadata tag.  So, to return the attributes that have tag [Id] you would
@@ -227,7 +230,11 @@ package org.davekeen.flextrine.util {
 		}
 		
 		public static function copyEntity(entity:Object):Object {
-			return ObjectUtil.copy(entity);
+			EntityUtil.flextrine::isCopying = true;
+			var entityCopy:Object = ObjectUtil.copy(entity);
+			EntityUtil.flextrine::isCopying = false;
+			
+			return entityCopy;
 		}
 		
 	}

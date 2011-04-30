@@ -60,7 +60,7 @@ abstract class AbstractWalker {
 						for ($n = 0; $n < $collection->count(); $n++) {
 							$relatedEntity = $collection->get($n);
 							
-							$collection->set($n, $this->replaceCollectionEntity($relatedEntity, $collection));
+							$collection->set($n, $this->replaceEntity($relatedEntity));
 							
 							$this->doWalk($relatedEntity, $visited);
 						}
@@ -74,9 +74,8 @@ abstract class AbstractWalker {
 	}
 
 	protected function beforeWalk($entity) { }
-	protected function replaceEntity($entity) { return $entity; }
 	protected function beforeCollectionWalk($collection) { }
-	protected function replaceCollectionEntity($entity, $collection) { return $entity; }
+	protected function replaceEntity($entity) { return $entity; }
 	protected function afterWalk($entity) { }
 
 }

@@ -119,7 +119,7 @@ class FlushExecutor {
 		foreach ($this->mergeRemoteOperations as $merge) {
 			$data = (object)$merge->data;
 			
-			$data->entity = $this->deserializationWalker->walk($data->entity);
+			$this->deserializationWalker->walk($data->entity);
 			
 			// Merge the entity
 			$this->em->merge($data->entity);
@@ -186,10 +186,13 @@ class FlushExecutor {
 	 * There seems to be a bug in Doctrine merge - not exactly sure what or why, but this seems to fix it so far...
 	 */
 	private function configureCascadesForFlextrine() {
-		foreach ($this->em->getMetadataFactory()->getAllMetadata() as $metadata)
+		foreach ($this->em->getMetadataFactory()->getAllMetadata() as $metadata) {
 			foreach ($metadata->associationMappings as $key => $associationMapping)
 				if (!($associationMapping['type'] & ClassMetadata::ONE_TO_MANY))
 					$metadata->associationMappings[$key]["isCascadeMerge"] = true;
+
+			$this->em->getMetadataFactory()->setMetaDataFor($metadata->name, clone $metadata);
+		}
 	}
 	
 }
