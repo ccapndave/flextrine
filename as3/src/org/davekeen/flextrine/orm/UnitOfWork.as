@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright 2011 Dave Keen
  * http://www.actionscriptdeveloper.co.uk
  * 
@@ -23,12 +23,18 @@
 package org.davekeen.flextrine.orm {
 	import flash.utils.Dictionary;
 	
+	import mx.events.CollectionEvent;
+	import mx.events.PropertyChangeEvent;
 	import mx.logging.ILogger;
 	import mx.logging.Log;
 	import mx.rpc.AsyncToken;
 	import mx.utils.ObjectUtil;
 	
 	import org.davekeen.flextrine.flextrine;
+	import org.davekeen.flextrine.orm.operations.CollectionChangeOperation;
+	import org.davekeen.flextrine.orm.operations.PersistOperation;
+	import org.davekeen.flextrine.orm.operations.PropertyChangeOperation;
+	import org.davekeen.flextrine.orm.operations.RemoveOperation;
 	import org.davekeen.flextrine.util.ClassUtil;
 	import org.davekeen.flextrine.util.EntityUtil;
 	
@@ -111,12 +117,12 @@ package org.davekeen.flextrine.orm {
 		 * @param	entity
 		 */
 		internal function persist(entity:Object, temporaryUid:String):void {
-			remoteOperations.persists[EntityUtil.getUniqueHash(entity, temporaryUid)] = new RemoteOperation( { entity: entity, temporaryUid: temporaryUid }, RemoteOperation.PERSIST);
+			remoteOperations.persists[EntityUtil.getUniqueHash(entity, temporaryUid)] = new PersistOperation(entity, temporaryUid);
 		}
 		
 		/**
 		 * This method cancels a persist operation for an entity which has not yet been flushed.  It is used when we remove a persisted entity before calling
-		 * flush and just removes the persist from the flush queue.
+		 * flush and just removes the persist operation from the flush queue.
 		 * 
 		 * @private 
 		 * @param	temporaryUid	The temporary uid of the persisted entity
@@ -124,8 +130,8 @@ package org.davekeen.flextrine.orm {
 		 */
 		internal function undoPersist(temporaryUid:String):Boolean {
 			for (var uniqueId:String in remoteOperations.persists) {
-				var remoteOperation:RemoteOperation = remoteOperations.persists[uniqueId] as RemoteOperation;
-				if (remoteOperation.data.temporaryUid == temporaryUid) {
+				var persistOperation:PersistOperation = remoteOperations.persists[uniqueId] as PersistOperation;
+				if (persistOperation.temporaryUid == temporaryUid) {
 					delete remoteOperations.persists[uniqueId];
 					return true;
 				}
@@ -134,16 +140,21 @@ package org.davekeen.flextrine.orm {
 			return false;
 		}
 		
-		/**
-		 * Add a merge remote operation to the flush queue.
-		 * 
-		 * @private 
-		 * @param	entity	The entity to merge
-		 * @return
-		 */
-		flextrine function merge(entity:Object):Object {
-			remoteOperations.merges[EntityUtil.getUniqueHash(entity)] = new RemoteOperation( { entity: entity }, RemoteOperation.MERGE);
-			return entity;
+		flextrine function propertyChange(e:PropertyChangeEvent):void {
+			var propertyChangeOperation:PropertyChangeOperation = PropertyChangeOperation.createFromPropertyChangeEvent(e);
+			
+			if (!persistedEntities[propertyChangeOperation.entity]) {
+				log.info("Detected property change on " + propertyChangeOperation.entity + "::" + propertyChangeOperation.property + " - '" + e.oldValue + "' => '" + e.newValue + "'");
+				remoteOperations.propertyChanges[EntityUtil.getUniqueHash(propertyChangeOperation.entity) + "_" + propertyChangeOperation.property] = propertyChangeOperation;
+			}
+		}
+		
+		flextrine function collectionChange(e:CollectionEvent):void {
+			var collectionChangeOperation:CollectionChangeOperation = CollectionChangeOperation.createFromCollectionChangeEvent(e);
+			
+			// Dictionary or array?  Not sure how we can write/overwrite stuff, plus we want it ordered.  This one is an array!
+			log.info("Detected collection change on " + collectionChangeOperation.entity + "::" + collectionChangeOperation.property + " - " + collectionChangeOperation.type);
+			remoteOperations.collectionChanges.push(collectionChangeOperation);
 		}
 		
 		/**
@@ -154,9 +165,10 @@ package org.davekeen.flextrine.orm {
 		 */
 		internal function remove(entity:Object):void {
 			// If the entity is in the merge queue remove it as there is no point merging an entity that is about to be removed
-			delete remoteOperations.merges[EntityUtil.getUniqueHash(entity)];
+			// TODO: This will need to change in order to remove it from propertyChanges and collectionChanges instead
+			//delete remoteOperations.merges[EntityUtil.getUniqueHash(entity)];
 			
-			remoteOperations.removes[EntityUtil.getUniqueHash(entity)] = new RemoteOperation( { entity: entity }, RemoteOperation.REMOVE);
+			remoteOperations.removes[EntityUtil.getUniqueHash(entity)] = new RemoveOperation(entity);
 		}
 		
 		/**
@@ -165,6 +177,7 @@ package org.davekeen.flextrine.orm {
 		 * @private 
 		 */
 		internal function flush(fetchMode:String):AsyncToken {
+			// TODO: If size() == 0 this should not call the remote service, but just invoke onResult on the AsyncToken instead
 			return em.getDelegate().flush(remoteOperations.toObject(), fetchMode);
 		}
 		
@@ -193,14 +206,17 @@ package org.davekeen.flextrine.orm {
 import flash.utils.Dictionary;
 
 import org.davekeen.flextrine.orm.RemoteEntityFactory;
-import org.davekeen.flextrine.orm.RemoteOperation;
+import org.davekeen.flextrine.orm.operations.PersistOperation;
+import org.davekeen.flextrine.orm.operations.RemoteOperation;
 import org.davekeen.flextrine.util.EntityUtil;
 
 class RemoteOperations {
 	
 	public var persists:Dictionary = new Dictionary(false);
-	public var merges:Dictionary = new Dictionary(false);
 	public var removes:Dictionary = new Dictionary(false);
+	
+	public var propertyChanges:Dictionary = new Dictionary(false);
+	public var collectionChanges:Array = [ ];
 	
 	/**
 	 * Returns the total number of queued remote operations in the RemoteOperations object
@@ -209,7 +225,7 @@ class RemoteOperations {
 	 * 
 	 */
 	public function size():int {
-		return getDictionarySize(persists) + getDictionarySize(merges) + getDictionarySize(removes);
+		return getDictionarySize(persists) + getDictionarySize(removes) + getDictionarySize(propertyChanges) + collectionChanges.length;
 	}
 	
 	/**
@@ -222,17 +238,16 @@ class RemoteOperations {
 	public function toObject():Object {
 		var remoteEntityFactory:RemoteEntityFactory = new RemoteEntityFactory();
 		
-		// We need to pass the persists and merges to the remote entity factory so it knows not to uninitialize these entities
-		for each (var persist:RemoteOperation in persists)
-			remoteEntityFactory.addTopLevelEntity(persist.data.entity);
+		// We need to pass the persists and merges to the remote entity factory so it knows not to uninitialize these top level entities
+		for each (var persistOperation:PersistOperation in persists)
+			remoteEntityFactory.addTopLevelEntity(persistOperation.entity);
 		
-		for each (var merge:RemoteOperation in merges)
-			remoteEntityFactory.addTopLevelEntity(merge.data.entity);
-		
-		var object:Object = { persists: dictionaryToArray(persists, remoteEntityFactory),
-				 			  merges: dictionaryToArray(merges, remoteEntityFactory),
-				 			  removes: dictionaryToArray(removes, remoteEntityFactory)
-							}
+		var object:Object = {
+			persists: toRemoteArray(persists, remoteEntityFactory),
+			removes: toRemoteArray(removes, remoteEntityFactory),
+			propertyChanges: toRemoteArray(propertyChanges, remoteEntityFactory),
+			collectionChanges: toRemoteArray(collectionChanges, remoteEntityFactory)
+		};
 		
 		return object;
 	}
@@ -246,11 +261,17 @@ class RemoteOperations {
 	 * @return 
 	 * 
 	 */	
-	private function dictionaryToArray(dictionary:Dictionary, remoteEntityFactory:RemoteEntityFactory):Array {
+	private function toRemoteArray(dictOrArray:*, remoteEntityFactory:RemoteEntityFactory):Array {
+		if (!(dictOrArray is Dictionary || dictOrArray is Array))
+			throw new Error("toRemoteArray can only be called on a Dictionary or Array");
+		
 		var array:Array = [];
 		
-		for each (var remoteOperation:RemoteOperation in dictionary) {	
-			remoteOperation.data.entity = remoteEntityFactory.getRemoteEntity(remoteOperation.data.entity);
+		for each (var remoteOperation:RemoteOperation in dictOrArray) {	
+			// Replace any entities with a remote version
+			remoteOperation.transformEntities(remoteEntityFactory);
+			
+			// Add the operation to the array
 			array.push(remoteOperation);
 		}
 		

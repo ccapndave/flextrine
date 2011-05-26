@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright 2011 Dave Keen
  * http://www.actionscriptdeveloper.co.uk
  * 
@@ -42,7 +42,6 @@ package org.davekeen.flextrine.orm {
 	import org.davekeen.flextrine.orm.events.EntityEvent;
 	import org.davekeen.flextrine.orm.metadata.MetaTags;
 	import org.davekeen.flextrine.util.ClassUtil;
-	import org.davekeen.flextrine.util.Closure;
 	import org.davekeen.flextrine.util.EntityUtil;
 
 	use namespace flextrine;
@@ -115,7 +114,7 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		/**
-		 * Returns the dirtyEntities from the current transaction
+		 * Returns the dirtyEntities from the current transaction.  This is used for rollbacks.
 		 * 
 		 * @return 
 		 */
@@ -361,7 +360,7 @@ package org.davekeen.flextrine.orm {
 						// and the temporary uid is internal.
 						entityToRemove = entity;
 						
-						// Remove from the temporaryUidMap, persistedEntities, dirtyEntities and the unit of work
+						// Remove from the temporaryUidMap, persistedEntities and the unit of work
 						for (var temporaryUid:String in temporaryUidMap) {
 							if (temporaryUidMap[temporaryUid] === entityToRemove) {
 								// Remove from the unit of work
@@ -427,11 +426,11 @@ package org.davekeen.flextrine.orm {
 		 * @param	persistentCollection
 		 * @param	associationName
 		 */
-		flextrine function resetManyAssociation(persistentCollection:PersistentCollection):void {
-			isUpdating = true;
+		flextrine function resetManyAssociation(persistentCollection:PersistentCollection, checkForPropertyChanges:Boolean = false):void {
+			if (!checkForPropertyChanges) isUpdating = true;
 			persistentCollection.removeAll();
 			//persistentCollection.removeAllNonRecursive();
-			isUpdating = false;
+			if (!checkForPropertyChanges) isUpdating = false;
 		}
 		
 		/**
@@ -557,13 +556,25 @@ package org.davekeen.flextrine.orm {
 		 * @param e
 		 */
 		private function onCollectionChange(e:CollectionEvent):void {
-			var persistentCollection:PersistentCollection = e.target as PersistentCollection;
-			
-			var entity:Object = persistentCollection.getOwner();
-			var attributeName:String = persistentCollection.getAssociationName();
-			
-			if (e.kind == CollectionEventKind.ADD || e.kind == CollectionEventKind.REMOVE || e.kind == CollectionEventKind.RESET || e.kind == CollectionEventKind.REPLACE)
-				entity.dispatchEvent(PropertyChangeEvent.createUpdateEvent(entity, attributeName, "Collection: " + e.kind, e.items));
+			if (!isUpdating) {
+				var persistentCollection:PersistentCollection = e.target as PersistentCollection;
+				var entity:Object = persistentCollection.getOwner();
+				var attributeName:String = persistentCollection.getAssociationName();
+				
+				switch (e.kind) {
+					case CollectionEventKind.ADD:
+					case CollectionEventKind.REMOVE:
+						// If this is a property, or the owning side of an association we need to mark for server-side merging
+						if (isOwningAssociation(entity, attributeName))
+							em.getUnitOfWork().collectionChange(e);
+	
+						break;
+					case CollectionEventKind.REPLACE:
+					case CollectionEventKind.RESET:
+						log.error("Got a " + e.kind + " collection message on " + entity + "::" + attributeName + " - not sure what to do about these messages for the moment");
+						break;
+				}
+			}
 		}
 		
 		/**
@@ -587,6 +598,18 @@ package org.davekeen.flextrine.orm {
 						if (!EntityUtil.isInitialized(e.source))
 							return;
 						
+						if (EntityUtil.getIdFields(e.source).indexOf(e.property) >= 0)
+							throw new FlextrineError("Something tried to alter an identifier of an entity.  This can cause unexpected behaviour and is not allowed.", FlextrineError.ILLEGAL_ID_PROPERTY_CHANGE);
+						
+						// Although this should never happen, have a few cases for Flextrine internal properties that we don't want to trigger a change
+						if (e.property == "isUnserialized__" || e.property == "isInitialized__")
+							return;
+						
+						// Sometimes using detachCopy can mean we have a property change from one instance to another, whilst the ids remain the same.  This should not
+						// trigger a PropertyChange.
+						if (e.newValue && e.oldValue && EntityUtil.isEntity(e.newValue) && EntityUtil.hasId(e.newValue) && EntityUtil.getUniqueHash(e.oldValue) == EntityUtil.getUniqueHash(e.newValue))
+							return;
+						
 						// A special case; if the property is a Date and the time is the same we don't want to update
 						if (e.source[e.property] is Date)
 							if (e.oldValue && e.newValue && e.newValue.time == e.oldValue.time)
@@ -607,16 +630,16 @@ package org.davekeen.flextrine.orm {
 						
 						// If this is a property, or the owning side of an association we need to mark for server-side merging
 						if (!EntityUtil.isAssociation(e.source, e.property.toString()) || isOwningAssociation(e.source, e.property.toString())) {
-							log.info("Detected change on managed entity " + e.currentTarget + " - property '" + e.property + "' from '" + e.oldValue + "' to '" + e.newValue + "' {repository = " + ClassUtil.formatClassAsString(entityClass) + "}");
 							if (!persistedEntities[e.currentTarget])
-								em.getUnitOfWork().merge(e.currentTarget);
+								em.getUnitOfWork().propertyChange(e);
+							
 						}
 						break;
 					case STATE_REMOVED:
 						throw new Error("A change was detected on a removed entity; this is an error as there shouldn't be any listeners on the entity anymore!");
 						break;
 					case STATE_DETACHED:
-						throw new Error("A change was detected on a detached entity; this is an error as there shouldn't be any property listeners on the entity!");
+						log.error("A change was detected on a detached entity; this is an error as there shouldn't be any property listeners on the entity");
 						break;
 				}
 			}

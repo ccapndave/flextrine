@@ -5,6 +5,7 @@ package tests.vo {
 	import mx.collections.errors.ItemPendingError;
 	import org.davekeen.flextrine.orm.collections.PersistentCollection;
 	import org.davekeen.flextrine.orm.events.EntityEvent;
+	import org.davekeen.flextrine.util.EntityUtil;
 	import org.davekeen.flextrine.flextrine;
 
 	[Bindable]
@@ -39,7 +40,7 @@ package tests.vo {
 		}
 		
 		private function checkIsInitialized(property:String):void {
-			if (!isInitialized__ && isUnserialized__) {
+			if (!isInitialized__ && isUnserialized__ && !EntityUtil.flextrine::isCopying) {
 				if (!flextrine::itemPendingError) {
 					flextrine::itemPendingError = new ItemPendingError("ItemPendingError - initializing entity " + this);
 					dispatchEvent(new EntityEvent(EntityEvent.INITIALIZE_ENTITY, property, flextrine::itemPendingError));

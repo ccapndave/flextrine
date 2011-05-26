@@ -49,7 +49,7 @@
 			
 			var mergedD1:Doctor = em.merge(d1Copy) as Doctor;
 			
-			Assert.assertEquals(d1, mergedD1);
+			Assert.assertStrictlyEquals(d1, mergedD1);
 			
 			em.flush().addResponder(Async.asyncResponder(this, new TestResponder(result1_2, remoteFault), 10000));
 		}

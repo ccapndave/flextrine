@@ -152,7 +152,7 @@ package org.davekeen.flextrine.orm.walkers {
 		 */
 		protected function collectionAction(collection:PersistentCollection, associationName:String, idx:uint, data:Object):void {
 			var relatedEntity:Object = collection.getItemAt(idx);
-			setItemAt(collection, idx, doWalk(replaceEntity(relatedEntity, data)));
+			setItemAt(collection, idx, doWalk(replaceEntity(relatedEntity, data)), data);
 		}
 		
 		/**
@@ -165,7 +165,7 @@ package org.davekeen.flextrine.orm.walkers {
 		 */
 		protected function propertyAction(entity:Object, associationName:String, data:Object):void {
 			var relatedEntity:Object = entity[associationName];
-			setProperty(entity, associationName, relatedEntity ? doWalk(replaceEntity(relatedEntity, data)) : null);
+			setProperty(entity, associationName, relatedEntity ? doWalk(replaceEntity(relatedEntity, data)) : null, data);
 		}
 		
 		/**
@@ -194,8 +194,8 @@ package org.davekeen.flextrine.orm.walkers {
 		 */
 		protected function returnEntity(entity:Object, data:Object):Object { return entity; }
 		
-		protected function setProperty(entity:Object, property:String, value:*):void { entity[property] = value; }
-		protected function setItemAt(collection:PersistentCollection, idx:uint, value:*):void { collection.setItemAt(value, idx); }
+		protected function setProperty(entity:Object, property:String, value:*, data:Object):void { entity[property] = value; }
+		protected function setItemAt(collection:PersistentCollection, idx:uint, value:*, data:Object):void { collection.setItemAt(value, idx); }
 	
 	}
 

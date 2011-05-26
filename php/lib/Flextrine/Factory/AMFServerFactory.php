@@ -45,7 +45,14 @@ class AMFServerFactory {
 
 		$server->setClassMap('org.davekeen.flextrine.orm.Query', '\Flextrine\Query');
 		$server->setClassMap('org.davekeen.flextrine.orm.collections.PersistentCollection', '\Flextrine\Collections\FlextrinePersistentCollection');
+		
+		$server->setClassMap('org.davekeen.flextrine.orm.operations.PersistOperation', '\Flextrine\Operations\PersistOperation');
+		$server->setClassMap('org.davekeen.flextrine.orm.operations.RemoveOperation', '\Flextrine\Operations\RemoveOperation');
+		$server->setClassMap('org.davekeen.flextrine.orm.operations.PropertyChangeOperation', '\Flextrine\Operations\PropertyChangeOperation');
+		$server->setClassMap('org.davekeen.flextrine.orm.operations.CollectionChangeOperation', '\Flextrine\Operations\CollectionChangeOperation');
 
+		$server->setClassMap('org.davekeen.flextrine.orm.operations.MergeOperation', '\Flextrine\Operations\MergeOperation'); // This operation will be depreciated
+		
 		$proxyNamespace = Zend_Registry::get("em")->getConfiguration()->getProxyNamespace();
 		foreach (Zend_Registry::get("em")->getMetadataFactory()->getAllMetadata() as $metadata) {
 			$phpClassName = $metadata->name;

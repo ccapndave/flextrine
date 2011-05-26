@@ -45,6 +45,16 @@ package org.davekeen.flextrine.util {
 		flextrine static var isCopying:Boolean = false; 
 		
 		/**
+		 * Return true if the given object is an entity (i.e. The class has [Entity] metadata)
+		 * 
+		 * @param entity
+		 * @return 
+		 */
+		public static function isEntity(entity:Object):Boolean {
+			return (DescribeTypeCache.describeType(entity).typeDescription.metadata.(@name == MetaTags.ENTITY).length() == 1);
+		}
+		
+		/**
 		 * Return an xml list of the attributes in the entity that have the given metadata tag.  So, to return the attributes that have tag [Id] you would
 		 * call getAttributesWithTag(myObject, "Id").
 		 * 
@@ -184,6 +194,9 @@ package org.davekeen.flextrine.util {
 		 * @return
 		 */
 		public static function getUniqueHash(entity:Object, uniqueIdentifier:String = null):String {
+			if (!EntityUtil.isEntity(entity))
+				throw new ReferenceError(entity + " is not an entity");
+			
 			return ClassUtil.getClassAsString(entity) + "_" + getIdHash(entity) + ((uniqueIdentifier) ? uniqueIdentifier : "");
 		}
 		

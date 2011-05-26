@@ -1,5 +1,9 @@
 package org.davekeen.flextrine.orm {
+	import flash.events.EventDispatcher;
+	
 	import mx.collections.errors.ItemPendingError;
+	import mx.events.CollectionEvent;
+	import mx.events.CollectionEventKind;
 	import mx.logging.ILogger;
 	import mx.logging.Log;
 	import mx.rpc.AsyncResponder;
@@ -54,7 +58,7 @@ package org.davekeen.flextrine.orm {
 			if (!e.itemPendingError)
 				e.itemPendingError = new ItemPendingError("ItemPendingError - initializing collection " + persistentCollection.getOwner() + "." + e.property);
 			
-			log.info("Loading on demand: collection '" + e.property + "' on entity '" + persistentCollection.getOwner());
+			log.info("Loading on demand: collection '" + e.property + "' on entity " + persistentCollection.getOwner());
 			
 			em.requireMany(persistentCollection.getOwner(), e.property).addResponder(new AsyncResponder(onInitializeResult, onInitializeFault, e.itemPendingError));
 		}
@@ -63,15 +67,12 @@ package org.davekeen.flextrine.orm {
 			if (itemPendingError && itemPendingError.responders)
 				for each (var responder:IResponder in itemPendingError.responders)
 					responder.result(e);
-			
-			// TODO: For a collection this might need to dispatch a COLLECTION_CHANGE event (although so far it seems to work without it)...
-			// dispatchEvent(new CollectionEvent(CollectionEvent.COLLECTION_CHANGE, false, false, CollectionEventKind.REFRESH));
 		}
 		
 		public function onInitializeFault(e:FaultEvent, itemPendingError:ItemPendingError):void {
 			if (itemPendingError && itemPendingError.responders)
 				for each (var responder:IResponder in itemPendingError.responders)
-				responder.fault(e);
+					responder.fault(e);
 		}
 		
 	}

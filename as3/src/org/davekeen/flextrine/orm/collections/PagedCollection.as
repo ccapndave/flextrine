@@ -10,6 +10,8 @@ package org.davekeen.flextrine.orm.collections {
 	import mx.events.CollectionEvent;
 	import mx.events.CollectionEventKind;
 	import mx.events.PropertyChangeEvent;
+	import mx.logging.ILogger;
+	import mx.logging.Log;
 	import mx.rpc.AsyncToken;
 	import mx.rpc.events.FaultEvent;
 	import mx.rpc.events.ResultEvent;
@@ -17,6 +19,7 @@ package org.davekeen.flextrine.orm.collections {
 	import org.davekeen.flextrine.orm.FetchMode;
 	import org.davekeen.flextrine.orm.Query;
 	import org.davekeen.flextrine.orm.delegates.FlextrineDelegate;
+	import org.davekeen.flextrine.util.ClassUtil;
 	
 	[Event(name="collectionContentsChanged", type="flash.events.Event")]
 	/**
@@ -40,6 +43,11 @@ package org.davekeen.flextrine.orm.collections {
 		private var _startOffset:int = 0;
 		
 		private var _paginatedList:ArrayCollection = new ArrayCollection();
+		
+		/**
+		 * Standard flex logger
+		 */
+		private var log:ILogger = Log.getLogger(ClassUtil.getQualifiedClassNameAsString(this));
 		
 		public function PagedCollection(list:IList = null) {
 			super(list);
@@ -261,7 +269,7 @@ package org.davekeen.flextrine.orm.collections {
 		}
 		
 		private function onAsyncResult(resultEvent:ResultEvent, token:Object = null):void {
-			//trace("Loaded:", token.start, token.end);
+			//log.info("Loaded:" + token.start + "->" + token.end);
 			var count:uint = resultEvent.result.count;
 			var resultArray:Array = resultEvent.result.results;
 			var idx:int = 0;

@@ -234,22 +234,8 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		/**
-		 * Return an unmanaged copy of the given entity.  This entity is not the same instance as that in the repository and
-		 * changes to its properties will not trigger updates on the database.  This has no effect on the entity given as a parameter -
-		 * it remains in its repository as a fully managed entity.
-		 *
-		 * <p>Typically <code>detach</code> would be used in situations where you want to make changes to an entity that might be
-		 * discarded; for example, an edit window with a <b>Save</b> and <b>Cancel</b> button.  If the user hits <b>cancel</b> the unmanaged entity can just be
-		 *  thrown away, or otherwise <code>EntityManager.merge</code> can be used to merge changes back into the repository.</p>
-		 *
-		 * @example To detach a <code>user</code> entity:
-		 *
-		 * <pre>
-		 * em.detach(user);
-		 * </pre>
-		 *
-		 * @param	entity The entity to detach.
-		 * @return
+		 * 
+		 * @param entity
 		 */
 		public function detach(entity:Object):void {
 			if (!entity)
@@ -260,7 +246,28 @@ package org.davekeen.flextrine.orm {
 			(getRepository(ClassUtil.getClass(entity)) as EntityRepository).detachEntity(entity);
 		}
 		
+		/**
+		 * Return an unmanaged copy of the given entity.  This entity is not the same instance as that in the repository and
+		 * changes to its properties will not trigger updates on the database.  This has no effect on the entity given as a parameter -
+		 * it remains in its repository as a fully managed entity.  Detached copies still support on-demand loading and bidirectional
+		 * association management.
+		 *
+		 * <p>Typically <code>detachCopy</code> would be used in situations where you want to make changes to an entity that might be
+		 * discarded; for example, an edit window with a <b>Save</b> and <b>Cancel</b> button.  If the user hits <b>cancel</b> the unmanaged entity can just be
+		 *  thrown away, or otherwise <code>EntityManager.merge</code> can be used to merge changes back into the repository.</p>
+		 *
+		 * @example To detach a <code>user</code> entity:
+		 *
+		 * <pre>
+		 * var detachedUserCopy:User = em.detachCopy(user) as User;
+		 * </pre>
+		 *
+		 * @param	entity The entity to detach.
+		 * @return
+		 */
 		public function detachCopy(entity:Object):Object {
+			if (!entity)
+				throw new TypeError("Attempted to detach null");
 			// Make a fresh copy of the entity
 			var entityCopy:Object = EntityUtil.copyEntity(entity);
 			
@@ -298,7 +305,7 @@ package org.davekeen.flextrine.orm {
 				case WriteMode.PUSH:
 					return addLoadedEntityToRepository(entity, true);
 				case WriteMode.PULL:
-					return unitOfWork.merge(entity);
+					throw new Error("Not implemented");
 			}
 			
 			return null;
@@ -344,6 +351,7 @@ package org.davekeen.flextrine.orm {
 			return getDelegate().select(query, 0, 0, (fetchMode) ? fetchMode : getConfiguration().fetchMode);
 		}
 		
+		// TODO: It should be possible to use a remote method for this instead of DQL
 		public function selectPaged(query:Query, pageSize:uint, fetchMode:String = null):PagedCollection {
 			log.info("Selecting (paged) " + query.dql);
 			
@@ -580,7 +588,7 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function requireMany(parentEntity:Object, manyAttributeNames:*, onResult:Function = null, onFault:Function = null, fetchMode:String = null):AsyncToken {
-			log.info("Requiring many " + parentEntity + " - " + manyAttributeNames);
+			log.info("Requiring many " + parentEntity + "::" + manyAttributeNames);
 			
 			return doRequireMany(parentEntity, (manyAttributeNames is Array) ? manyAttributeNames : [manyAttributeNames], onResult, onFault, fetchMode);
 		}
@@ -613,7 +621,6 @@ package org.davekeen.flextrine.orm {
 				
 				var entityIsDetached:Boolean = (getRepository(ClassUtil.getClass(parentEntity)).getEntityState(parentEntity) == EntityRepository.STATE_DETACHED);
 				
-				//var asyncToken:AsyncToken = selectOne(new Query(query), fetchMode);
 				var asyncToken:AsyncToken = getDelegate().selectOne(query, (fetchMode) ? fetchMode : getConfiguration().fetchMode, (entityIsDetached) ? parentEntity : null);
 				if (onResult != null || onFault != null)
 					asyncToken.addResponder(new AsyncResponder(onResult, onFault));

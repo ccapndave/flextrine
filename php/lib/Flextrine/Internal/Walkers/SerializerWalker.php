@@ -67,6 +67,7 @@ class SerializerWalker extends AbstractWalker {
 	 */
 	protected function replaceEntity($entity) {
 		if ($entity instanceof Proxy && !$entity->__isInitialized__) {
+			// TODO: This ReflectionClass is actually already inside the reflFields of ClassMetadata - use that instead as it will be more efficient
 			$reflectionClass = new \ReflectionClass($entity);
 
 			$identifierProperty = $reflectionClass->getProperty("_identifier");

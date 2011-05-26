@@ -71,6 +71,8 @@ package org.davekeen.flextrine.orm.walkers {
 		}
 		
 		protected override function setupWalk(entity:Object, data:Object):void {
+			data.isMerge = isMerge;
+			
 			// Check if this entity already exists in its repository and set the mergeType and targetEntity accordingly
 			data.entityRepository = em.getRepository(ClassUtil.getClass(entity)) as EntityRepository;
 			
@@ -100,7 +102,8 @@ package org.davekeen.flextrine.orm.walkers {
 					data.targetEntity = data.entityRepository.addEntity(entity);
 					break;
 				case UPDATE:
-					data.targetEntity = data.entityRepository.updateEntity(entity, isMerge);
+					var checkForPropertyChanges:Boolean = data.isMerge && EntityUtil.isInitialized(entity) && EntityUtil.isInitialized(data.targetEntity);
+					data.targetEntity = data.entityRepository.updateEntity(entity, checkForPropertyChanges);
 					break;
 				case DETACHED:
 					data.targetEntity = EntityUtil.mergeEntity(entity, data.targetEntity);
@@ -119,8 +122,10 @@ package org.davekeen.flextrine.orm.walkers {
 				case UPDATE:
 				case DETACHED:
 					// We want to remove everything from the targetEntity's existing many association (it will be re-added in collectionAction)
-					if (EntityUtil.isCollectionInitialized(collection))
-						data.entityRepository.resetManyAssociation(data.targetEntity[associationName]);
+					if (EntityUtil.isCollectionInitialized(collection)) {
+						var checkForPropertyChanges:Boolean = isMerge;
+						data.entityRepository.resetManyAssociation(data.targetEntity[associationName], checkForPropertyChanges);
+					}
 					break;
 			}
 		}
@@ -128,7 +133,7 @@ package org.davekeen.flextrine.orm.walkers {
 		protected override function propertyAction(entity:Object, associationName:String, data:Object):void {
 			// This is the same as the parent property, except it targets data.targetEntity instead of entity
 			var relatedEntity:Object = entity[associationName];
-			setProperty(data.targetEntity, associationName, relatedEntity ? doWalk(replaceEntity(relatedEntity, data)) : null);
+			setProperty(data.targetEntity, associationName, relatedEntity ? doWalk(replaceEntity(relatedEntity, data)) : null, data);
 		}
 		
 		protected override function collectionAction(collection:PersistentCollection, associationName:String, idx:uint, data:Object):void {
@@ -138,7 +143,8 @@ package org.davekeen.flextrine.orm.walkers {
 				case UPDATE:
 				case DETACHED:
 					// We will have removed the collection in beforeCollectionWalk, so add them back in with the recursive results
-					data.entityRepository.addEntityToManyAssociation(data.targetEntity, associationName, doWalk(replaceEntity(collection.source[idx], data)), isMerge);
+					var checkForPropertyChanges:Boolean = isMerge;
+					data.entityRepository.addEntityToManyAssociation(data.targetEntity, associationName, doWalk(replaceEntity(collection.source[idx], data)), checkForPropertyChanges);
 					break;
 				case ADD:
 				case THIS:
@@ -146,7 +152,8 @@ package org.davekeen.flextrine.orm.walkers {
 					
 					// If the original element was unitialized then replace it with the possibly initialized version
 					if (!EntityUtil.isInitialized(relatedEntity))
-						setItemAt(collection, idx, addedEntity);
+						setItemAt(collection, idx, addedEntity, data);
+					
 					break;
 			}
 		}
@@ -160,10 +167,7 @@ package org.davekeen.flextrine.orm.walkers {
 		}
 		
 		protected override function afterWalk(entity:Object, data:Object):void {
-			// If we are merging then naively add merge to the unit of work.  This may be unnecessary as the client will figure out whether anything has changed
-			// through the normal methods, but this protects against entities being garbage collected.  Improve on this in the future.
-			//if (isMerge)
-			//	em.getUnitOfWork().merge(data.targetEntity);
+			
 		}
 		
 		/**
@@ -173,8 +177,8 @@ package org.davekeen.flextrine.orm.walkers {
 		 * @param property
 		 * @param value
 		 */
-		protected override function setProperty(entity:Object, property:String, value:*):void {
-			(em.getRepository(ClassUtil.getClass(entity)) as EntityRepository).updateEntityProperty(entity, property, value, isMerge);
+		protected override function setProperty(entity:Object, property:String, value:*, data:Object):void {
+			(em.getRepository(ClassUtil.getClass(entity)) as EntityRepository).updateEntityProperty(entity, property, value, data.isMerge);
 		}
 		
 	}

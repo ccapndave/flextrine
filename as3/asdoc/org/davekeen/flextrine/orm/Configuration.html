@@ -4,7 +4,7 @@
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <link rel="stylesheet" href="../../../../style.css" type="text/css" media="screen">
 <link rel="stylesheet" href="../../../../print.css" type="text/css" media="print">
-<meta content="Configuration,org.davekeen.flextrine.orm.Configuration,enabledRollback,entityTimeToLive,fetchMode,gateway,loadCollectionsOnDemand,loadEntitiesOnDemand,service,writeMode" name="keywords">
+<meta content="Configuration,org.davekeen.flextrine.orm.Configuration,entityTimeToLive,fetchMode,gateway,loadCollectionsOnDemand,loadEntitiesOnDemand,service,transactionMode,useConcurrentRequests,writeMode" name="keywords">
 <title>org.davekeen.flextrine.orm.Configuration</title>
 </head>
 <body>
@@ -65,11 +65,6 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <th>&nbsp;</th><th colspan="2">Property</th><th class="summaryTableOwnerCol">Defined&nbsp;by</th>
 </tr>
 <tr class="">
-<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#enabledRollback">enabledRollback</a> : Boolean = true<div class="summaryTableDescription">
-   Enable em.rollback().</div>
-</td><td class="summaryTableOwnerCol">Configuration</td>
-</tr>
-<tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#entityTimeToLive">entityTimeToLive</a> : int = 5000<div class="summaryTableDescription">
    Determines how long entities are stored in repositories before they are garbage collection.</div>
 </td><td class="summaryTableOwnerCol">Configuration</td>
@@ -101,6 +96,17 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 </td><td class="summaryTableOwnerCol">Configuration</td>
 </tr>
 <tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#transactionMode">transactionMode</a> : String = "flat"<div class="summaryTableDescription">
+   For future implementation
+   </div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#useConcurrentRequests">useConcurrentRequests</a> : Boolean = true<div class="summaryTableDescription">
+   Whether to bundle together multiple requests into single calls, or to make them one after the other.</div>
+</td><td class="summaryTableOwnerCol">Configuration</td>
+</tr>
+<tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol"><a class="signatureLink" href="#writeMode">writeMode</a> : String = "push"<div class="summaryTableDescription">
    The write mode to use.</div>
 </td><td class="summaryTableOwnerCol">Configuration</td>
@@ -114,22 +120,10 @@ showHideInherited();
 <div class="MainContent">
 <a name="propertyDetail"></a>
 <div class="detailSectionHeader">Property detail</div>
-<a name="enabledRollback"></a>
-<table cellspacing="0" cellpadding="0" class="detailHeader">
-<tr>
-<td class="detailHeaderName">enabledRollback</td><td class="detailHeaderType">property</td>
-</tr>
-</table>
-<div class="detailBody">
-<code>public var enabledRollback:Boolean = true</code><p>
-   Enable em.rollback().  When enabled entities will store their original states allowing you to discard changes (e.g. on user cancel or network
-   error).  In general you will want to leave this on (the default), but rollback uses slightly more memory so if you are sure you don't need to
-   use it you can turn it off.
-   </p></div>
 <a name="entityTimeToLive"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
-<td class="detailHeaderName">entityTimeToLive</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+<td class="detailHeaderName">entityTimeToLive</td><td class="detailHeaderType">property</td>
 </tr>
 </table>
 <div class="detailBody">
@@ -192,6 +186,27 @@ showHideInherited();
 <div class="detailBody">
 <code>public var service:String = "FlextrineService"</code><p>
    The service defaults to FlextrineService (which is what it will be in most configurations)
+   </p></div>
+<a name="transactionMode"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">transactionMode</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var transactionMode:String = "flat"</code><p>
+   For future implementation
+   </p></div>
+<a name="useConcurrentRequests"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">useConcurrentRequests</td><td class="detailHeaderType">property</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public var useConcurrentRequests:Boolean = true</code><p>
+   Whether to bundle together multiple requests into single calls, or to make them one after the other.  Setting this to true can give a significant
+   performance boost, especially with on demand loading.  However, this may cause problems if you use multiple remote service files.
    </p></div>
 <a name="writeMode"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">

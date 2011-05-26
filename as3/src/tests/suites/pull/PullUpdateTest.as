@@ -30,7 +30,7 @@
 		private var d1:Doctor;
 		
 		[Test(async, description = "Very basic test that checks that property updates work in pull mode.")]
-		public function updateTest():void {
+		public function pullUpdateTest():void {
 			em.getRepository(Doctor).loadAll().addResponder(Async.asyncResponder(this, new TestResponder(result1, remoteFault), 10000));
 		}
 		

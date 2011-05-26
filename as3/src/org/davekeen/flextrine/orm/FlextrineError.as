@@ -50,14 +50,19 @@ package org.davekeen.flextrine.orm {
 		public static const ILLEGAL_REQUIRE:int = 4;
 		
 		/**
-		 * An attempt was made to directly change a property or collection of an entity when in <code>WriteMode.PULL</code>
+		 * An attempt was made to directly change a property or collection of an entity when in <code>WriteMode.PULL</code> (not yet implemented)
 		 */
 		public static const ENTITY_CHANGE_IN_PULL_MODE:int = 5;
 		
 		/**
-		 * An attempt was made to perform an operation (i.e. commit(), rollback()) without explicitly beginning a transaction
+		 * An attempt was made to perform an operation (i.e. commit(), rollback()) without explicitly beginning a transaction (not yet implemented)
 		 */ 
 		public static const NO_ACTIVE_TRANSACTION:int = 6;
+		
+		/**
+		 * An attempt was made to change an identifier property of an entity
+		 */ 
+		public static const ILLEGAL_ID_PROPERTY_CHANGE:int = 7;
 		
 		function FlextrineError(message:String, errorID:int = 0) {
 			super(message, errorID);

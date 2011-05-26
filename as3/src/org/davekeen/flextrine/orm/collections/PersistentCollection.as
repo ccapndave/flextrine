@@ -24,7 +24,6 @@ package org.davekeen.flextrine.orm.collections {
 	import mx.collections.ArrayList;
 	import mx.collections.IList;
 	import mx.collections.ListCollectionView;
-	import mx.collections.Sort;
 	import mx.collections.errors.ItemPendingError;
 	import mx.logging.ILogger;
 	import mx.logging.Log;
@@ -111,10 +110,10 @@ package org.davekeen.flextrine.orm.collections {
 			return super.filterFunction;
 		}
 
-		[Transient]
-		public override function set sort(s:Sort):void {
+		/*[Transient]
+		public override function set sort(s:ISort):void {
 			super.sort = s;
-		}
+		}*/
 
 		[Transient]
 		public override function get list():IList {

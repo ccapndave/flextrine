@@ -909,9 +909,13 @@ class ClassMetadataInfo implements ClassMetadata
             $mapping['targetToSourceKeyColumns'] = array_flip($mapping['sourceToTargetKeyColumns']);
         }
 
-        //TODO: if orphanRemoval, cascade=remove is implicit!
         $mapping['orphanRemoval'] = isset($mapping['orphanRemoval']) ?
                 (bool) $mapping['orphanRemoval'] : false;
+        
+        // if orphanRemoval, cascade=remove is implicit
+        if ($mapping['orphanRemoval']) {
+            $mapping['isCascadeRemove'] = true;
+        }
 
         if (isset($mapping['id']) && $mapping['id'] === true && !$mapping['isOwningSide']) {
             throw MappingException::illegalInverseIdentifierAssocation($this->name, $mapping['fieldName']);
@@ -936,9 +940,13 @@ class ClassMetadataInfo implements ClassMetadata
             throw MappingException::oneToManyRequiresMappedBy($mapping['fieldName']);
         }
         
-        //TODO: if orphanRemoval, cascade=remove is implicit!
         $mapping['orphanRemoval'] = isset($mapping['orphanRemoval']) ?
                 (bool) $mapping['orphanRemoval'] : false;
+
+        // if orphanRemoval, cascade=remove is implicit
+        if ($mapping['orphanRemoval']) {
+            $mapping['isCascadeRemove'] = true;
+        }
 
         if (isset($mapping['orderBy'])) {
             if ( ! is_array($mapping['orderBy'])) {
@@ -1628,6 +1636,7 @@ class ClassMetadataInfo implements ClassMetadata
             if (strpos($className, '\\') === false && strlen($this->namespace)) {
                 $className = $this->namespace . '\\' . $className;
             }
+            $className = ltrim($className, '\\');
             $this->discriminatorMap[$value] = $className;
             if ($this->name == $className) {
                 $this->discriminatorValue = $value;

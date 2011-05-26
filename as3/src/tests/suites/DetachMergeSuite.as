@@ -14,6 +14,8 @@
 		public var test3:DetachCopyTest;
 		public var test4:DetachCopyMergeTest;
 		public var test5:O2oDetachMergeTest;
+		public var test6:MultiDetachCopyMergeTest;
+		public var test7:DetachCopyOnDemandMergeTest;
 		
 	}
 

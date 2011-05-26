@@ -29,7 +29,7 @@ use Symfony\Component\HttpFoundation\UniversalClassLoader,
 // Define a constant pointing to the root of the application
 define('ROOT_PATH', dirname(dirname(__FILE__)));
 
-// And anoher pointing to the web-accessible directory
+// And another pointing to the web-accessible directory
 define('WEB_PATH', ROOT_PATH.DIRECTORY_SEPARATOR."web");
 
 // Set the include path to the lib folder included in the framework

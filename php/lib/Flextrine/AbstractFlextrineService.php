@@ -134,7 +134,7 @@ abstract class AbstractFlextrineService {
 		
 		if ($usePaging) {
 			// Use a regular expression to turn the query into a COUNT query in order to get the total number of rows without the paging
-			$flextrineQuery->dql = preg_replace('/SELECT .*? FROM (\S*) (\S*)(.*)/i', "SELECT COUNT(\${2}) FROM \${1} \${2} \${3}", $flextrineQuery->dql);
+			$flextrineQuery->dql = preg_replace('/SELECT (DISTINCT )?.*? FROM (\S*) (\S*)(.*)/i', "SELECT COUNT(\${1}\${3}) FROM \${2} \${3} \${4}", $flextrineQuery->dql);
 			$query = $flextrineQuery->createQuery($this->em);
 			$count = $query->getSingleScalarResult();
 			
@@ -175,7 +175,7 @@ abstract class AbstractFlextrineService {
 			
 			// Commit the transaction
 			$this->em->getConnection()->commit();
-						
+			
 			// Return the change sets so they can be replicated in Flextrine
 			return $changeSets;
 		} catch (\Exception $e) {

@@ -1,16 +1,21 @@
 ﻿package tests.suites.basic {
 	import flash.events.Event;
+	
 	import flexunit.framework.Assert;
+	
 	import mx.rpc.AsyncResponder;
 	import mx.rpc.AsyncToken;
 	import mx.rpc.events.FaultEvent;
 	import mx.rpc.events.ResultEvent;
+	
 	import org.davekeen.flextrine.orm.EntityRepository;
+	import org.davekeen.flextrine.util.EntityUtil;
 	import org.flexunit.async.Async;
 	import org.flexunit.async.TestResponder;
+	
 	import tests.AbstractTest;
-	import tests.vo.garden.*
-	import tests.vo.*
+	import tests.vo.*;
+	import tests.vo.garden.*;
 	
 	/**
 	 * ...
@@ -26,6 +31,15 @@
 		
 		private var doctorRepository:EntityRepository;
 		private var d1:Doctor;
+		
+		[Test(description = "Tests isEntity works (based of metadata).")]
+		public function entityTest():void {
+			Assert.assertTrue(EntityUtil.isEntity(new Doctor()));
+			Assert.assertTrue(EntityUtil.isEntity(new Patient()));
+			Assert.assertFalse(EntityUtil.isEntity(new Object()));
+			Assert.assertFalse(EntityUtil.isEntity("6"));
+			Assert.assertFalse(EntityUtil.isEntity(1002));
+		}
 		
 		[Test(async, description = "Tests entity states are correct for a variety of local and remote operations.")]
 		public function entityStateTest():void {

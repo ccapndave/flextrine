@@ -32,6 +32,7 @@
 		public function setUp():void {
 			var configuration:Configuration = new Configuration();
 			configuration.gateway = "http://multime.localhost/gateway.php?app=testsuite&env=test";
+			//configuration.gateway = "http://69.73.131.38/gateway.php?app=testsuite&env=test";
 			configuration.service = "FlextrineService";
 			configuration.writeMode = WriteMode.PUSH;
 			configuration.entityTimeToLive = -1;

@@ -1,1 +1,0 @@
-This directory should be web-accessible

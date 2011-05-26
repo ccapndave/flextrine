@@ -23,6 +23,8 @@
 
 namespace Flextrine\Internal;
 
+use Flextrine\Operations\CollectionChangeOperation;
+
 use Doctrine\ORM\Events,
 	Doctrine\ORM\Event\OnFlushEventArgs,
 	Doctrine\ORM\Mapping\ClassMetadata;
@@ -39,7 +41,9 @@ class FlushExecutor {
 	
 	private $persistRemoteOperations = array();
 	
-	private $mergeRemoteOperations = array();
+	private $propertyChangeRemoteOperations = array();
+	
+	private $collectionChangeRemoteOperations = array();
 	
 	private $removeRemoteOperations = array();
 	
@@ -54,9 +58,12 @@ class FlushExecutor {
 			// Get the remote operations out of the flushset for each operation type
 			foreach ($flushSet->persists as $persistRemoteOperation)
 				$this->persistRemoteOperations[] = (object)$persistRemoteOperation;
+			
+			foreach ($flushSet->propertyChanges as $propertyChangeRemoteOperation)
+				$this->propertyChangeRemoteOperations[] = (object)$propertyChangeRemoteOperation;
 				
-			foreach ($flushSet->merges as $mergeRemoteOperation)
-				$this->mergeRemoteOperations[] = (object)$mergeRemoteOperation;
+			foreach ($flushSet->collectionChanges as $collectionChangeRemoteOperation)
+				$this->collectionChangeRemoteOperations[] = (object)$collectionChangeRemoteOperation;
 				
 			foreach ($flushSet->removes as $removeRemoteOperation)
 				$this->removeRemoteOperations[] = (object)$removeRemoteOperation;
@@ -69,23 +76,21 @@ class FlushExecutor {
 	}
 	
 	public function flush() {
-		// Configure the cascade settings for Flextrine
-		$this->configureCascadesForFlextrine();
-		
 		$this->temporaryUidMap = array();
 		
 		// Add an event listener to hook into the flush and retrieve the changesets
 		$this->em->getEventManager()->addEventListener(array(Events::onFlush), $this);
 		
-		// Persist, merge and remove as required
+		// Persist, update and remove as required
 		$this->doPersists();
-		$this->doMerges();
+		$this->doPropertyChanges();
+		$this->doCollectionChanges();
 		$this->doRemoves();
 		
 		try {
 			// Perform the flush
 			$this->em->flush();
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			throw $e;
 		}
 		
@@ -102,39 +107,86 @@ class FlushExecutor {
 	}
 	
 	private function doPersists() {
-		foreach ($this->persistRemoteOperations as $persist) {
-			$data = (object)$persist->data;
-			
-			$data->entity = $this->deserializationWalker->walk($data->entity);
+		foreach ($this->persistRemoteOperations as $persistOperation) {
+			$entity = $this->deserializationWalker->walk($persistOperation->entity);
 			
 			// Persist the entity
-			$this->em->persist($data->entity);
+			$this->em->persist($entity);
 			
 			// Add a map from the object hash to the temporary uid of the object
-			$this->temporaryUidMap[spl_object_hash($data->entity)] = $data->temporaryUid;
+			$this->temporaryUidMap[spl_object_hash($entity)] = $persistOperation->temporaryUid;
 		}
 	}
 	
-	private function doMerges() {
-		foreach ($this->mergeRemoteOperations as $merge) {
-			$data = (object)$merge->data;
+	private function doPropertyChanges() {
+		foreach ($this->propertyChangeRemoteOperations as $propertyChangeOperation) {
+			$class = $this->em->getClassMetadata(get_class($propertyChangeOperation->entity));
 			
-			$this->deserializationWalker->walk($data->entity);
+			$entity = $this->getManagedEntityById($propertyChangeOperation->entity);
 			
-			// Merge the entity
-			$this->em->merge($data->entity);
+			// Determine whether we are updating a field or a (single valued) association.
+			if (array_key_exists($propertyChangeOperation->property, $class->fieldMappings)) {
+				// Set the new value of the property (this should use reflection, but for now do it dynamically)
+				$entity->{$propertyChangeOperation->property} = $propertyChangeOperation->value;
+			} else if (array_key_exists($propertyChangeOperation->property, $class->associationMappings)) {
+				if ($class->associationMappings[$propertyChangeOperation->property]['type'] & ClassMetadata::TO_MANY)
+					throw new \Exception("Flextrine attempted to execute a propertyChange event against a many valued collection.  This should not happen!");
+				
+				// Set the new value of the property (this should use reflection, but for now do it dynamically)
+				$newAssoc = $this->getManagedEntityById($propertyChangeOperation->value);
+				$entity->{$propertyChangeOperation->property} = $newAssoc;
+			}
+			
+			// This is horribly inefficient, but unfortunately (at least at present) it seems to be the only way to get certain property changes to hold
+			$this->em->flush();
 		}
+	}
+	
+	private function doCollectionChanges() {
+		foreach ($this->collectionChangeRemoteOperations as $collectionChangeOperation) {
+			$class = $this->em->getClassMetadata(get_class($collectionChangeOperation->entity));
+			
+			if (!(array_key_exists($collectionChangeOperation->property, $class->associationMappings) && $class->associationMappings[$collectionChangeOperation->property]['type'] & ClassMetadata::TO_MANY))
+				throw new \Exception("Flextrine attempted to execute a collectionChange event against a non-existant or single valued association.  This should not happen!");
+			
+			$entity = $this->getManagedEntityById($collectionChangeOperation->entity);
+			
+			foreach ($collectionChangeOperation->items as $item) {
+				$newAssoc = $this->getManagedEntityById($item);
+				
+				switch ($collectionChangeOperation->type) {
+					case CollectionChangeOperation::ADD:
+						if (!($entity->{$collectionChangeOperation->property}->contains($newAssoc)))
+							$entity->{$collectionChangeOperation->property}->add($newAssoc);
+						break;
+					case CollectionChangeOperation::REMOVE:
+						if (($entity->{$collectionChangeOperation->property}->contains($newAssoc)))
+							$entity->{$collectionChangeOperation->property}->removeElement($newAssoc);
+						break;
+				}
+			}
+		}
+	}
+	
+	private function getManagedEntityById($detachedEntity) {
+		if (is_null($detachedEntity))
+			return null;
+		
+		$class = $this->em->getClassMetadata(get_class($detachedEntity));
+		
+		$idFields = $class->getIdentifier();
+		
+		$findBy = array();
+		foreach ($idFields as $idField)
+			$findBy[$idField] = $detachedEntity->$idField; // TODO: This should use reflection
+		
+		return $this->em->getRepository(get_class($detachedEntity))->findOneBy($findBy);
 	}
 	
 	private function doRemoves() {
-		foreach ($this->removeRemoteOperations as $remove) {
-			$data = (object)$remove->data;
-
-			$data->entity = $this->deserializationWalker->walk($data->entity);
-
-			// Remove the entity
-			$this->em->remove($this->em->merge($data->entity));
-		}
+		foreach ($this->removeRemoteOperations as $removeOperation)
+			$this->em->remove($this->getManagedEntityById($removeOperation->entity));
+		
 	}
 	
 	private function doAddPersistedIds() {
@@ -174,25 +226,15 @@ class FlushExecutor {
 		
 		// We don't use collectionUpdates and colectionDeletions so far, and they seem to make Doctrine do loads of SQL queries so leave them
 		// out for the moment.
+		//
+		// TODO: Now that Flextrine uses change messenging collectionUpdates and collectionDeletions makes more sense again, especially as without then server-side M2N changes won't
+		// get picked up by callRemoteFlushMethod.  For now these can stay commented, but this must be addressed at some point.
 		$this->changeSets = array("entityInsertions" => $this->em->getUnitOfWork()->getScheduledEntityInsertions(),
 								  "entityUpdates" => $this->em->getUnitOfWork()->getScheduledEntityUpdates(),
 								  "entityDeletions" => $this->em->getUnitOfWork()->getScheduledEntityDeletions()/*,
 								  "collectionUpdates" => $this->em->getUnitOfWork()->getScheduledCollectionUpdates(),
 								  "collectionDeletions" => $this->em->getUnitOfWork()->getScheduledCollectionDeletions()*/);
 		
-	}
-
-	/**
-	 * There seems to be a bug in Doctrine merge - not exactly sure what or why, but this seems to fix it so far...
-	 */
-	private function configureCascadesForFlextrine() {
-		foreach ($this->em->getMetadataFactory()->getAllMetadata() as $metadata) {
-			foreach ($metadata->associationMappings as $key => $associationMapping)
-				if (!($associationMapping['type'] & ClassMetadata::ONE_TO_MANY))
-					$metadata->associationMappings[$key]["isCascadeMerge"] = true;
-
-			$this->em->getMetadataFactory()->setMetaDataFor($metadata->name, clone $metadata);
-		}
 	}
 	
 }

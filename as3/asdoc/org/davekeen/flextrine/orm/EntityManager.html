@@ -4,7 +4,7 @@
 <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <link rel="stylesheet" href="../../../../style.css" type="text/css" media="screen">
 <link rel="stylesheet" href="../../../../print.css" type="text/css" media="print">
-<meta content="EntityManager,org.davekeen.flextrine.orm.EntityManager,callRemoteEntityMethod,callRemoteMethod,clear,detach,flush,getConfiguration,getInstance,getRepository,getUnitOfWork,load,loadAll,loadBy,loadOneBy,merge,persist,remove,requireMany,requireOne,rollback,select,selectOne,selectPaged,setConfiguration" name="keywords">
+<meta content="EntityManager,org.davekeen.flextrine.orm.EntityManager,beginTransaction,callRemoteEntityMethod,callRemoteFlushMethod,callRemoteMethod,clear,commit,detach,detachCopy,flush,getConfiguration,getInstance,getOnDemandListener,getRepository,getUnitOfWork,load,loadAll,loadBy,loadOneBy,merge,persist,remove,requireMany,requireOne,rollback,select,selectOne,selectPaged,setConfiguration" name="keywords">
 <title>org.davekeen.flextrine.orm.EntityManager</title>
 </head>
 <body>
@@ -43,8 +43,7 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 </table>
 <p></p>
   The EntityManager is the central access point to the ORM functionality provided by Flextrine.
-  
-  <p></p>
+    <p></p>
 <br>
 <hr>
 </div>
@@ -58,9 +57,23 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
 <div class="summarySignature">
+<a class="signatureLink" href="#beginTransaction()">beginTransaction</a>():void</div>
+<div class="summaryTableDescription"></div>
+</td><td class="summaryTableOwnerCol">EntityManager</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
+<div class="summarySignature">
 <a class="signatureLink" href="#callRemoteEntityMethod()">callRemoteEntityMethod</a>(methodName:String, ... args):AsyncToken</div>
 <div class="summaryTableDescription">
    This is identical to callRemoteMethod, except that this expects a response from the server that is either an entity or an array of entities.</div>
+</td><td class="summaryTableOwnerCol">EntityManager</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
+<div class="summarySignature">
+<a class="signatureLink" href="#callRemoteFlushMethod()">callRemoteFlushMethod</a>(methodName:String, ... args):AsyncToken</div>
+<div class="summaryTableDescription"></div>
 </td><td class="summaryTableOwnerCol">EntityManager</td>
 </tr>
 <tr class="">
@@ -82,7 +95,23 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 <tr class="">
 <td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
 <div class="summarySignature">
-<a class="signatureLink" href="#detach()">detach</a>(entity:Object):Object</div>
+<a class="signatureLink" href="#commit()">commit</a>():Boolean</div>
+<div class="summaryTableDescription"></div>
+</td><td class="summaryTableOwnerCol">EntityManager</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
+<div class="summarySignature">
+<a class="signatureLink" href="#detach()">detach</a>(entity:Object):void</div>
+<div class="summaryTableDescription">
+   
+   </div>
+</td><td class="summaryTableOwnerCol">EntityManager</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
+<div class="summarySignature">
+<a class="signatureLink" href="#detachCopy()">detachCopy</a>(entity:Object):Object</div>
 <div class="summaryTableDescription">
    Return an unmanaged copy of the given entity.</div>
 </td><td class="summaryTableOwnerCol">EntityManager</td>
@@ -111,6 +140,14 @@ if (!isEclipse() || window.name != ECLIPSE_FRAME_NAME) {titleBar_setSubTitle("Cl
 </div>
 <div class="summaryTableDescription">[static]
    Get a singleton instance of the EntityManager.</div>
+</td><td class="summaryTableOwnerCol">EntityManager</td>
+</tr>
+<tr class="">
+<td class="summaryTablePaddingCol">&nbsp;</td><td class="summaryTableInheritanceCol">&nbsp;</td><td class="summaryTableSignatureCol">
+<div class="summarySignature">
+<a class="signatureLink" href="#getOnDemandListener()">getOnDemandListener</a>():<a href="../orm/OnDemandListener.html">OnDemandListener</a>
+</div>
+<div class="summaryTableDescription"></div>
 </td><td class="summaryTableOwnerCol">EntityManager</td>
 </tr>
 <tr class="">
@@ -251,26 +288,59 @@ showHideInherited();
 <div class="MainContent">
 <a name="methodDetail"></a>
 <div class="detailSectionHeader">Method detail</div>
+<a name="beginTransaction()"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">beginTransaction</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public function beginTransaction():void</code>
+</div>
 <a name="callRemoteEntityMethod()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
-<td class="detailHeaderName">callRemoteEntityMethod</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td>
+<td class="detailHeaderName">callRemoteEntityMethod</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td><td class="detailHeaderRule">&nbsp;</td>
 </tr>
 </table>
 <div class="detailBody">
 <code>public function callRemoteEntityMethod(methodName:String, ... args):AsyncToken</code><p>
    This is identical to callRemoteMethod, except that this expects a response from the server that is either an entity or an array of entities.
-   
-   On the server it is essential to prepare the return value for Flextrine using the <pre>flextrinize</pre> method:
-   
-   <pre>
+      On the server it is essential to prepare the return value for Flextrine using the <pre>flextrinize</pre> method:
+      <pre>
    public function myRemoteEntityMethod($id) {
      $entity = $this->em->getRepository("vo\User")->load($id);
      return $this->flextrinize($entity);
    }
    </pre>
-    
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20px"></td><td><code><span class="label">methodName</span>:String</code></td>
+</tr>
+<tr>
+<td class="paramSpacer">&nbsp;</td>
+</tr>
+<tr>
+<td width="20px"></td><td><code>... <span class="label">args</span></code></td>
+</tr>
+</table>
+<p></p>
+<span class="label">Returns</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20"></td><td><code>AsyncToken</code></td>
+</tr>
+</table>
+</div>
+<a name="callRemoteFlushMethod()"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">callRemoteFlushMethod</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public function callRemoteFlushMethod(methodName:String, ... args):AsyncToken</code><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">methodName</span>:String</code></td>
@@ -300,10 +370,8 @@ showHideInherited();
 <code>public function callRemoteMethod(methodName:String, ... args):AsyncToken</code><p>
    Call a custom method on a remote service.  By default this will call a remote method on the default <code>FlextrineService</code>, but its also
    possible to specify a different service in the <code>services</code> folder by using the notation &lt;remoteServiceName&gt;.&lt;remoteMethodName&gt;
-   
-   </p><p>This method returns an <code>AsyncToken</code> to which you can attach responders in order to handle the result.</p>
-   
-   <span class="label">Parameters</span>
+      </p><p>This method returns an <code>AsyncToken</code> to which you can attach responders in order to handle the result.</p>
+      <span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">methodName</span>:String</code> &mdash; The name of the method.  This can either be in the form <code>&lt;remoteMethodName&gt;</code> or
@@ -329,28 +397,21 @@ showHideInherited();
 <br>
 <span class="label">Example</span>
 <br>Call a <code>doSomething</code> remote method in <code>FlextrineService</code>
-   
-   <pre>
+      <pre>
    em.callRemoteMethod("doSomething");
    </pre>
-   
-   <p></p>Call a <code>doSomethingElse</code> remote method on a service called <code>MyNewService</code>
-   
-   <pre>
+      <p></p>Call a <code>doSomethingElse</code> remote method on a service called <code>MyNewService</code>
+      <pre>
    em.callRemoteMethod("MyNewService.doSomethingElse");
    </pre>
-   
-   <p></p>Call the <code>addTwoNumbers</code> method on FlextrineService and handle the result
-   
-   <pre>
+      <p></p>Call the <code>addTwoNumbers</code> method on FlextrineService and handle the result
+      <pre>
    em.callRemoteMethod("addTwoNumbers", 2, 3).addResponder(new AsyncResponder(onAddTwoNumbersResult, null));
-   
-   function onAddTwoNumbersResult(e:ResultEvent, token:Object):void {
+      function onAddTwoNumbersResult(e:ResultEvent, token:Object):void {
      trace("The answer is " + e.result);
    }
    </pre>
-   
-   <p></p>
+      <p></p>
 </div>
 <a name="clear()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
@@ -364,6 +425,22 @@ showHideInherited();
    as after it has been invoked any references to entities that were previously in the repositories will become <i>orphaned</i> and will no longer
    be managed.
    </p></div>
+<a name="commit()"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">commit</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public function commit():Boolean</code>
+<p></p>
+<span class="label">Returns</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20"></td><td><code>Boolean</code></td>
+</tr>
+</table>
+</div>
 <a name="detach()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
 <tr>
@@ -371,18 +448,31 @@ showHideInherited();
 </tr>
 </table>
 <div class="detailBody">
-<code>public function detach(entity:Object):Object</code><p>
+<code>public function detach(entity:Object):void</code><p>
+   
+   </p><span class="label">Parameters</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20px"></td><td><code><span class="label">entity</span>:Object</code></td>
+</tr>
+</table>
+</div>
+<a name="detachCopy()"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">detachCopy</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public function detachCopy(entity:Object):Object</code><p>
    Return an unmanaged copy of the given entity.  This entity is not the same instance as that in the repository and
    changes to its properties will not trigger updates on the database.  This has no effect on the entity given as a parameter -
-   it remains in its repository as a fully managed entity.
-   
-   </p><p>Typically <code>detach</code> would be used in situations where you want to make changes to an entity that might be
+   it remains in its repository as a fully managed entity.  Detached copies still support on-demand loading and bidirectional
+   association management.
+      </p><p>Typically <code>detachCopy</code> would be used in situations where you want to make changes to an entity that might be
    discarded; for example, an edit window with a <b>Save</b> and <b>Cancel</b> button.  If the user hits <b>cancel</b> the unmanaged entity can just be
     thrown away, or otherwise <code>EntityManager.merge</code> can be used to merge changes back into the repository.</p>
-   
-   <p>Note that since <code>detach</code> returns an <code>Object</code> it will probably want to be cast to a strongly typed object.
-   
-   <span class="label">Parameters</span>
+      <span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entity</span>:Object</code> &mdash; The entity to detach.
@@ -393,19 +483,16 @@ showHideInherited();
 <span class="label">Returns</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
-<td width="20"></td><td><code>Object</code> &mdash;  An unmanaged copy of the entity
-   </td>
+<td width="20"></td><td><code>Object</code></td>
 </tr>
 </table>
 <br>
 <span class="label">Example</span>
-<br>To get an unmanaged copy of a <code>user</code> entity:
-   
-   <pre>
-   var unmanagedUser:User = em.detach(managedUser) as User;
+<br>To detach a <code>user</code> entity:
+      <pre>
+   var detachedUserCopy:User = em.detachCopy(user) as User;
    </pre>
-   
-   <p></p>
+      <p></p>
 </div>
 <a name="flush()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
@@ -416,8 +503,7 @@ showHideInherited();
 <div class="detailBody">
 <code>public function flush(fetchMode:String = null):AsyncToken</code><p>
    Flush all outstanding changes to the database.  Until <code>flush</code> is called, no changes will ever be written to the database.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">fetchMode</span>:String</code> (default = <code>null</code>)<code></code></td>
@@ -440,8 +526,7 @@ showHideInherited();
 <div class="detailBody">
 <code>public function getConfiguration():<a href="../orm/Configuration.html">Configuration</a></code><p>
    Get the currently set configuration on this <code>EntityManager</code>.
-   
-   </p><p></p>
+      </p><p></p>
 <span class="label">Returns</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
@@ -462,12 +547,27 @@ showHideInherited();
 <div class="detailBody">
 <code>public static function getInstance():<a href="../orm/EntityManager.html">EntityManager</a></code><p>
    Get a singleton instance of the EntityManager.
-   
-   </p><p></p>
+      </p><p></p>
 <span class="label">Returns</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20"></td><td><code><a href="../orm/EntityManager.html">EntityManager</a></code></td>
+</tr>
+</table>
+</div>
+<a name="getOnDemandListener()"></a>
+<table cellspacing="0" cellpadding="0" class="detailHeader">
+<tr>
+<td class="detailHeaderName">getOnDemandListener</td><td class="detailHeaderParens">()</td><td class="detailHeaderType">method</td><td class="detailHeaderRule">&nbsp;</td>
+</tr>
+</table>
+<div class="detailBody">
+<code>public function getOnDemandListener():<a href="../orm/OnDemandListener.html">OnDemandListener</a></code>
+<p></p>
+<span class="label">Returns</span>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td width="20"></td><td><code><a href="../orm/OnDemandListener.html">OnDemandListener</a></code></td>
 </tr>
 </table>
 </div>
@@ -480,8 +580,7 @@ showHideInherited();
 <div class="detailBody">
 <code>public function getRepository(entityClass:Class, entityTimeToLive:Number):<a href="../orm/IEntityRepository.html">IEntityRepository</a></code><p>
    Get the <code>EntityRepository</code> for the given class.  If the repository does not exist then create an empty one and return it.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entityClass</span>:Class</code></td>
@@ -515,8 +614,7 @@ showHideInherited();
 <code>public function getUnitOfWork():<a href="../orm/UnitOfWork.html">UnitOfWork</a></code><p>
    Get direct access to the unit of work.  Public access to this might be removed in the future as, unlike Doctrine 2, changing
    things directly in the UoW can potentially put Flextrine in an unstable state.
-   
-   </p><p></p>
+      </p><p></p>
 <span class="label">Returns</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
@@ -534,8 +632,7 @@ showHideInherited();
 <code>public function load(entityClass:Class, id:Number, fetchMode:String = null):AsyncToken</code><p>
    This is a convenience method to save having to explicitly retrieve the repository.
    It is equivalent to calling <code>em.getRepository(entityClass).load(id)</code>
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entityClass</span>:Class</code></td>
@@ -571,8 +668,7 @@ showHideInherited();
 <code>public function loadAll(entityClass:Class, fetchMode:String = null):AsyncToken</code><p>
    This is a convenience method to save having to explicitly retrieve the repository.
    It is equivalent to calling <code>em.getRepository(entityClass).loadAll()</code>
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entityClass</span>:Class</code></td>
@@ -602,8 +698,7 @@ showHideInherited();
 <code>public function loadBy(entityClass:Class, criteria:Object, fetchMode:String = null):AsyncToken</code><p>
    This is a convenience method to save having to explicitly retrieve the repository.
    It is equivalent to calling <code>em.getRepository(entityClass).loadBy(criteria)</code>
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entityClass</span>:Class</code></td>
@@ -639,8 +734,7 @@ showHideInherited();
 <code>public function loadOneBy(entityClass:Class, criteria:Object, fetchMode:String = null):AsyncToken</code><p>
    This is a convenience method to save having to explicitly retrieve the repository.
    It is equivalent to calling <code>em.getRepository(entityClass).loadOneBy(criteria)</code>
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entityClass</span>:Class</code></td>
@@ -676,10 +770,8 @@ showHideInherited();
 <code>public function merge(entity:Object):Object</code><p>
    Merge a detached entity back into Flextrine.  If the entity has changed compared to its merged counterpart the merged
    object will be marked dirty and scheduled for update on the next flush.
-   
-   </p><p><code>merge</code> is the opposite operation to <code>detach</code>
-   
-   <span class="label">Parameters</span>
+      </p><p><code>merge</code> is the opposite operation to <code>detach</code>
+      <span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entity</span>:Object</code> &mdash; The entity to merge
@@ -697,17 +789,14 @@ showHideInherited();
 <br>
 <span class="label">Example</span>
 <br>Thie following example detaches an entity, makes a change, then merges it back into the repository:
-   
-   <pre>
+      <pre>
    var unmanagedUser:User = em.detach(managedUser) as User;
    unmanagedUser.name = "A different name";
    em.merge(unmanagedUser);
-   
-   // This will write the changes that were made to the entity whilst it was detached
+      // This will write the changes that were made to the entity whilst it was detached
    em.flush();
    </pre>
-   
-   <p></p>
+      <p></p>
 </div>
 <a name="persist()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
@@ -718,8 +807,7 @@ showHideInherited();
 <div class="detailBody">
 <code>public function persist(entity:Object):Object</code><p>
    Add the entity to its repository and mark it for insertion into the database on the next <code>flush</code>.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entity</span>:Object</code></td>
@@ -742,8 +830,7 @@ showHideInherited();
 <div class="detailBody">
 <code>public function remove(entity:Object):Object</code><p>
    Remove an entity from the repository and mark it for deletion from the database on the next flush.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entity</span>:Object</code> &mdash; The entity to remove
@@ -761,13 +848,11 @@ showHideInherited();
 <br>
 <span class="label">Example</span>
 <br>The following example will remove the given user from the database
-   
-   <pre>
+      <pre>
    em.remove(user);
    em.flush();
    </pre>
-   
-   <p></p>
+      <p></p>
 </div>
 <a name="requireMany()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
@@ -779,8 +864,7 @@ showHideInherited();
 <code>public function requireMany(parentEntity:Object, manyAttributeNames:Function, onResult:Function = null, onFault:String = null, fetchMode:* = null):AsyncToken</code><p>
    Ensure that a many valued collection is loaded before taking an action.  If the collection is already loaded this
    calls <code>onResult</code> instantly.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">parentEntity</span>:Object</code> &mdash; The entity containing the unitialized collection.
@@ -824,27 +908,22 @@ showHideInherited();
 <br>
 <span class="label">Example</span>
 <br>To initalize a lazily loaded collection association <code>toes</code> on a <code>foot</code> entity:
-   
-   <pre>
+      <pre>
    em.requireMany(foot, "toes", onToesLoaded);
-   
-   function onToesLoaded():void {
+      function onToesLoaded():void {
      trace("We loaded " + foot.toes.length + " toes");
    }
    </pre>
-   
-   It is also possible to use an array of attribute names if you need to required more than one association at a time.
+      It is also possible to use an array of attribute names if you need to required more than one association at a time.
    A common usage of this would be to wrap a block that works on possibly uninitialized collections in a requireMany
    call with all the associations:
-   
-   <pre>
+      <pre>
    em.requireMany(foot, [ "toes", "nails" ], function():void {
     foot.toes.add(new Toe());
     foor.nails.add(new Nail());
    } );
    </pre>
-   
-   <p></p>
+      <p></p>
 </div>
 <a name="requireOne()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
@@ -856,8 +935,7 @@ showHideInherited();
 <code>public function requireOne(entity:Object, onResult:Function = null, onFault:Function = null, fetchMode:String = null):AsyncToken</code><p>
    Ensure that a single valued association is loaded before taking an action.  If the association is already loaded this
    calls <code>onResult</code> instantly.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">entity</span>:Object</code> &mdash; The uninitialized entity to load.
@@ -894,16 +972,13 @@ showHideInherited();
 <br>
 <span class="label">Example</span>
 <br>To initalize a lazily loaded single valued association <code>owner</code> on a <code>dog</code> entity:
-   
-   <pre>
+      <pre>
    em.requireOne(dog.owner, onOwnerLoaded);
-   
-   function onOwnerLoaded():void {
+      function onOwnerLoaded():void {
      trace(dog.owner + " is now initialized");
    }
    </pre>
-   
-   <p></p>
+      <p></p>
 </div>
 <a name="rollback()"></a>
 <table cellspacing="0" cellpadding="0" class="detailHeader">
@@ -933,8 +1008,7 @@ showHideInherited();
 <code>public function select(query:<a href="Query.html">Query</a>, fetchMode:String = null):AsyncToken</code><p>
    Run a DQL select query against the database.  Use <code>EntityManager.getDQLClass</code> to convert a Flextrine entity or entity class
    into a DQL fully qualified class name.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">query</span>:<a href="Query.html">Query</a></code></td>
@@ -964,8 +1038,7 @@ showHideInherited();
 <code>public function selectOne(query:<a href="Query.html">Query</a>, fetchMode:String = null):AsyncToken</code><p>
    Run a DQL select query against the database.  Use <code>EntityManager.getDQLClass</code> to convert a Flextrine entity or entity class
    into a DQL fully qualified class name.  Only returns the first results - all others are discarded on the server.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">query</span>:<a href="Query.html">Query</a></code></td>
@@ -1028,8 +1101,7 @@ showHideInherited();
 <code>public function setConfiguration(configuration:<a href="Configuration.html">Configuration</a>):void</code><p>
    Set the configuration of the EntityManager.  A configuration <b>must</b> be provided, and at least <code>configuration.gateway</code> must be set
    in that configuration in order to use Flextrine.
-   
-   </p><span class="label">Parameters</span>
+      </p><span class="label">Parameters</span>
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
 <td width="20px"></td><td><code><span class="label">configuration</span>:<a href="Configuration.html">Configuration</a></code> &mdash; The configuration to apply to the <code>EntityManager</code>
