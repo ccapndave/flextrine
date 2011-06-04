@@ -123,7 +123,7 @@ package org.davekeen.flextrine.orm.walkers {
 				case DETACHED:
 					// We want to remove everything from the targetEntity's existing many association (it will be re-added in collectionAction)
 					if (EntityUtil.isCollectionInitialized(collection)) {
-						var checkForPropertyChanges:Boolean = isMerge;
+						var checkForPropertyChanges:Boolean = data.isMerge;
 						data.entityRepository.resetManyAssociation(data.targetEntity[associationName], checkForPropertyChanges);
 					}
 					break;
@@ -143,7 +143,7 @@ package org.davekeen.flextrine.orm.walkers {
 				case UPDATE:
 				case DETACHED:
 					// We will have removed the collection in beforeCollectionWalk, so add them back in with the recursive results
-					var checkForPropertyChanges:Boolean = isMerge;
+					var checkForPropertyChanges:Boolean = data.isMerge;
 					data.entityRepository.addEntityToManyAssociation(data.targetEntity, associationName, doWalk(replaceEntity(collection.source[idx], data)), checkForPropertyChanges);
 					break;
 				case ADD:

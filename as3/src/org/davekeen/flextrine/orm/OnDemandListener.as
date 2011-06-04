@@ -39,7 +39,7 @@ package org.davekeen.flextrine.orm {
 			if (!em.getConfiguration().loadEntitiesOnDemand)
 				throw new FlextrineError("Attempt to get property '" + e.property + "' on unitialized entity '" + entity + "'.  Consider using EntityManager::require, FetchMode.EAGER or configuration.loadEntitiesOnDemand.", FlextrineError.ACCESSED_UNINITIALIZED_ENTITY);
 			
-			log.info("Loading on demand: entity " + entity);
+			log.info("Loading on demand: entity {0}", entity);
 			
 			em.requireOne(entity).addResponder(new AsyncResponder(onInitializeResult, onInitializeFault, e.itemPendingError));
 		}
@@ -58,7 +58,7 @@ package org.davekeen.flextrine.orm {
 			if (!e.itemPendingError)
 				e.itemPendingError = new ItemPendingError("ItemPendingError - initializing collection " + persistentCollection.getOwner() + "." + e.property);
 			
-			log.info("Loading on demand: collection '" + e.property + "' on entity " + persistentCollection.getOwner());
+			log.info("Loading on demand: collection '{0}' on entity {1}", e.property, persistentCollection.getOwner());
 			
 			em.requireMany(persistentCollection.getOwner(), e.property).addResponder(new AsyncResponder(onInitializeResult, onInitializeFault, e.itemPendingError));
 		}

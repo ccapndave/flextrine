@@ -5,7 +5,7 @@ class CollectionChangeOperation extends RemoteOperation {
 	
 	const ADD = "add";
 	const REMOVE = "remove";
-	//const RESET = "reset";
+	const RESET = "reset";
 	
 	var $type;
 	var $entity;

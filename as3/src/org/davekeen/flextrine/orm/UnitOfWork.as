@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2011 Dave Keen
  * http://www.actionscriptdeveloper.co.uk
  * 
@@ -144,7 +144,7 @@ package org.davekeen.flextrine.orm {
 			var propertyChangeOperation:PropertyChangeOperation = PropertyChangeOperation.createFromPropertyChangeEvent(e);
 			
 			if (!persistedEntities[propertyChangeOperation.entity]) {
-				log.info("Detected property change on " + propertyChangeOperation.entity + "::" + propertyChangeOperation.property + " - '" + e.oldValue + "' => '" + e.newValue + "'");
+				log.info("Detected property change on {0}::{1} - '{2}' => '{3}'", propertyChangeOperation.entity, propertyChangeOperation.property, e.oldValue, e.newValue);
 				remoteOperations.propertyChanges[EntityUtil.getUniqueHash(propertyChangeOperation.entity) + "_" + propertyChangeOperation.property] = propertyChangeOperation;
 			}
 		}
@@ -153,7 +153,8 @@ package org.davekeen.flextrine.orm {
 			var collectionChangeOperation:CollectionChangeOperation = CollectionChangeOperation.createFromCollectionChangeEvent(e);
 			
 			// Dictionary or array?  Not sure how we can write/overwrite stuff, plus we want it ordered.  This one is an array!
-			log.info("Detected collection change on " + collectionChangeOperation.entity + "::" + collectionChangeOperation.property + " - " + collectionChangeOperation.type);
+			log.info("Detected collection change on {0}::{1} - {2}", collectionChangeOperation.entity, collectionChangeOperation.property, collectionChangeOperation.type);
+			
 			remoteOperations.collectionChanges.push(collectionChangeOperation);
 		}
 		

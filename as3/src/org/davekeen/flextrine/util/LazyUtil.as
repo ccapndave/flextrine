@@ -67,7 +67,7 @@ package org.davekeen.flextrine.util {
 						result();
 					},
 					function (e:FaultEvent, token:Object):void {
-						log.info("Received fault [" + e.fault.faultDetail + "]");
+						log.info("Received fault [{0}]", e.fault.faultDetail);
 						if (fault != null) fault();
 					}
 				));

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Copyright 2011 Dave Keen
  * http://www.actionscriptdeveloper.co.uk
  * 
@@ -21,6 +21,7 @@
  */
 
 package org.davekeen.flextrine.orm {
+	import flash.events.Event;
 	import flash.utils.Dictionary;
 	
 	import mx.collections.errors.ItemPendingError;
@@ -179,7 +180,7 @@ package org.davekeen.flextrine.orm {
 		flextrine function addEntity(entity:Object, temporaryUid:String = null):Object {
 			var idHash:String = EntityUtil.getIdHash(entity);
 			
-			log.info("Adding " + entity + " {repository=" + ClassUtil.formatClassAsString(entityClass) + ", " + ((temporaryUid) ? "tempUid=" + temporaryUid : "idHash=" + idHash) + "}");
+			log.info("Adding {0} {repository={1}, {2}}", entity, ClassUtil.formatClassAsString(entityClass), ((temporaryUid) ? "tempUid=" + temporaryUid : "idHash=" + idHash));
 			
 			entities.addItem(entity);
 			
@@ -239,7 +240,7 @@ package org.davekeen.flextrine.orm {
 			
 			// Only update if the entity actually exists
 			if (existingEntity) {
-				log.info("Updating " + existingEntity + " to " +  entity + " {repository=" + ClassUtil.formatClassAsString(entityClass) + ", idHash=" + idHash + "}");
+				log.info("Updating {0} to {1} {repository={2}, idHash={3}}", existingEntity, entity, ClassUtil.formatClassAsString(entityClass), idHash);
 				
 				if (!checkForPropertyChanges) isUpdating = true;
 				existingEntity = EntityUtil.mergeEntity(entity, existingEntity);
@@ -268,7 +269,7 @@ package org.davekeen.flextrine.orm {
 		internal function addPersistedEntity(entity:Object, temporaryUid:String, addEntityToRepository:Boolean = false):Object {
 			if (temporaryUidMap[temporaryUid]) {
 				// We found the temporary uid in the repository, so upate the existing entity by reference
-				log.info("Updating persisted entity " + entity + " with uid " + temporaryUid);
+				log.info("Updating persisted entity {0} with uid {1}", entity, temporaryUid);
 				
 				isUpdating = true;
 				EntityUtil.mergeEntity(entity, temporaryUidMap[temporaryUid]);
@@ -282,7 +283,7 @@ package org.davekeen.flextrine.orm {
 			} else {
 				// The temporary id was not found in the repository so this must have been persisted on another client; add the entity as a new object
 				// We found the temporary uid in the repository, so upate the existing entity by reference
-				log.info("Got a new persisted entity " + entity);
+				log.info("Got a new persisted entity {0}", entity);
 				
 				addEntity(entity);
 			}
@@ -379,7 +380,8 @@ package org.davekeen.flextrine.orm {
 					break;
 				case STATE_REMOVED:
 					// If the entity has already been removed do nothing
-					log.info("Remove called on already removed entity " + entity +  " - ignoring {repository=" + ClassUtil.formatClassAsString(entityClass) + ", idHash=" + idHash + "}");
+					log.info("Remove called on already removed entity {0} - ignoring {repository={1}, idHash={2}}", entity, ClassUtil.formatClassAsString(entityClass), idHash);
+					
 					return false;
 				case STATE_DETACHED:
 					throw new Error("You cannot remove a detached entity");
@@ -388,7 +390,7 @@ package org.davekeen.flextrine.orm {
 					throw new Error("Unknown state '" + entityState + "' for entity " + entity);
 			}
 			
-			log.info("Deleting " + entityToRemove +  " {repository=" + ClassUtil.formatClassAsString(entityClass) + ", idHash=" + idHash + "}");
+			log.info("Deleting {0} {repository={1}, idHash={2}}", entityToRemove, ClassUtil.formatClassAsString(entityClass), idHash);
 			
 			// Remove the property change listener
 			entityToRemove.removeEventListener(PropertyChangeEvent.PROPERTY_CHANGE, onPropertyChange);
@@ -415,7 +417,7 @@ package org.davekeen.flextrine.orm {
 					// No need to do anything
 					break;
 				case STATE_REMOVED:
-					log.warn("Attempted to detach REMOVED entity " + entity + ".  Ignoring.");
+					log.warn("Attempted to detach REMOVED entity {0}.  Ignoring.", entity);
 					break;
 			}
 		}
@@ -427,10 +429,16 @@ package org.davekeen.flextrine.orm {
 		 * @param	associationName
 		 */
 		flextrine function resetManyAssociation(persistentCollection:PersistentCollection, checkForPropertyChanges:Boolean = false):void {
-			if (!checkForPropertyChanges) isUpdating = true;
+			isUpdating = true;
 			persistentCollection.removeAll();
 			//persistentCollection.removeAllNonRecursive();
-			if (!checkForPropertyChanges) isUpdating = false;
+			isUpdating = false;
+			
+			// Manually dispatch in a collectionchange reset if we are checking for property changes
+			if (checkForPropertyChanges)
+				persistentCollection.dispatchEvent(new CollectionEvent(CollectionEvent.COLLECTION_CHANGE, false, false, CollectionEventKind.RESET));
+
+			
 		}
 		
 		/**
@@ -564,14 +572,13 @@ package org.davekeen.flextrine.orm {
 				switch (e.kind) {
 					case CollectionEventKind.ADD:
 					case CollectionEventKind.REMOVE:
+					case CollectionEventKind.RESET:
 						// If this is a property, or the owning side of an association we need to mark for server-side merging
 						if (isOwningAssociation(entity, attributeName))
 							em.getUnitOfWork().collectionChange(e);
-	
 						break;
 					case CollectionEventKind.REPLACE:
-					case CollectionEventKind.RESET:
-						log.error("Got a " + e.kind + " collection message on " + entity + "::" + attributeName + " - not sure what to do about these messages for the moment");
+						log.error("Got a {0} collection message on {1}::{2} - not sure what to do about these messages for the moment", e.kind, entity, attributeName);
 						break;
 				}
 			}
@@ -622,7 +629,7 @@ package org.davekeen.flextrine.orm {
 							
 							// and since we are in onPropertyChange change back the property that caused this handler to be fired, giving us the original
 							if (e.source[e.property] is PersistentCollection) {
-								log.error("Memento saving needs to be fixed for PersistentCollections! (" + e.source + "[" + e.property + "]");
+								log.error("Memento saving needs to be fixed for PersistentCollections! ({0} [{1}]", e.source, e.property);
 							} else {
 								dirtyEntities[e.source][e.property] = e.oldValue;
 							}

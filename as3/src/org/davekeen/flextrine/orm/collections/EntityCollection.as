@@ -100,7 +100,7 @@ package org.davekeen.flextrine.orm.collections {
 			var entity:Object = (super.getItemAt(index, prefetch) as EntityProxy).flextrine::object;
 			
 			if (!entity) {
-				log.info("Noticed " + (super.getItemAt(index, prefetch) as EntityProxy).flextrine::objectToString + " was garbage collected in getItemAt()");
+				log.info("Noticed {0} was garbage collected in getItemAt()", (super.getItemAt(index, prefetch) as EntityProxy).flextrine::objectToString);
 				
 				// This is a bit dodgy, but seems to work ok so far...
 				removeItemAt(index);

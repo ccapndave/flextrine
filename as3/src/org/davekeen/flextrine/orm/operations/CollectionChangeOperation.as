@@ -10,7 +10,7 @@ package org.davekeen.flextrine.orm.operations {
 		
 		public static const ADD:String = "add"; // add the item(s)
 		public static const REMOVE:String = "remove"; // remove the item(s)
-		//public static const RESET:String = "reset"; // replace the entire collection with the items
+		public static const RESET:String = "reset"; // replace the entire collection with the items
 		
 		public var type:String;
 		
@@ -39,16 +39,15 @@ package org.davekeen.flextrine.orm.operations {
 					return create(persistentCollection, ADD, e.items);
 				case CollectionEventKind.REMOVE:
 					return create(persistentCollection, REMOVE, e.items);
+				case CollectionEventKind.RESET:
+					// Use map to make a clone of the array so it doesn't change
+					return create(persistentCollection, RESET, persistentCollection.source.map(function(e:*, ...r):* { return e; } ));
 				default:
 					throw new Error("unsupported collection change kind " + e.kind);
 			}
 			
 			return null;
 		}
-		
-		/*public static function createResetFromCollection(persistentCollection:PersistentCollection):CollectionChangeOperation {
-			return create(persistentCollection, RESET, persistentCollection.source);
-		}*/
 		
 		private static function create(persistentCollection:PersistentCollection, type:String, items:Array):CollectionChangeOperation {
 			var changeOperation:CollectionChangeOperation = new CollectionChangeOperation();

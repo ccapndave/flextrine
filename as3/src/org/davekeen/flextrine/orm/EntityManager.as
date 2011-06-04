@@ -221,7 +221,7 @@ package org.davekeen.flextrine.orm {
 			
 			// If the entity was already persisted we get null back and do nothing
 			if (temporaryUid) {
-				log.info("Persisting " + entity);
+				log.info("Persisting {0}", entity);
 				
 				// Add the persist operation to the unit of work
 				unitOfWork.persist(entity, temporaryUid);
@@ -241,7 +241,7 @@ package org.davekeen.flextrine.orm {
 			if (!entity)
 				throw new TypeError("Attempted to detach null");
 			
-			log.info("Detaching " + entity);
+			log.info("Detaching {0}", entity);
 			
 			(getRepository(ClassUtil.getClass(entity)) as EntityRepository).detachEntity(entity);
 		}
@@ -299,7 +299,7 @@ package org.davekeen.flextrine.orm {
 			if (!entity)
 				throw new TypeError("Attempted to merge null");
 			
-			log.info("Merging " + entity);
+			log.info("Merging {0}", entity);
 			
 			switch (getConfiguration().writeMode) {
 				case WriteMode.PUSH:
@@ -329,7 +329,7 @@ package org.davekeen.flextrine.orm {
 				throw new TypeError("Attempted to remove null");
 			
 			if ((getRepository(ClassUtil.getClass(entity)) as EntityRepository).deleteEntity(entity, configuration.writeMode != WriteMode.PULL)) {
-				log.info("Removing " + entity);
+				log.info("Removing {0}", entity);
 				unitOfWork.remove(entity);
 			}
 			
@@ -346,14 +346,14 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function select(query:Query, fetchMode:String = null):AsyncToken {
-			log.info("Selecting " + query.dql);
+			log.info("Selecting {0}", query.dql);
 			
 			return getDelegate().select(query, 0, 0, (fetchMode) ? fetchMode : getConfiguration().fetchMode);
 		}
 		
 		// TODO: It should be possible to use a remote method for this instead of DQL
 		public function selectPaged(query:Query, pageSize:uint, fetchMode:String = null):PagedCollection {
-			log.info("Selecting (paged) " + query.dql);
+			log.info("Selecting (paged) {0}", query.dql);
 			
 			var pagedCollection:PagedCollection = new PagedCollection();
 			pagedCollection.pageSize = pageSize;
@@ -372,7 +372,7 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function selectOne(query:Query, fetchMode:String = null):AsyncToken {
-			log.info("Selecting (one) " + query.dql);
+			log.info("Selecting (one) {0}", query.dql);
 			
 			return getDelegate().selectOne(query, (fetchMode) ? fetchMode : getConfiguration().fetchMode);
 		}
@@ -387,7 +387,7 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function load(entityClass:Class, id:Number, fetchMode:String = null):AsyncToken {
-			log.info("Loading " + entityClass.toString() + " id=" + id);
+			log.info("Loading {0} id={1}", entityClass.toString(), id);
 			
 			return getRepository(entityClass).load(id, fetchMode);
 		}
@@ -402,7 +402,7 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function loadOneBy(entityClass:Class, criteria:Object, fetchMode:String = null):AsyncToken {
-			log.info("Loading one by " + entityClass.toString() + ObjectUtil.toString(criteria));
+			log.info("Loading one by {0}", entityClass.toString() + ObjectUtil.toString(criteria));
 			
 			return getRepository(entityClass).loadOneBy(criteria, fetchMode);
 		}
@@ -417,7 +417,7 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function loadBy(entityClass:Class, criteria:Object, fetchMode:String = null):AsyncToken {
-			log.info("Loading by " + entityClass.toString() + ObjectUtil.toString(criteria));
+			log.info("Loading by {0}", entityClass.toString() + ObjectUtil.toString(criteria));
 			
 			return getRepository(entityClass).loadBy(criteria, fetchMode);
 		}
@@ -431,7 +431,7 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function loadAll(entityClass:Class, fetchMode:String = null):AsyncToken {
-			log.info("Loading all " + entityClass.toString());
+			log.info("Loading all {0}", entityClass.toString());
 			
 			return getRepository(entityClass).loadAll(fetchMode);
 		}
@@ -482,7 +482,7 @@ package org.davekeen.flextrine.orm {
 		 * @return  An AsyncToken which can be used to handle a result or fault.
 		 */
 		public function callRemoteMethod(methodName:String, ... args):AsyncToken {
-			log.info("Calling remote method " + methodName + " " + ObjectUtil.toString(args));
+			log.info("Calling remote method {0} {1}", methodName, ObjectUtil.toString(args));
 			
 			return getDelegate().callRemoteMethod(methodName, args);
 		}
@@ -505,13 +505,13 @@ package org.davekeen.flextrine.orm {
 		 *
 		 */
 		public function callRemoteEntityMethod(methodName:String, ... args):AsyncToken {
-			log.info("Calling remote entity method " + methodName + " " + ObjectUtil.toString(args));
+			log.info("Calling remote entity method {0} {1}", methodName, ObjectUtil.toString(args));
 			
 			return getDelegate().callRemoteEntityMethod(methodName, args);
 		}
 		
 		public function callRemoteFlushMethod(methodName:String, ... args):AsyncToken {
-			log.info("Calling remote flush method " + methodName + " " + ObjectUtil.toString(args));
+			log.info("Calling remote flush method {0} {1}", methodName, ObjectUtil.toString(args));
 			
 			return getDelegate().callRemoteFlushMethod(methodName, args);
 		}
@@ -539,7 +539,7 @@ package org.davekeen.flextrine.orm {
 			if (entity is PersistentCollection)
 				throw new FlextrineError("requireOne can only be called on a single valued association, not a collection", FlextrineError.ILLEGAL_REQUIRE);
 			
-			log.info("Requiring one " + entity);
+			log.info("Requiring one {0}", entity);
 			
 			if (EntityUtil.isInitialized(entity)) {
 				if (onResult != null)
@@ -588,7 +588,7 @@ package org.davekeen.flextrine.orm {
 		 * @return
 		 */
 		public function requireMany(parentEntity:Object, manyAttributeNames:*, onResult:Function = null, onFault:Function = null, fetchMode:String = null):AsyncToken {
-			log.info("Requiring many " + parentEntity + "::" + manyAttributeNames);
+			log.info("Requiring many {0}::{1}", parentEntity, manyAttributeNames);
 			
 			return doRequireMany(parentEntity, (manyAttributeNames is Array) ? manyAttributeNames : [manyAttributeNames], onResult, onFault, fetchMode);
 		}
@@ -676,7 +676,7 @@ package org.davekeen.flextrine.orm {
 			//if (transactionLevel == 0)
 			//	throw new FlextrineError("Unable to rollback without explicitly beginning a new transaction with em.beginTransaction()", FlextrineError.NO_ACTIVE_TRANSACTION);
 			
-			log.info("Rolling back transaction " + transactionLevel);
+			log.info("Rolling back transaction {0}", transactionLevel);
 			
 			var rolledBack:Boolean;
 			var entity:Object;
@@ -758,11 +758,11 @@ package org.davekeen.flextrine.orm {
 		}
 		
 		private function onFlextrineLoadFault(e:FlextrineFaultEvent):void {
-			log.error("Load fault: " + e.faultEvent.fault.faultString + "\n" + e.faultEvent.fault.faultDetail);
+			log.error("Load fault: {0}\n{1}", e.faultEvent.fault.faultString, e.faultEvent.fault.faultDetail);
 		}
 		
 		private function onFlextrineFlushFault(e:FlextrineFaultEvent):void {
-			log.error("Flush fault: " + e.faultEvent.fault.faultString + "\n" + e.faultEvent.fault.faultDetail);
+			log.error("Flush fault: {0}\n{1}", e.faultEvent.fault.faultString, e.faultEvent.fault.faultDetail);
 		}
 		
 		/**
@@ -793,7 +793,7 @@ package org.davekeen.flextrine.orm {
 				
 				if (changedEntity) {
 					// We found the temporary uid in the repository, so upate the existing entity and merge it into the repository
-					log.info("Updating persisted entity " + changedEntity + " with uid " + temporaryUidMap[oid] + " to " + entityInsertions[oid]);
+					log.info("Updating persisted entity {0} with uid {1} to {2}", changedEntity, temporaryUidMap[oid], entityInsertions[oid]);
 					
 					changedEntity = repo.mergeIdentifiers(changedEntity, entityInsertions[oid]);
 					changedEntity = addLoadedEntityToRepository(changedEntity);
@@ -809,8 +809,10 @@ package org.davekeen.flextrine.orm {
 			}
 			
 			for each (var serverInsertion:Object in serverInsertions) {
-				log.info("Got a new persisted entity from the server " + serverInsertion);
+				log.info("Got a new persisted entity from the server {0}", serverInsertion);
 				changedEntity = addLoadedEntityToRepository(serverInsertion);
+				
+				repo = getRepository(ClassUtil.getClass(changedEntity)) as EntityRepository;
 				persists.push(repo.findOneBy(EntityUtil.getIdObject(changedEntity)));
 			}
 			
@@ -851,10 +853,10 @@ package org.davekeen.flextrine.orm {
 				
 				var repoEntity:Object = repo.findOneBy(EntityUtil.getIdObject(entityDeletions[oid]));
 				if (repoEntity) {
-					log.info("Entity removed on server and also in local repository " + repoEntity);
+					log.info("Entity removed on server and also in local repository {0}", repoEntity);
 					repo.deleteEntity(repoEntity);
 				} else {
-					log.info("Entity removed on server " + entityDeletions[oid]);
+					log.info("Entity removed on server {0}", entityDeletions[oid]);
 				}
 				
 				// Since a removed object no longer exists in the repository we just put what we got back from the server into changes

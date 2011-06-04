@@ -56,8 +56,6 @@ package org.davekeen.flextrine.orm.collections {
 			refreshTimer.addEventListener(TimerEvent.TIMER, doRefreshTimer, false, 0, true);
 			
 			this.refresh();
-			
-			this.sort = new NullSort();
 		}
 		
 		[Bindable("paginatedCollectionChange")]
@@ -269,7 +267,7 @@ package org.davekeen.flextrine.orm.collections {
 		}
 		
 		private function onAsyncResult(resultEvent:ResultEvent, token:Object = null):void {
-			//log.info("Loaded:" + token.start + "->" + token.end);
+			//log.info("Loaded: {0} -> {1}", token.start, token.end);
 			var count:uint = resultEvent.result.count;
 			var resultArray:Array = resultEvent.result.results;
 			var idx:int = 0;
@@ -311,20 +309,5 @@ package org.davekeen.flextrine.orm.collections {
 			});
 			callLater.start();
 		}
-	}
-}
-
-import mx.collections.Sort;
-
-class NullSort extends Sort {
-	
-	private var _sorted:Boolean = false;
-	
-	public function get sorted():Boolean {
-		return _sorted;
-	}
-	
-	public override function sort(array:Array):void {
-		_sorted = true;
 	}
 }

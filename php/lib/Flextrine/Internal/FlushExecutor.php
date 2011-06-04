@@ -27,7 +27,8 @@ use Flextrine\Operations\CollectionChangeOperation;
 
 use Doctrine\ORM\Events,
 	Doctrine\ORM\Event\OnFlushEventArgs,
-	Doctrine\ORM\Mapping\ClassMetadata;
+	Doctrine\ORM\Mapping\ClassMetadata,
+	Doctrine\ORM\Proxy\Proxy;
 
 class FlushExecutor {
 	
@@ -78,6 +79,12 @@ class FlushExecutor {
 	public function flush() {
 		$this->temporaryUidMap = array();
 		
+		$this->changeSets = array("entityInsertions" => array(),
+								  "entityUpdates" => array(),
+								  "entityDeletions" => array()/*,
+								  "collectionUpdates" => array(),
+								  "collectionDeletions" => array()*/);
+		
 		// Add an event listener to hook into the flush and retrieve the changesets
 		$this->em->getEventManager()->addEventListener(array(Events::onFlush), $this);
 		
@@ -122,7 +129,7 @@ class FlushExecutor {
 		foreach ($this->propertyChangeRemoteOperations as $propertyChangeOperation) {
 			$class = $this->em->getClassMetadata(get_class($propertyChangeOperation->entity));
 			
-			$entity = $this->getManagedEntityById($propertyChangeOperation->entity);
+			$entity = $this->getManagedEntity($propertyChangeOperation->entity);
 			
 			// Determine whether we are updating a field or a (single valued) association.
 			if (array_key_exists($propertyChangeOperation->property, $class->fieldMappings)) {
@@ -132,13 +139,13 @@ class FlushExecutor {
 				if ($class->associationMappings[$propertyChangeOperation->property]['type'] & ClassMetadata::TO_MANY)
 					throw new \Exception("Flextrine attempted to execute a propertyChange event against a many valued collection.  This should not happen!");
 				
-				// Set the new value of the property (this should use reflection, but for now do it dynamically)
-				$newAssoc = $this->getManagedEntityById($propertyChangeOperation->value);
+				// Set the new value of the property (this should use reflection, but for now do it dynamically).  This doesn't need to be initialized.
+				$newAssoc = $this->getManagedEntity($propertyChangeOperation->value, false);
 				$entity->{$propertyChangeOperation->property} = $newAssoc;
 			}
 			
-			// This is horribly inefficient, but unfortunately (at least at present) it seems to be the only way to get certain property changes to hold
-			$this->em->flush();
+			// TODO: Unless there is a flush here, weird stuff happens - I'm not sure why.  At some point work this out and remove it.
+			//$this->em->flush();
 		}
 	}
 	
@@ -149,26 +156,40 @@ class FlushExecutor {
 			if (!(array_key_exists($collectionChangeOperation->property, $class->associationMappings) && $class->associationMappings[$collectionChangeOperation->property]['type'] & ClassMetadata::TO_MANY))
 				throw new \Exception("Flextrine attempted to execute a collectionChange event against a non-existant or single valued association.  This should not happen!");
 			
-			$entity = $this->getManagedEntityById($collectionChangeOperation->entity);
+			$entity = $this->getManagedEntity($collectionChangeOperation->entity);
 			
-			foreach ($collectionChangeOperation->items as $item) {
-				$newAssoc = $this->getManagedEntityById($item);
-				
-				switch ($collectionChangeOperation->type) {
-					case CollectionChangeOperation::ADD:
-						if (!($entity->{$collectionChangeOperation->property}->contains($newAssoc)))
-							$entity->{$collectionChangeOperation->property}->add($newAssoc);
-						break;
-					case CollectionChangeOperation::REMOVE:
-						if (($entity->{$collectionChangeOperation->property}->contains($newAssoc)))
-							$entity->{$collectionChangeOperation->property}->removeElement($newAssoc);
-						break;
-				}
+			switch ($collectionChangeOperation->type) {
+				case CollectionChangeOperation::ADD:
+				case CollectionChangeOperation::REMOVE:
+					foreach ($collectionChangeOperation->items as $item) {
+						// Get the entity to add/remove.  This doesn't need to be initialized.
+						$newAssoc = $this->getManagedEntity($item, false);
+						
+						if ($collectionChangeOperation->type == CollectionChangeOperation::ADD) {
+							if (!($entity->{$collectionChangeOperation->property}->contains($newAssoc)))
+								$entity->{$collectionChangeOperation->property}->add($newAssoc);
+						} else if ($collectionChangeOperation->type == CollectionChangeOperation::REMOVE) {
+							if (($entity->{$collectionChangeOperation->property}->contains($newAssoc)))
+								$entity->{$collectionChangeOperation->property}->removeElement($newAssoc);
+						}
+					}
+					break;
+				case CollectionChangeOperation::RESET:
+					$entity->{$collectionChangeOperation->property}->initialize(); // DDC-1180; remove when fixed in Doctrine
+					$entity->{$collectionChangeOperation->property}->clear();
+					
+					foreach ($collectionChangeOperation->items as $item) {
+						// Get the entity to add.  This doesn't need to be initialized.
+						$newAssoc = $this->getManagedEntity($item, false);
+						$entity->{$collectionChangeOperation->property}->add($newAssoc);
+					}
+					
+					break;
 			}
 		}
 	}
 	
-	private function getManagedEntityById($detachedEntity) {
+	private function getManagedEntity($detachedEntity, $forceEntityInitialized = true) {
 		if (is_null($detachedEntity))
 			return null;
 		
@@ -180,12 +201,27 @@ class FlushExecutor {
 		foreach ($idFields as $idField)
 			$findBy[$idField] = $detachedEntity->$idField; // TODO: This should use reflection
 		
-		return $this->em->getRepository(get_class($detachedEntity))->findOneBy($findBy);
+		// First try and get the entity from the unit of work, in case we have already loaded (and possibly changed) it.
+		$managedEntity = $this->em->getUnitOfWork()->tryGetById($findBy, get_class($detachedEntity));
+		
+		// If the entity wasn't in the unit of work then get it from the database instead
+		if (!$managedEntity) $managedEntity = $this->em->getRepository(get_class($detachedEntity))->findOneBy($findBy);
+		
+		// If the entity is not initialized then force initialize it (if $initializeEntity is true)
+		if ($managedEntity instanceof Proxy && !$managedEntity->__isInitialized__ && $forceEntityInitialized) {
+			// Not very pretty, but it currently seems to be the only way to initialize an entity without using a proxied method
+			$reflectionClass = new \ReflectionClass($managedEntity);
+			$loadMethod = $reflectionClass->getMethod("__load");
+			$loadMethod->setAccessible(true);
+			$loadMethod->invoke($managedEntity);
+		}
+		
+		return $managedEntity;
 	}
 	
 	private function doRemoves() {
 		foreach ($this->removeRemoteOperations as $removeOperation)
-			$this->em->remove($this->getManagedEntityById($removeOperation->entity));
+			$this->em->remove($this->getManagedEntity($removeOperation->entity));
 		
 	}
 	
@@ -226,14 +262,13 @@ class FlushExecutor {
 		
 		// We don't use collectionUpdates and colectionDeletions so far, and they seem to make Doctrine do loads of SQL queries so leave them
 		// out for the moment.
-		//
-		// TODO: Now that Flextrine uses change messenging collectionUpdates and collectionDeletions makes more sense again, especially as without then server-side M2N changes won't
+		// TODO: Now that Flextrine uses change messenging collectionUpdates and collectionDeletions makes more sense again, especially as without then server-side M2n changes won't
 		// get picked up by callRemoteFlushMethod.  For now these can stay commented, but this must be addressed at some point.
-		$this->changeSets = array("entityInsertions" => $this->em->getUnitOfWork()->getScheduledEntityInsertions(),
-								  "entityUpdates" => $this->em->getUnitOfWork()->getScheduledEntityUpdates(),
-								  "entityDeletions" => $this->em->getUnitOfWork()->getScheduledEntityDeletions()/*,
-								  "collectionUpdates" => $this->em->getUnitOfWork()->getScheduledCollectionUpdates(),
-								  "collectionDeletions" => $this->em->getUnitOfWork()->getScheduledCollectionDeletions()*/);
+		$this->changeSets["entityInsertions"] = array_merge($this->em->getUnitOfWork()->getScheduledEntityInsertions(), $this->changeSets["entityInsertions"]);
+		$this->changeSets["entityUpdates"] = array_merge($this->em->getUnitOfWork()->getScheduledEntityUpdates(), $this->changeSets["entityUpdates"]);
+		$this->changeSets["entityDeletions"] = array_merge($this->em->getUnitOfWork()->getScheduledEntityDeletions(), $this->changeSets["entityDeletions"]);
+		/*$this->changeSets["collectionUpdates"] = array_merge($this->em->getUnitOfWork()->getScheduledCollectionUpdates(), $this->changeSets["collectionUpdates"]);
+		$this->changeSets["collectionDeletions"] = array_merge($this->em->getUnitOfWork()->getScheduledCollectionDeletions(), $this->changeSets["collectionDeletions"]);*/
 		
 	}
 	
