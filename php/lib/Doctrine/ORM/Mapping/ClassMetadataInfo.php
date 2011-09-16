@@ -335,7 +335,6 @@ class ClassMetadataInfo implements ClassMetadata
      * uniqueConstraints => array
      *
      * @var array
-     * @todo Rename to just $table
      */
     public $table;
 
@@ -833,16 +832,12 @@ class ClassMetadataInfo implements ClassMetadata
         }
 
         // Cascades
-        $cascades = isset($mapping['cascade']) ? $mapping['cascade'] : array();
+        $cascades = isset($mapping['cascade']) ? array_map('strtolower', $mapping['cascade']) : array();
+        
         if (in_array('all', $cascades)) {
-            $cascades = array(
-               'remove',
-               'persist',
-               'refresh',
-               'merge',
-               'detach'
-            );
+            $cascades = array('remove', 'persist', 'refresh', 'merge', 'detach');
         }
+        
         $mapping['cascade'] = $cascades;
         $mapping['isCascadeRemove'] = in_array('remove',  $cascades);
         $mapping['isCascadePersist'] = in_array('persist',  $cascades);
@@ -909,13 +904,9 @@ class ClassMetadataInfo implements ClassMetadata
             $mapping['targetToSourceKeyColumns'] = array_flip($mapping['sourceToTargetKeyColumns']);
         }
 
+        //TODO: if orphanRemoval, cascade=remove is implicit!
         $mapping['orphanRemoval'] = isset($mapping['orphanRemoval']) ?
                 (bool) $mapping['orphanRemoval'] : false;
-        
-        // if orphanRemoval, cascade=remove is implicit
-        if ($mapping['orphanRemoval']) {
-            $mapping['isCascadeRemove'] = true;
-        }
 
         if (isset($mapping['id']) && $mapping['id'] === true && !$mapping['isOwningSide']) {
             throw MappingException::illegalInverseIdentifierAssocation($this->name, $mapping['fieldName']);
@@ -940,13 +931,9 @@ class ClassMetadataInfo implements ClassMetadata
             throw MappingException::oneToManyRequiresMappedBy($mapping['fieldName']);
         }
         
+        //TODO: if orphanRemoval, cascade=remove is implicit!
         $mapping['orphanRemoval'] = isset($mapping['orphanRemoval']) ?
                 (bool) $mapping['orphanRemoval'] : false;
-
-        // if orphanRemoval, cascade=remove is implicit
-        if ($mapping['orphanRemoval']) {
-            $mapping['isCascadeRemove'] = true;
-        }
 
         if (isset($mapping['orderBy'])) {
             if ( ! is_array($mapping['orderBy'])) {
@@ -1280,7 +1267,8 @@ class ClassMetadataInfo implements ClassMetadata
      */
     public function getTemporaryIdTableName()
     {
-        return $this->table['name'] . '_id_tmp';
+        // replace dots with underscores because PostgreSQL creates temporary tables in a special schema
+        return str_replace('.', '_', $this->table['name'] . '_id_tmp');
     }
 
     /**
@@ -1530,6 +1518,10 @@ class ClassMetadataInfo implements ClassMetadata
      */
     public function setCustomRepositoryClass($repositoryClassName)
     {
+        if ($repositoryClassName !== null && strpos($repositoryClassName, '\\') === false 
+                && strlen($this->namespace) > 0) {
+            $repositoryClassName = $this->namespace . '\\' . $repositoryClassName;
+        }
         $this->customRepositoryClassName = $repositoryClassName;
     }
 
@@ -1808,7 +1800,7 @@ class ClassMetadataInfo implements ClassMetadata
         $this->versionField = $mapping['fieldName'];
 
         if ( ! isset($mapping['default'])) {
-            if ($mapping['type'] == 'integer') {
+            if (in_array($mapping['type'], array('integer', 'bigint', 'smallint'))) {
                 $mapping['default'] = 1;
             } else if ($mapping['type'] == 'datetime') {
                 $mapping['default'] = 'CURRENT_TIMESTAMP';
@@ -1847,5 +1839,95 @@ class ClassMetadataInfo implements ClassMetadata
     public function markReadOnly()
     {
         $this->isReadOnly = true;
+    }
+    
+    /**
+     * A numerically indexed list of field names of this persistent class.
+     * 
+     * This array includes identifier fields if present on this class.
+     * 
+     * @return array
+     */
+    public function getFieldNames()
+    {
+        return array_keys($this->fieldMappings);
+    }
+    
+    /**
+     * A numerically indexed list of association names of this persistent class.
+     * 
+     * This array includes identifier associations if present on this class.
+     * 
+     * @return array
+     */
+    public function getAssociationNames()
+    {
+        return array_keys($this->associationMappings);
+    }
+    
+    /**
+     * Returns the target class name of the given association.
+     * 
+     * @param string $assocName
+     * @return string
+     */
+    public function getAssociationTargetClass($assocName)
+    {
+        if (!isset($this->associationMappings[$assocName])) {
+            throw new \InvalidArgumentException("Association name expected, '" . $assocName ."' is not an association.");
+        }
+        return $this->associationMappings[$assocName]['targetEntity'];
+    }
+    
+    /**
+     * Get fully-qualified class name of this persistent class.
+     * 
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Gets the (possibly quoted) column name of a mapped field for safe use
+     * in an SQL statement.
+     * 
+     * @param string $field
+     * @param AbstractPlatform $platform
+     * @return string
+     */
+    public function getQuotedColumnName($field, $platform)
+    {
+        return isset($this->fieldMappings[$field]['quoted']) ?
+                $platform->quoteIdentifier($this->fieldMappings[$field]['columnName']) :
+                $this->fieldMappings[$field]['columnName'];
+    }
+    
+    /**
+     * Gets the (possibly quoted) primary table name of this class for safe use
+     * in an SQL statement.
+     * 
+     * @param AbstractPlatform $platform
+     * @return string
+     */
+    public function getQuotedTableName($platform)
+    {
+        return isset($this->table['quoted']) ?
+                $platform->quoteIdentifier($this->table['name']) :
+                $this->table['name'];
+    }
+
+    /**
+     * Gets the (possibly quoted) name of the join table.
+     *
+     * @param AbstractPlatform $platform
+     * @return string
+     */
+    public function getQuotedJoinTableName(array $assoc, $platform)
+    {
+        return isset($assoc['joinTable']['quoted'])
+            ? $platform->quoteIdentifier($assoc['joinTable']['name'])
+            : $assoc['joinTable']['name'];
     }
 }

@@ -23,24 +23,68 @@ use Doctrine\Common\Annotations\Annotation;
 
 /* Annotations */
 
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class Entity extends Annotation {
     public $repositoryClass;
     public $readOnly = false;
 }
+
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class MappedSuperclass extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class InheritanceType extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class DiscriminatorColumn extends Annotation {
     public $name;
     public $fieldName; // field name used in non-object hydration (array/scalar)
     public $type;
     public $length;
 }
+
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class DiscriminatorMap extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class Id extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class GeneratedValue extends Annotation {
     public $strategy = 'AUTO';
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class Version extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target({"PROPERTY","ANNOTATION"})
+ */
 final class JoinColumn extends Annotation {
     public $name;
     public $fieldName; // field name used in non-object hydration (array/scalar)
@@ -48,10 +92,19 @@ final class JoinColumn extends Annotation {
     public $unique = false;
     public $nullable = true;
     public $onDelete;
-    public $onUpdate;
     public $columnDefinition;
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class JoinColumns extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class Column extends Annotation {
     public $type = 'string';
     public $length;
@@ -65,6 +118,11 @@ final class Column extends Annotation {
     public $options = array();
     public $columnDefinition;
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class OneToOne extends Annotation {
     public $targetEntity;
     public $mappedBy;
@@ -73,6 +131,11 @@ final class OneToOne extends Annotation {
     public $fetch = 'LAZY';
     public $orphanRemoval = false;
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class OneToMany extends Annotation {
     public $mappedBy;
     public $targetEntity;
@@ -81,12 +144,22 @@ final class OneToMany extends Annotation {
     public $orphanRemoval = false;
     public $indexBy;
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class ManyToOne extends Annotation {
     public $targetEntity;
     public $cascade;
     public $fetch = 'LAZY';
     public $inversedBy;
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class ManyToMany extends Annotation {
     public $targetEntity;
     public $mappedBy;
@@ -95,50 +168,139 @@ final class ManyToMany extends Annotation {
     public $fetch = 'LAZY';
     public $indexBy;
 }
+
+/** 
+ * @Annotation 
+ * @Target("ALL")
+ * @todo check available targets
+ */
 final class ElementCollection extends Annotation {
     public $tableName;
 }
+
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class Table extends Annotation {
     public $name;
     public $schema;
     public $indexes;
     public $uniqueConstraints;
 }
+
+/** 
+ * @Annotation 
+ * @Target("ANNOTATION")
+ */
 final class UniqueConstraint extends Annotation {
     public $name;
     public $columns;
 }
+
+/** 
+ * @Annotation 
+ * @Target("ANNOTATION")
+ */
 final class Index extends Annotation {
     public $name;
     public $columns;
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class JoinTable extends Annotation {
     public $name;
     public $schema;
     public $joinColumns = array();
     public $inverseJoinColumns = array();
 }
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class SequenceGenerator extends Annotation {
     public $sequenceName;
     public $allocationSize = 1;
     public $initialValue = 1;
 }
+
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class ChangeTrackingPolicy extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("PROPERTY")
+ */
 final class OrderBy extends Annotation {}
 
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
 final class NamedQueries extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("ANNOTATION")
+ */
 final class NamedQuery extends Annotation {
     public $name;
     public $query;
 }
 
 /* Annotations for lifecycle callbacks */
-final class HasLifecycleCallbacks extends Annotation {}
-final class PrePersist extends Annotation {}
-final class PostPersist extends Annotation {}
-final class PreUpdate extends Annotation {}
-final class PostUpdate extends Annotation {}
-final class PreRemove extends Annotation {}
-final class PostRemove extends Annotation {}
-final class PostLoad extends Annotation {}
 
+/** 
+ * @Annotation 
+ * @Target("CLASS")
+ */
+final class HasLifecycleCallbacks extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("METHOD")
+ */
+final class PrePersist extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("METHOD")
+ */
+final class PostPersist extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("METHOD")
+ */
+final class PreUpdate extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("METHOD")
+ */
+final class PostUpdate extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("METHOD")
+ */
+final class PreRemove extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("METHOD")
+ */
+final class PostRemove extends Annotation {}
+
+/** 
+ * @Annotation 
+ * @Target("METHOD")
+ */
+final class PostLoad extends Annotation {}

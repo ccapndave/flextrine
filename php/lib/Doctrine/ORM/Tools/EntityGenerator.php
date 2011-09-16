@@ -94,6 +94,8 @@ class EntityGenerator
 
 <namespace>
 
+use Doctrine\ORM\Mapping as ORM;
+
 <entityAnnotation>
 <entityClassName>
 {
@@ -104,7 +106,7 @@ class EntityGenerator
 '/**
  * <description>
  *
- * @return <variableType>$<variableName>
+ * @return <variableType>
  */
 public function <methodName>()
 {
@@ -149,11 +151,18 @@ public function <methodName>()
 }
 ';
 
+    public function __construct()
+    {
+        if (version_compare(\Doctrine\Common\Version::VERSION, '3.0.0-DEV', '>=')) {
+            $this->_annotationsPrefix = 'ORM\\';
+        }
+    }
+
     /**
      * Generate and write entity classes for the given array of ClassMetadataInfo instances
      *
      * @param array $metadatas
-     * @param string $outputDirectory 
+     * @param string $outputDirectory
      * @return void
      */
     public function generate(array $metadatas, $outputDirectory)
@@ -167,7 +176,7 @@ public function <methodName>()
      * Generated and write entity class to disk for the given ClassMetadataInfo instance
      *
      * @param ClassMetadataInfo $metadata
-     * @param string $outputDirectory 
+     * @param string $outputDirectory
      * @return void
      */
     public function writeEntityClass(ClassMetadataInfo $metadata, $outputDirectory)
@@ -204,7 +213,7 @@ public function <methodName>()
     /**
      * Generate a PHP5 Doctrine 2 entity class from the given ClassMetadataInfo instance
      *
-     * @param ClassMetadataInfo $metadata 
+     * @param ClassMetadataInfo $metadata
      * @return string $code
      */
     public function generateEntityClass(ClassMetadataInfo $metadata)
@@ -230,8 +239,8 @@ public function <methodName>()
     /**
      * Generate the updated code for the given ClassMetadataInfo and entity at path
      *
-     * @param ClassMetadataInfo $metadata 
-     * @param string $path 
+     * @param ClassMetadataInfo $metadata
+     * @param string $path
      * @return string $code;
      */
     public function generateUpdatedEntityClass(ClassMetadataInfo $metadata, $path)
@@ -248,7 +257,7 @@ public function <methodName>()
     /**
      * Set the number of spaces the exported class should have
      *
-     * @param integer $numSpaces 
+     * @param integer $numSpaces
      * @return void
      */
     public function setNumSpaces($numSpaces)
@@ -260,7 +269,7 @@ public function <methodName>()
     /**
      * Set the extension to use when writing php files to disk
      *
-     * @param string $extension 
+     * @param string $extension
      * @return void
      */
     public function setExtension($extension)
@@ -281,7 +290,7 @@ public function <methodName>()
     /**
      * Set whether or not to generate annotations for the entity
      *
-     * @param bool $bool 
+     * @param bool $bool
      * @return void
      */
     public function setGenerateAnnotations($bool)
@@ -296,13 +305,16 @@ public function <methodName>()
      */
     public function setAnnotationPrefix($prefix)
     {
+        if (version_compare(\Doctrine\Common\Version::VERSION, '2.2.0-DEV', '>=')) {
+            return;
+        }
         $this->_annotationsPrefix = $prefix;
     }
 
     /**
      * Set whether or not to try and update the entity if it already exists
      *
-     * @param bool $bool 
+     * @param bool $bool
      * @return void
      */
     public function setUpdateEntityIfExists($bool)
@@ -421,7 +433,7 @@ public function <methodName>()
         $tokens = token_get_all($src);
         $lastSeenNamespace = "";
         $lastSeenClass = false;
-        
+
         $inNamespace = false;
         $inClass = false;
         for ($i = 0; $i < count($tokens); $i++) {
@@ -440,7 +452,7 @@ public function <methodName>()
 
             if ($inClass) {
                 $inClass = false;
-                $lastSeenClass = $lastSeenNamespace . '\\' . $token[1];
+                $lastSeenClass = $lastSeenNamespace . ($lastSeenNamespace ? '\\' : '') . $token[1];
                 $this->_staticReflection[$lastSeenClass]['properties'] = array();
                 $this->_staticReflection[$lastSeenClass]['methods'] = array();
             }
@@ -453,7 +465,7 @@ public function <methodName>()
             } else if ($token[0] == T_FUNCTION) {
                 if ($tokens[$i+2][0] == T_STRING) {
                     $this->_staticReflection[$lastSeenClass]['methods'][] = $tokens[$i+2][1];
-                } else if ($tokens[$i+2][0] == T_AMPERSAND && $tokens[$i+3][0] == T_STRING) {
+                } else if ($tokens[$i+2] == "&" && $tokens[$i+3][0] == T_STRING) {
                     $this->_staticReflection[$lastSeenClass]['methods'][] = $tokens[$i+3][1];
                 }
             } else if (in_array($token[0], array(T_VAR, T_PUBLIC, T_PRIVATE, T_PROTECTED)) && $tokens[$i+2][0] != T_FUNCTION) {
@@ -464,6 +476,14 @@ public function <methodName>()
 
     private function _hasProperty($property, ClassMetadataInfo $metadata)
     {
+        if ($this->_extendsClass()) {
+            // don't generate property if its already on the base class.
+            $reflClass = new \ReflectionClass($this->_getClassToExtend());
+            if ($reflClass->hasProperty($property)) {
+                return true;
+            }
+        }
+
         return (
             isset($this->_staticReflection[$metadata->name]) &&
             in_array($property, $this->_staticReflection[$metadata->name]['properties'])
@@ -472,6 +492,14 @@ public function <methodName>()
 
     private function _hasMethod($method, ClassMetadataInfo $metadata)
     {
+        if ($this->_extendsClass()) {
+            // don't generate method if its already on the base class.
+            $reflClass = new \ReflectionClass($this->_getClassToExtend());
+            if ($reflClass->hasMethod($method)) {
+                return true;
+            }
+        }
+
         return (
             isset($this->_staticReflection[$metadata->name]) &&
             in_array($method, $this->_staticReflection[$metadata->name]['methods'])
@@ -688,11 +716,18 @@ public function <methodName>()
 
     private function _generateEntityStubMethod(ClassMetadataInfo $metadata, $type, $fieldName, $typeHint = null)
     {
-        $methodName = $type . Inflector::classify($fieldName);
+        if ($type == "add") {
+            $addMethod = explode("\\", $typeHint);
+            $addMethod = end($addMethod);
+            $methodName = $type . $addMethod;
+        } else {
+            $methodName = $type . Inflector::classify($fieldName);
+        }
 
         if ($this->_hasMethod($methodName, $metadata)) {
             return;
         }
+        $this->_staticReflection[$metadata->name]['methods'][] = $methodName;
 
         $var = sprintf('_%sMethodTemplate', $type);
         $template = self::$$var;
@@ -725,6 +760,7 @@ public function <methodName>()
         if ($this->_hasMethod($methodName, $metadata)) {
             return;
         }
+        $this->_staticReflection[$metadata->name]['methods'][] = $methodName;
 
         $replacements = array(
             '<name>'        => $this->_annotationsPrefix . $name,
@@ -762,10 +798,6 @@ public function <methodName>()
 
         if (isset($joinColumn['onDelete'])) {
             $joinColumnAnnot[] = 'onDelete=' . ($joinColumn['onDelete'] ? 'true' : 'false');
-        }
-
-        if (isset($joinColumn['onUpdate'])) {
-            $joinColumnAnnot[] = 'onUpdate=' . ($joinColumn['onUpdate'] ? 'true' : 'false');
         }
 
         if (isset($joinColumn['columnDefinition'])) {
@@ -822,7 +854,7 @@ public function <methodName>()
                 if ($associationMapping['isCascadeMerge']) $cascades[] = '"merge"';
                 if ($associationMapping['isCascadeRefresh']) $cascades[] = '"refresh"';
 
-                $typeOptions[] = 'cascade={' . implode(',', $cascades) . '}';            
+                $typeOptions[] = 'cascade={' . implode(',', $cascades) . '}';
             }
 
             if (isset($associationMapping['orphanRemoval']) && $associationMapping['orphanRemoval']) {
@@ -876,7 +908,7 @@ public function <methodName>()
                 $lines[] = $this->_spaces . ' * @' . $this->_annotationsPrefix . 'OrderBy({';
 
                 foreach ($associationMapping['orderBy'] as $name => $direction) {
-                    $lines[] = $this->_spaces . ' *     "' . $name . '"="' . $direction . '",'; 
+                    $lines[] = $this->_spaces . ' *     "' . $name . '"="' . $direction . '",';
                 }
 
                 $lines[count($lines) - 1] = substr($lines[count($lines) - 1], 0, strlen($lines[count($lines) - 1]) - 1);

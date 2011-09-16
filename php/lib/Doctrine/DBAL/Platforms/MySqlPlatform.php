@@ -20,7 +20,9 @@
 namespace Doctrine\DBAL\Platforms;
 
 use Doctrine\DBAL\DBALException,
-    Doctrine\DBAL\Schema\TableDiff;
+    Doctrine\DBAL\Schema\TableDiff,
+    Doctrine\DBAL\Schema\Index,
+    Doctrine\DBAL\Schema\Table;
 
 /**
  * The MySqlPlatform provides the behavior, features and SQL dialect of the
@@ -369,7 +371,13 @@ class MySqlPlatform extends AbstractPlatform
      *                              'comment' => 'Foo',
      *                              'charset' => 'utf8',
      *                              'collate' => 'utf8_unicode_ci',
-     *                              'type'    => 'innodb',
+     *                              'engine' => 'innodb',
+     *                              'foreignKeys' => array(
+     *                                  new ForeignKeyConstraint(),
+     *                                  new ForeignKeyConstraint(),
+     *                                  new ForeignKeyConstraint(),
+     *                                  // etc
+     *                              )
      *                          );
      *
      * @return void
@@ -407,7 +415,7 @@ class MySqlPlatform extends AbstractPlatform
         $optionStrings = array();
 
         if (isset($options['comment'])) {
-            $optionStrings['comment'] = 'COMMENT = ' . $this->quote($options['comment'], 'text');
+            $optionStrings['comment'] = 'COMMENT = ' . $options['comment'];
         }
         if (isset($options['charset'])) {
             $optionStrings['charset'] = 'DEFAULT CHARACTER SET ' . $options['charset'];
@@ -481,7 +489,11 @@ class MySqlPlatform extends AbstractPlatform
         if (count($queryParts) > 0) {
             $sql[] = 'ALTER TABLE ' . $diff->name . ' ' . implode(", ", $queryParts);
         }
-        $sql = array_merge($sql, $this->_getAlterTableIndexForeignKeySQL($diff));
+        $sql = array_merge(
+            $this->getPreAlterTableIndexForeignKeySQL($diff),
+            $sql,
+            $this->getPostAlterTableIndexForeignKeySQL($diff)
+        );
         return $sql;
     }
     
@@ -566,20 +578,37 @@ class MySqlPlatform extends AbstractPlatform
      * @override
      */
     public function getDropIndexSQL($index, $table=null)
-    {
-        if($index instanceof \Doctrine\DBAL\Schema\Index) {
-            $index = $index->getQuotedName($this);
-        } else if(!is_string($index)) {
+    {        
+        if($index instanceof Index) {
+            $indexName = $index->getQuotedName($this);
+        } else if(is_string($index)) {
+            $indexName = $index;
+        } else {
             throw new \InvalidArgumentException('MysqlPlatform::getDropIndexSQL() expects $index parameter to be string or \Doctrine\DBAL\Schema\Index.');
         }
         
-        if($table instanceof \Doctrine\DBAL\Schema\Table) {
+        if($table instanceof Table) {
             $table = $table->getQuotedName($this);
         } else if(!is_string($table)) {
             throw new \InvalidArgumentException('MysqlPlatform::getDropIndexSQL() expects $table parameter to be string or \Doctrine\DBAL\Schema\Table.');
         }
+        
+        if ($index instanceof Index && $index->isPrimary()) {
+            // mysql primary keys are always named "PRIMARY", 
+            // so we cannot use them in statements because of them being keyword.
+            return $this->getDropPrimaryKeySQL($table);
+        }
 
-        return 'DROP INDEX ' . $index . ' ON ' . $table;
+        return 'DROP INDEX ' . $indexName . ' ON ' . $table;
+    }
+    
+    /**
+     * @param Index $index
+     * @param Table $table 
+     */
+    protected function getDropPrimaryKeySQL($table)
+    {
+        return 'ALTER TABLE ' . $table . ' DROP PRIMARY KEY';
     }
     
     /**

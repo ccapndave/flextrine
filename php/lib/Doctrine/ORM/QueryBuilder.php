@@ -217,9 +217,30 @@ class QueryBuilder
                 ->setFirstResult($this->_firstResult)
                 ->setMaxResults($this->_maxResults);
     }
+    
+    /**
+     * Gets the FIRST root alias of the query. This is the first entity alias involved
+     * in the construction of the query.
+     *
+     * <code>
+     * $qb = $em->createQueryBuilder()
+     * ->select('u')
+     * ->from('User', 'u');
+     *
+     * echo $qb->getRootAlias(); // u
+     * </code>
+     *
+     * @deprecated Please use $qb->getRootAliases() instead.
+     * @return string $rootAlias
+     */
+    public function getRootAlias()
+    {
+        $aliases = $this->getRootAliases();
+        return $aliases[0];
+    }
 
     /**
-     * Gets the root alias of the query. This is the first entity alias involved
+     * Gets the root aliases of the query. This is the entity aliases involved
      * in the construction of the query.
      *
      * <code>
@@ -230,7 +251,7 @@ class QueryBuilder
      *     $qb->getRootAliases(); // array('u')
      * </code>
      *
-     * @return string $rootAlias
+     * @return array $rootAliases
      */
     public function getRootAliases()
     {
@@ -252,6 +273,39 @@ class QueryBuilder
     }
 
     /**
+     * Gets the root entities of the query. This is the entity aliases involved
+     * in the construction of the query.
+     *
+     * <code>
+     *     $qb = $em->createQueryBuilder()
+     *         ->select('u')
+     *         ->from('User', 'u');
+     *
+     *     $qb->getRootEntities(); // array('User')
+     * </code>
+     *
+     * @return array $rootEntities
+     */
+    public function getRootEntities()
+    {
+        $entities = array();
+        
+        foreach ($this->_dqlParts['from'] as &$fromClause) {
+            if (is_string($fromClause)) {
+                $spacePos = strrpos($fromClause, ' ');
+                $from     = substr($fromClause, 0, $spacePos);
+                $alias    = substr($fromClause, $spacePos + 1);
+
+                $fromClause = new Query\Expr\From($from, $alias);
+            }
+            
+            $entities[] = $fromClause->getFrom();
+        }
+        
+        return $entities;
+    }
+
+    /**
      * Sets a query parameter for the query being constructed.
      *
      * <code>
@@ -269,6 +323,8 @@ class QueryBuilder
      */
     public function setParameter($key, $value, $type = null)
     {
+        $key = trim($key, ':');
+        
         if ($type === null) {
             $type = Query\ParameterTypeInferer::inferType($value);
         }
@@ -389,6 +445,20 @@ class QueryBuilder
     public function add($dqlPartName, $dqlPart, $append = false)
     {
         $isMultiple = is_array($this->_dqlParts[$dqlPartName]);
+        
+        // This is introduced for backwards compatibility reasons.
+        // TODO: Remove for 3.0
+        if ($dqlPartName == 'join') {
+            $newDqlPart = array();
+            foreach ($dqlPart AS $k => $v) {
+                if (is_numeric($k)) {
+                    $newDqlPart[$this->getRootAlias()] = $v;
+                } else {
+                    $newDqlPart[$k] = $v;
+                }
+            }
+            $dqlPart = $newDqlPart;
+        }
     
         if ($append && $isMultiple) {
             if (is_array($dqlPart)) {
@@ -581,6 +651,9 @@ class QueryBuilder
     public function innerJoin($join, $alias, $conditionType = null, $condition = null, $indexBy = null)
     {
         $rootAlias = substr($join, 0, strpos($join, '.'));
+        if (!in_array($rootAlias, $this->getRootAliases())) {
+            $rootAlias = $this->getRootAlias();
+        }
         
         return $this->add('join', array(
             $rootAlias => new Expr\Join(Expr\Join::INNER_JOIN, $join, $alias, $conditionType, $condition, $indexBy)
@@ -611,6 +684,9 @@ class QueryBuilder
     public function leftJoin($join, $alias, $conditionType = null, $condition = null, $indexBy = null)
     {
         $rootAlias = substr($join, 0, strpos($join, '.'));
+        if (!in_array($rootAlias, $this->getRootAliases())) {
+            $rootAlias = $this->getRootAlias();
+        }
         
         return $this->add('join', array(
             $rootAlias => new Expr\Join(Expr\Join::LEFT_JOIN, $join, $alias, $conditionType, $condition, $indexBy)
@@ -912,7 +988,7 @@ class QueryBuilder
             foreach ($fromParts as $from) {
                 $fromClause = (string) $from;
 
-                if (isset($joinParts[$from->getAlias()])) {
+                if ($from instanceof Expr\From && isset($joinParts[$from->getAlias()])) {
                     foreach ($joinParts[$from->getAlias()] as $join) {
                         $fromClause .= ' ' . ((string) $join);
                     }

@@ -284,4 +284,13 @@ class MappingException extends \Doctrine\ORM\ORMException
     {
         return new self("Its not supported to define inheritance information on a mapped superclass '" . $className . "'.");
     }
+    
+    public static function mappedClassNotPartOfDiscriminatorMap($className, $rootClassName)
+    {
+        return new self(
+            "Entity '" . $className . "' has to be part of the descriminator map of '" . $rootClassName . "' " .
+            "to be properly mapped in the inheritance hierachy. Alternatively you can make '".$className."' an abstract class " .
+            "to avoid this exception from occuring."
+        );
+    }
 }

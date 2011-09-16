@@ -16,7 +16,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * and the Lesser GNU General Public License along with this program.
- * If not, see <http://www.gnu.org/licenses/>.
+ * If not, see http://www.gnu.org/licenses/.
  * 
  */
 
@@ -31,7 +31,7 @@ package org.davekeen.flextrine.util {
 		/**
 		 * Formats an object or a class into a DQL friendly fully qualified class name for use in select queries.
 		 * 
-		 * @example This is an example of using <code>getDQLClass</code> in a select:
+		 * @example This is an example of using <code>getDQLClass</code> in a select
 		 * 
 		 * <pre>
 		 *   em.select("SELECT u FROM " + QueryUtil.getDQLClass(User) + " u WHERE u.age > 25");

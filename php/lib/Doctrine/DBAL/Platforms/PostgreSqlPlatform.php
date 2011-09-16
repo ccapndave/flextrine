@@ -452,6 +452,12 @@ class PostgreSqlPlatform extends AbstractPlatform
                ' START ' . $sequence->getInitialValue();
     }
     
+    public function getAlterSequenceSQL(\Doctrine\DBAL\Schema\Sequence $sequence)
+    {
+        return 'ALTER SEQUENCE ' . $sequence->getQuotedName($this) . 
+               ' INCREMENT BY ' . $sequence->getAllocationSize();
+    }
+    
     /**
      * Drop existing sequence
      * @param  \Doctrine\DBAL\Schema\Sequence $sequence
@@ -686,7 +692,7 @@ class PostgreSqlPlatform extends AbstractPlatform
      */
     public function getTruncateTableSQL($tableName, $cascade = false)
     {
-        return 'TRUNCATE '.$tableName.' '.($cascade)?'CASCADE':'';
+        return 'TRUNCATE '.$tableName.' '.(($cascade)?'CASCADE':'');
     }
 
     public function getReadLockSQL()

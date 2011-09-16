@@ -31,20 +31,4 @@ class Query {
 	
 	public $hydrationMode;
 	
-	public function createQuery($em) {
-		if (substr(strtoupper($this->dql), 0, 7) != "SELECT ")
-			throw new \Exception("You may only use the SELECT operator");
-		
-		$query = $em->createQuery($this->dql);
-		
-		if ($this->params) {
-			$paramsArray = (array)$this->params;
-			foreach ($paramsArray as $name => $value) {
-				$query->setParameter($name, $value);
-			}
-		}
-		
-		return $query;
-	}
-	
 }

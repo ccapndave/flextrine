@@ -16,7 +16,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * and the Lesser GNU General Public License along with this program.
- * If not, see <http://www.gnu.org/licenses/>.
+ * If not, see http://www.gnu.org/licenses/.
  * 
  */
 
@@ -37,7 +37,7 @@ package org.davekeen.flextrine.orm {
 	 * 
 	 * <p>Note that its also possible to use <code>EntityManager.select</code> with <code>FetchMode.LAZY</code> to explicitly
 	 * define which associations to fetch by using <b>DQL fetch joins</b>.  See Doctrine 2 DQL documentation
-	 * for more details.
+	 * for more details.</p>
 	 * 
 	 * @author Dave Keen
 	 */

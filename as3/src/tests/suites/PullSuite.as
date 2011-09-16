@@ -10,7 +10,6 @@
 	[Suite]
 	[RunWith("org.flexunit.runners.Suite")]
 	public class PullSuite {
-		
 		public var pullUpdateTest:PullUpdateTest;
 		public var pullPersistTest:PullPersistTest;
 		public var pullRemoveTest:PullRemoveTest;

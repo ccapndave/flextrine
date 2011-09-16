@@ -16,7 +16,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * and the Lesser GNU General Public License along with this program.
- * If not, see <http://www.gnu.org/licenses/>.
+ * If not, see http://www.gnu.org/licenses/.
  * 
  */
 
@@ -29,7 +29,7 @@ package org.davekeen.flextrine.orm {
 	 * An <code>EntityRepository</code> is a collection of entities of a specific type and it can be thought of as a kind of local copy of the database.
 	 * There is one <code>EntityRepository</code> for each entity in your application.
 	 * 
-	 * @example To get a reference to a particular <code>EntityRepository</code> you need to use <code>EntityManager.getRepository</code>:
+	 * @example To get a reference to a particular <code>EntityRepository</code> you need to use <code>EntityManager.getRepository</code>
 	 * 
 	 * <pre>
 	 * var userEntityRepository:IEntityRepository = em.getRepository(User);

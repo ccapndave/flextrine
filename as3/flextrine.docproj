@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<docProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <pageTitle>Flextrine</pageTitle>
-  <classPaths>.\src\org</classPaths>
-  <sourcesList>DateFormatter</sourcesList>
-  <outputDirectory>.\asdoc</outputDirectory>
-  <activeCompiler>1</activeCompiler>
-  <extraOptions>-footer "Flextrine Copyright 2011 Dave Keen (http://www.actionscriptdeveloper.co.uk)</extraOptions>
-</docProject>

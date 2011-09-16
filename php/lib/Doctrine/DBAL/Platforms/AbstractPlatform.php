@@ -948,6 +948,7 @@ abstract class AbstractPlatform
             if(strtolower($columnData['type']) == "string" && $columnData['length'] === null) {
                 $columnData['length'] = 255;
             }
+            $columnData['unsigned'] = $column->getUnsigned();
             $columnData['precision'] = $column->getPrecision();
             $columnData['scale'] = $column->getScale();
             $columnData['default'] = $column->getDefault();
@@ -1045,6 +1046,17 @@ abstract class AbstractPlatform
     {
         throw DBALException::notSupported(__METHOD__);
     }
+    
+    /**
+     * Gets the SQL statement to change a sequence on this platform.
+     * 
+     * @param \Doctrine\DBAL\Schema\Sequence $sequence 
+     * @return string
+     */
+    public function getAlterSequenceSQL(\Doctrine\DBAL\Schema\Sequence $sequence)
+    {
+        throw DBALException::notSupported(__METHOD__);
+    }
 
     /**
      * Gets the SQL to create a constraint on a table on this platform.
@@ -1111,17 +1123,32 @@ abstract class AbstractPlatform
         if (count($columns) == 0) {
             throw new \InvalidArgumentException("Incomplete definition. 'columns' required.");
         }
+        
+        if ($index->isPrimary()) {
+            return $this->getCreatePrimaryKeySQL($index, $table);
+        } else {
+            $type = '';
+            if ($index->isUnique()) {
+                $type = 'UNIQUE ';
+            }
 
-        $type = '';
-        if ($index->isUnique()) {
-            $type = 'UNIQUE ';
+            $query = 'CREATE ' . $type . 'INDEX ' . $name . ' ON ' . $table;
+            $query .= ' (' . $this->getIndexFieldDeclarationListSQL($columns) . ')';
         }
 
-        $query = 'CREATE ' . $type . 'INDEX ' . $name . ' ON ' . $table;
-
-        $query .= ' (' . $this->getIndexFieldDeclarationListSQL($columns) . ')';
-
         return $query;
+    }
+    
+    /**
+     * Get SQL to create an unnamed primary key constraint.
+     * 
+     * @param Index $index
+     * @param string|Table $table
+     * @return string
+     */
+    public function getCreatePrimaryKeySQL(Index $index, $table)
+    {
+        return 'ALTER TABLE ' . $table . ' ADD PRIMARY KEY (' . $this->getIndexFieldDeclarationListSQL($index->getColumns()) . ')';
     }
 
     /**
@@ -1173,13 +1200,31 @@ abstract class AbstractPlatform
         throw DBALException::notSupported(__METHOD__);
     }
 
-    /**
-     * Common code for alter table statement generation that updates the changed Index and Foreign Key definitions.
-     *
-     * @param TableDiff $diff
-     * @return array
-     */
-    protected function _getAlterTableIndexForeignKeySQL(TableDiff $diff)
+    protected function getPreAlterTableIndexForeignKeySQL(TableDiff $diff)
+    {
+        $tableName = $diff->name;
+        
+        $sql = array();
+        if ($this->supportsForeignKeyConstraints()) {
+            foreach ($diff->removedForeignKeys AS $foreignKey) {
+                $sql[] = $this->getDropForeignKeySQL($foreignKey, $tableName);
+            }
+            foreach ($diff->changedForeignKeys AS $foreignKey) {
+                $sql[] = $this->getDropForeignKeySQL($foreignKey, $tableName);
+            }
+        }
+
+        foreach ($diff->removedIndexes AS $index) {
+            $sql[] = $this->getDropIndexSQL($index, $tableName);
+        }
+        foreach ($diff->changedIndexes AS $index) {
+            $sql[] = $this->getDropIndexSQL($index, $tableName);
+        }
+
+        return $sql;
+    }
+    
+    protected function getPostAlterTableIndexForeignKeySQL(TableDiff $diff)
     {
         if ($diff->newName !== false) {
             $tableName = $diff->newName;
@@ -1189,14 +1234,10 @@ abstract class AbstractPlatform
 
         $sql = array();
         if ($this->supportsForeignKeyConstraints()) {
-            foreach ($diff->removedForeignKeys AS $foreignKey) {
-                $sql[] = $this->getDropForeignKeySQL($foreignKey, $tableName);
-            }
             foreach ($diff->addedForeignKeys AS $foreignKey) {
                 $sql[] = $this->getCreateForeignKeySQL($foreignKey, $tableName);
             }
             foreach ($diff->changedForeignKeys AS $foreignKey) {
-                $sql[] = $this->getDropForeignKeySQL($foreignKey, $tableName);
                 $sql[] = $this->getCreateForeignKeySQL($foreignKey, $tableName);
             }
         }
@@ -1204,15 +1245,22 @@ abstract class AbstractPlatform
         foreach ($diff->addedIndexes AS $index) {
             $sql[] = $this->getCreateIndexSQL($index, $tableName);
         }
-        foreach ($diff->removedIndexes AS $index) {
-            $sql[] = $this->getDropIndexSQL($index, $tableName);
-        }
         foreach ($diff->changedIndexes AS $index) {
-            $sql[] = $this->getDropIndexSQL($index, $tableName);
             $sql[] = $this->getCreateIndexSQL($index, $tableName);
         }
 
         return $sql;
+    }
+    
+    /**
+     * Common code for alter table statement generation that updates the changed Index and Foreign Key definitions.
+     *
+     * @param TableDiff $diff
+     * @return array
+     */
+    protected function _getAlterTableIndexForeignKeySQL(TableDiff $diff)
+    {
+        return array_merge($this->getPreAlterTableIndexForeignKeySQL($diff), $this->getPostAlterTableIndexForeignKeySQL($diff));
     }
 
     /**

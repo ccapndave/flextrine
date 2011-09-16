@@ -26,6 +26,7 @@ use PDO,
     Doctrine\ORM\ORMException,
     Doctrine\ORM\OptimisticLockException,
     Doctrine\ORM\EntityManager,
+    Doctrine\ORM\UnitOfWork,
     Doctrine\ORM\Query,
     Doctrine\ORM\PersistentCollection,
     Doctrine\ORM\Mapping\MappingException,
@@ -570,6 +571,7 @@ class BasicEntityPersister
         
         if ($entity !== null) {
             $hints[Query::HINT_REFRESH] = true;
+            $hints[Query::HINT_REFRESH_ENTITY] = $entity;
         }
 
         if ($this->_selectJoinSql) {
@@ -587,13 +589,12 @@ class BasicEntityPersister
      *
      * @param array $assoc The association to load.
      * @param object $sourceEntity The entity that owns the association (not necessarily the "owning side").
-     * @param object $targetEntity The existing ghost entity (proxy) to load, if any.
      * @param array $identifier The identifier of the entity to load. Must be provided if
      *                          the association to load represents the owning side, otherwise
      *                          the identifier is derived from the $sourceEntity.
      * @return object The loaded and managed entity instance or NULL if the entity can not be found.
      */
-    public function loadOneToOneEntity(array $assoc, $sourceEntity, $targetEntity, array $identifier = array())
+    public function loadOneToOneEntity(array $assoc, $sourceEntity, array $identifier = array())
     {
         if ($foundEntity = $this->_em->getUnitOfWork()->tryGetById($identifier, $assoc['targetEntity'])) {
             return $foundEntity;
@@ -621,7 +622,7 @@ class BasicEntityPersister
             }
             */
 
-            $targetEntity = $this->load($identifier, $targetEntity, $assoc, $hints);
+            $targetEntity = $this->load($identifier, null, $assoc, $hints);
 
             // Complete bidirectional association, if necessary
             if ($targetEntity !== null && $isInverseSingleValued) {
@@ -633,7 +634,11 @@ class BasicEntityPersister
             // TRICKY: since the association is specular source and target are flipped
             foreach ($owningAssoc['targetToSourceKeyColumns'] as $sourceKeyColumn => $targetKeyColumn) {
                 if (isset($sourceClass->fieldNames[$sourceKeyColumn])) {
-                    $identifier[$targetKeyColumn] = $sourceClass->reflFields[$sourceClass->fieldNames[$sourceKeyColumn]]->getValue($sourceEntity);
+                    // unset the old value and set the new sql aliased value here. By definition
+                    // unset($identifier[$targetKeyColumn] works here with how UnitOfWork::createEntity() calls this method.
+                    $identifier[$this->_getSQLTableAlias($targetClass->name) . "." . $targetKeyColumn] =
+                        $sourceClass->reflFields[$sourceClass->fieldNames[$sourceKeyColumn]]->getValue($sourceEntity);
+                    unset($identifier[$targetKeyColumn]);
                 } else {
                     throw MappingException::joinColumnMustPointToMappedField(
                         $sourceClass->name, $sourceKeyColumn
@@ -641,7 +646,7 @@ class BasicEntityPersister
                 }
             }
 
-            $targetEntity = $this->load($identifier, $targetEntity, $assoc);
+            $targetEntity = $this->load($identifier, null, $assoc);
 
             if ($targetEntity !== null) {
                 $targetClass->setFieldValue($targetEntity, $assoc['mappedBy'], $sourceEntity);
@@ -953,12 +958,17 @@ class BasicEntityPersister
                     }
                 }
                 $this->_selectJoinSql .= ' LEFT JOIN'; // TODO: Inner join when all join columns are NOT nullable.
+                $first = true;
                 if ($assoc['isOwningSide']) {
                     $this->_selectJoinSql .= ' ' . $eagerEntity->table['name'] . ' ' . $this->_getSQLTableAlias($eagerEntity->name, $assocAlias) .' ON ';
                     
                     foreach ($assoc['sourceToTargetKeyColumns'] AS $sourceCol => $targetCol) {
+                        if (!$first) {
+                            $this->_selectJoinSql .= ' AND ';
+                        }
                         $this->_selectJoinSql .= $this->_getSQLTableAlias($assoc['sourceEntity']) . '.'.$sourceCol.' = ' .
                                                  $this->_getSQLTableAlias($assoc['targetEntity'], $assocAlias) . '.'.$targetCol.' ';
+                        $first = false;
                     }
                 } else {
                     $eagerEntity = $this->_em->getClassMetadata($assoc['targetEntity']);
@@ -967,8 +977,12 @@ class BasicEntityPersister
                     $this->_selectJoinSql .= ' ' . $eagerEntity->table['name'] . ' ' . $this->_getSQLTableAlias($eagerEntity->name, $assocAlias) .' ON ';
 
                     foreach ($owningAssoc['sourceToTargetKeyColumns'] AS $sourceCol => $targetCol) {
+                        if (!$first) {
+                            $this->_selectJoinSql .= ' AND ';
+                        }
                         $this->_selectJoinSql .= $this->_getSQLTableAlias($owningAssoc['sourceEntity'], $assocAlias) . '.'.$sourceCol.' = ' .
                                                  $this->_getSQLTableAlias($owningAssoc['targetEntity']) . '.' . $targetCol . ' ';
+                        $first = false;
                     }
                 }
             }
@@ -989,7 +1003,7 @@ class BasicEntityPersister
                 $columnAlias = $srcColumn . $this->_sqlAliasCounter++;
                 $columnList .= $this->_getSQLTableAlias($class->name, ($alias == 'r' ? '' : $alias) )  . ".$srcColumn AS $columnAlias";
                 $resultColumnName = $this->_platform->getSQLResultCasing($columnAlias);
-                $this->_rsm->addMetaResult($alias, $this->_platform->getSQLResultCasing($columnAlias), $srcColumn);
+                $this->_rsm->addMetaResult($alias, $this->_platform->getSQLResultCasing($columnAlias), $srcColumn, isset($assoc['id']) && $assoc['id'] === true);
             }
         }
         return $columnList;
@@ -1200,17 +1214,18 @@ class BasicEntityPersister
                 } else {
                     $conditionSql .= $this->_getSQLTableAlias($this->_class->name) . '.';
                 }
-
+                
                 $conditionSql .= $this->_class->associationMappings[$field]['joinColumns'][0]['name'];
             } else if ($assoc !== null && strpos($field, " ") === false && strpos($field, "(") === false) {
                 // very careless developers could potentially open up this normally hidden api for userland attacks,
                 // therefore checking for spaces and function calls which are not allowed.
-                
+
                 // found a join column condition, not really a "field"
                 $conditionSql .= $field;
             } else {
                 throw ORMException::unrecognizedField($field);
             }
+            
             $conditionSql .= (is_array($value)) ? ' IN (?)' : (($value === null) ? ' IS NULL' : ' = ?');
         }
         return $conditionSql;
@@ -1300,18 +1315,96 @@ class BasicEntityPersister
                 continue; // skip null values.
             }
 
-            $type = null;
-            if (isset($this->_class->fieldMappings[$field])) {
+            $types[]  = $this->getType($field, $value);
+            $params[] = $this->getValue($value);
+        }
+        
+        return array($params, $types);
+    }
+    
+    /**
+     * Infer field type to be used by parameter type casting.
+     * 
+     * @param string $field
+     * @param mixed $value
+     * @return integer
+     */
+    private function getType($field, $value)
+    {
+        switch (true) {
+            case (isset($this->_class->fieldMappings[$field])):
                 $type = Type::getType($this->_class->fieldMappings[$field]['type'])->getBindingType();
-            }
-            if (is_array($value)) {
-                $type += Connection::ARRAY_PARAM_OFFSET;
+                break;
+
+            case (isset($this->_class->associationMappings[$field])):
+                $assoc = $this->_class->associationMappings[$field];
+                
+                if (count($assoc['sourceToTargetKeyColumns']) > 1) {
+                    throw Query\QueryException::associationPathCompositeKeyNotSupported();
+                }
+                
+                $targetClass  = $this->_em->getClassMetadata($assoc['targetEntity']);
+                $targetColumn = $assoc['joinColumns'][0]['referencedColumnName'];
+                $type         = null;
+
+                if (isset($targetClass->fieldNames[$targetColumn])) {
+                    $type = Type::getType($targetClass->fieldMappings[$targetClass->fieldNames[$targetColumn]]['type'])->getBindingType();
+                }
+
+                break;
+
+            default:
+                $type = null;
+        }
+
+        if (is_array($value)) {
+            $type += Connection::ARRAY_PARAM_OFFSET;
+        }
+        
+        return $type;
+    }
+    
+    /**
+     * Retrieve parameter value
+     * 
+     * @param mixed $value
+     * @return mixed 
+     */
+    private function getValue($value)
+    {
+        if (is_array($value)) {
+            $newValue = array();
+            
+            foreach ($value as $itemValue) {
+                $newValue[] = $this->getIndividualValue($itemValue);
             }
             
-            $params[] = $value;
-            $types[] = $type;
+            return $newValue;
         }
-        return array($params, $types);
+        
+        return $this->getIndividualValue($value);
+    }
+    
+    /**
+     * Retrieve an invidiual parameter value
+     * 
+     * @param mixed $value
+     * @return mixed 
+     */
+    private function getIndividualValue($value)
+    {
+        if (is_object($value) && $this->_em->getMetadataFactory()->hasMetadataFor(get_class($value))) {
+            if ($this->_em->getUnitOfWork()->getEntityState($value) === UnitOfWork::STATE_MANAGED) {
+                $idValues = $this->_em->getUnitOfWork()->getEntityIdentifier($value);
+            } else {
+                $class = $this->_em->getClassMetadata(get_class($value));
+                $idValues = $class->getIdentifierValues($value);
+            }
+            
+            $value = $idValues[key($idValues)];
+        }
+        
+        return $value;    
     }
 
     /**

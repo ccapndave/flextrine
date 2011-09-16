@@ -25,7 +25,7 @@
 		}
 		
 		[Test(async, description = "Test what happens when changed objects are removed before flushing.")]
-		public function updateTest():void {
+		public function updateRemoveTest():void {
 			em.getRepository(Doctor).loadAll().addResponder(Async.asyncResponder(this, new TestResponder(result1, remoteFault), 10000));
 		}
 		

@@ -16,7 +16,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * and the Lesser GNU General Public License along with this program.
- * If not, see <http://www.gnu.org/licenses/>.
+ * If not, see http://www.gnu.org/licenses/.
  * 
  */
 
@@ -33,6 +33,12 @@ package org.davekeen.flextrine.orm.walkers {
 	use namespace flextrine;
 	
 	/**
+	 * TODO: em.detach() followed by em.merge() currently doesn't work properly; the LocalMergeWalker needs to work out if we are doing an ADD and isMerge == true, and if so
+	 * we need to push PropertyChangeOperations and RESET CollectionChangeOperations for every property and association on an initialized entity as the detached entity is no
+	 * longer in the repository and we have no way of knowing what might have changed.  We could possibly get away with persisting it instead.
+	 * 
+	 * For the moment detachCopy works properly (and is actually much more useful)
+	 * 
 	 * @private 
 	 */
 	public class LocalMergeWalker extends AbstractWalker {

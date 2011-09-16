@@ -32,7 +32,7 @@
 		
 		private function result3_1(e:ResultEvent, token:AsyncToken):void {
 			Assert.assertEquals(1, em.getRepository(Garden).entities.length);
-			Assert.assertEquals(2, em.getRepository(Tree).entities.length);
+			Assert.assertEquals(1, em.getRepository(Tree).entities.length);
 			
 			var g:Garden = em.getRepository(Garden).entities.getItemAt(0) as Garden;
 			var t:Tree = em.getRepository(Tree).entities.getItemAt(0) as Tree;

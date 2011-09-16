@@ -21,10 +21,9 @@ namespace Doctrine\ORM\Mapping\Driver;
 
 use Doctrine\Common\Cache\ArrayCache,
     Doctrine\Common\Annotations\AnnotationReader,
+    Doctrine\Common\Annotations\AnnotationRegistry,
     Doctrine\ORM\Mapping\ClassMetadataInfo,
     Doctrine\ORM\Mapping\MappingException;
-
-require __DIR__ . '/DoctrineAnnotations.php';
 
 /**
  * The AnnotationDriver reads the mapping metadata from docblock annotations.
@@ -42,7 +41,7 @@ class AnnotationDriver implements Driver
      *
      * @var AnnotationReader
      */
-    private $_reader;
+    protected $_reader;
 
     /**
      * The paths where to look for mapping files.
@@ -62,13 +61,13 @@ class AnnotationDriver implements Driver
      * @param array
      */
     protected $_classNames;
-    
+
     /**
      * Initializes a new AnnotationDriver that uses the given AnnotationReader for reading
      * docblock annotations.
-     * 
+     *
      * @param AnnotationReader $reader The AnnotationReader to use, duck-typed.
-     * @param string|array $paths One or multiple paths where mapping classes can be found. 
+     * @param string|array $paths One or multiple paths where mapping classes can be found.
      */
     public function __construct($reader, $paths = null)
     {
@@ -77,7 +76,7 @@ class AnnotationDriver implements Driver
             $this->addPaths((array) $paths);
         }
     }
-    
+
     /**
      * Append lookup paths to metadata driver.
      *
@@ -96,6 +95,16 @@ class AnnotationDriver implements Driver
     public function getPaths()
     {
         return $this->_paths;
+    }
+
+    /**
+     * Retrieve the current annotation reader
+     * 
+     * @return AnnotationReader
+     */
+    public function getReader()
+    {
+        return $this->_reader;
     }
 
     /**
@@ -127,6 +136,13 @@ class AnnotationDriver implements Driver
         $class = $metadata->getReflectionClass();
 
         $classAnnotations = $this->_reader->getClassAnnotations($class);
+
+        // Compatibility with Doctrine Common 3.x
+        if ($classAnnotations && is_int(key($classAnnotations))) {
+            foreach ($classAnnotations as $annot) {
+                $classAnnotations[get_class($annot)] = $annot;
+            }
+        }
 
         // Evaluate Entity annotation
         if (isset($classAnnotations['Doctrine\ORM\Mapping\Entity'])) {
@@ -237,7 +253,6 @@ class AnnotationDriver implements Driver
                     'unique' => $joinColumnAnnot->unique,
                     'nullable' => $joinColumnAnnot->nullable,
                     'onDelete' => $joinColumnAnnot->onDelete,
-                    'onUpdate' => $joinColumnAnnot->onUpdate,
                     'columnDefinition' => $joinColumnAnnot->columnDefinition,
                 );
             } else if ($joinColumnsAnnot = $this->_reader->getPropertyAnnotation($property, 'Doctrine\ORM\Mapping\JoinColumns')) {
@@ -248,7 +263,6 @@ class AnnotationDriver implements Driver
                         'unique' => $joinColumn->unique,
                         'nullable' => $joinColumn->nullable,
                         'onDelete' => $joinColumn->onDelete,
-                        'onUpdate' => $joinColumn->onUpdate,
                         'columnDefinition' => $joinColumn->columnDefinition,
                     );
                 }
@@ -356,7 +370,6 @@ class AnnotationDriver implements Driver
                             'unique' => $joinColumn->unique,
                             'nullable' => $joinColumn->nullable,
                             'onDelete' => $joinColumn->onDelete,
-                            'onUpdate' => $joinColumn->onUpdate,
                             'columnDefinition' => $joinColumn->columnDefinition,
                         );
                     }
@@ -368,7 +381,6 @@ class AnnotationDriver implements Driver
                             'unique' => $joinColumn->unique,
                             'nullable' => $joinColumn->nullable,
                             'onDelete' => $joinColumn->onDelete,
-                            'onUpdate' => $joinColumn->onUpdate,
                             'columnDefinition' => $joinColumn->columnDefinition,
                         );
                     }
@@ -396,6 +408,13 @@ class AnnotationDriver implements Driver
                 // filter for the declaring class only, callbacks from parents will already be registered.
                 if ($method->isPublic() && $method->getDeclaringClass()->getName() == $class->name) {
                     $annotations = $this->_reader->getMethodAnnotations($method);
+
+                    // Compatibility with Doctrine Common 3.x
+                    if ($annotations && is_int(key($annotations))) {
+                        foreach ($annotations as $annot) {
+                            $annotations[get_class($annot)] = $annot;
+                        }
+                    }
 
                     if (isset($annotations['Doctrine\ORM\Mapping\PrePersist'])) {
                         $metadata->addLifecycleCallback($method->getName(), \Doctrine\ORM\Events::prePersist);
@@ -442,6 +461,20 @@ class AnnotationDriver implements Driver
     {
         $classAnnotations = $this->_reader->getClassAnnotations(new \ReflectionClass($className));
 
+        // Compatibility with Doctrine Common 3.x
+        if ($classAnnotations && is_int(key($classAnnotations))) {
+            foreach ($classAnnotations as $annot) {
+                if ($annot instanceof \Doctrine\ORM\Mapping\Entity) {
+                    return false;
+                }
+                if ($annot instanceof \Doctrine\ORM\Mapping\MappedSuperclass) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         return ! isset($classAnnotations['Doctrine\ORM\Mapping\Entity']) &&
                ! isset($classAnnotations['Doctrine\ORM\Mapping\MappedSuperclass']);
     }
@@ -467,18 +500,20 @@ class AnnotationDriver implements Driver
                 throw MappingException::fileMappingDriversRequireConfiguredDirectoryPath($path);
             }
 
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path),
-                \RecursiveIteratorIterator::LEAVES_ONLY
+            $iterator = new \RegexIterator(
+                new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::LEAVES_ONLY
+                ),
+                '/^.+' . str_replace('.', '\.', $this->_fileExtension) . '$/i', 
+                \RecursiveRegexIterator::GET_MATCH
             );
-
+            
             foreach ($iterator as $file) {
-                if (($fileName = $file->getBasename($this->_fileExtension)) == $file->getBasename()) {
-                    continue;
-                }
-
-                $sourceFile = realpath($file->getPathName());
+                $sourceFile = realpath($file[0]);
+                
                 require_once $sourceFile;
+                
                 $includedFiles[] = $sourceFile;
             }
         }
@@ -500,7 +535,7 @@ class AnnotationDriver implements Driver
 
     /**
      * Factory method for the Annotation Driver
-     * 
+     *
      * @param array|string $paths
      * @param AnnotationReader $reader
      * @return AnnotationDriver

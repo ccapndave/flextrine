@@ -16,7 +16,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * and the Lesser GNU General Public License along with this program.
- * If not, see <http://www.gnu.org/licenses/>.
+ * If not, see http://www.gnu.org/licenses/.
  * 
  */
 
@@ -109,12 +109,7 @@ package org.davekeen.flextrine.orm.collections {
 		public override function get filterFunction():Function {
 			return super.filterFunction;
 		}
-
-		/*[Transient]
-		public override function set sort(s:ISort):void {
-			super.sort = s;
-		}*/
-
+		
 		[Transient]
 		public override function get list():IList {
 			return super.list;

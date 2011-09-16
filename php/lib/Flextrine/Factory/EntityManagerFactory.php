@@ -30,19 +30,25 @@ use Doctrine\ORM\EntityManager,
 	Doctrine\Common\Annotations\AnnotationReader,
 	\Zend_Registry;
 
-class EntityManagerFactory {
+class EntityManagerFactory implements IEntityManagerFactory {
 
-	public static function create($options) {
-		if (!isset($options['connection_options']))
+	private $options;
+	
+	public function __construct($options) {
+		$this->options = $options;
+	}
+	
+	public function create() {
+		if (!isset($this->options['connection_options']))
 			throw new \Exception("The connection_options configuration setting is not defined.");
 
-		if (!isset($options['metadata']['driver']))
+		if (!isset($this->options['metadata']['driver']))
 			throw new \Exception("The metadata.driver configuration setting is not defined.");
 
-		if (!isset($options['metadata']['paths']))
+		if (!isset($this->options['metadata']['paths']))
 			throw new \Exception("The metadata.paths configuration setting is not defined.");
 
-		if (!isset($options['directories']['proxies']))
+		if (!isset($this->options['directories']['proxies']))
 			throw new \Exception("The directories.proxies configuration setting is not defined.");
 
 		$config = new Configuration();
@@ -58,25 +64,26 @@ class EntityManagerFactory {
 		$config->setQueryCacheImpl($cache);
 
 		// Setup the proxies
-		$config->setProxyDir(APP_PATH."/".$options['directories']['proxies']);
+		$config->setProxyDir(APP_PATH."/".$this->options['directories']['proxies']);
 		$config->setProxyNamespace("Proxies");
-		$config->setAutoGenerateProxyClasses(isset($options['autoGenerateProxies']) && $options['autoGenerateProxies']);
+		$config->setAutoGenerateProxyClasses(isset($this->options['autoGenerateProxies']) && $this->options['autoGenerateProxies']);
 		
 		// Get the paths from the metadata.paths configuration entry.  This can either be a single item (paths: entities), or a
 		// list of paths (paths: [path1, path2]).  The code below deals with both cases, and prepends the APP_PATH to them.
-		$paths = is_array($options['metadata']['paths']) ? $options['metadata']['paths'] : array($options['metadata']['paths']);
+		$paths = is_array($this->options['metadata']['paths']) ? $this->options['metadata']['paths'] : array($this->options['metadata']['paths']);
 		array_walk($paths, function(&$item, $key) { $item = APP_PATH.DIRECTORY_SEPARATOR.$item; });
 		
 		// Set the metadata driver implementation based on the metadata.driver configuration entry.  Note that Annotations are
 		// slightly different to the others implementations so are dealt with seperately.
-		switch ($options['metadata']['driver']) {
+		switch ($this->options['metadata']['driver']) {
 			case 'Doctrine\ORM\Mapping\Driver\AnnotationDriver':
 				$reader = new AnnotationReader();
 				$reader->setDefaultAnnotationNamespace('Doctrine\ORM\Mapping\\');
-				$driverImpl = new $options['metadata']['driver']($reader, $paths);
+				//$driverImpl = new $this->options['metadata']['driver']($reader, $paths);
+				$driverImpl = $config->newDefaultAnnotationDriver($paths);
 				break;
 			default:
-				$driverImpl = new $options['metadata']['driver']($paths);
+				$driverImpl = new $this->options['metadata']['driver']($paths);
 				break;
 		}
 
@@ -85,7 +92,7 @@ class EntityManagerFactory {
 
 		// Finally create and return the EntityManager.  If a $connectionOptions variable is set in the registry this takes precedence over
 		// config.yml, which allows us to override database setting for test suites
-		return EntityManager::create(Zend_Registry::isRegistered("connectionOptions") ? Zend_Registry::get("connectionOptions") : $options['connection_options'], $config);
+		return EntityManager::create(Zend_Registry::isRegistered("connectionOptions") ? Zend_Registry::get("connectionOptions") : $this->options['connection_options'], $config);
 	}
 
 }

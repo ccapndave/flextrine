@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * and the Lesser GNU General Public License along with this program.
- * If not, see <http://www.gnu.org/licenses/>.
+ * If not, see http://www.gnu.org/licenses/.
  *
  */
 
@@ -256,7 +256,7 @@ package org.davekeen.flextrine.orm {
 		 * discarded; for example, an edit window with a <b>Save</b> and <b>Cancel</b> button.  If the user hits <b>cancel</b> the unmanaged entity can just be
 		 *  thrown away, or otherwise <code>EntityManager.merge</code> can be used to merge changes back into the repository.</p>
 		 *
-		 * @example To detach a <code>user</code> entity:
+		 * @example To detach a <code>user</code> entity
 		 *
 		 * <pre>
 		 * var detachedUserCopy:User = em.detachCopy(user) as User;
@@ -268,6 +268,7 @@ package org.davekeen.flextrine.orm {
 		public function detachCopy(entity:Object):Object {
 			if (!entity)
 				throw new TypeError("Attempted to detach null");
+			
 			// Make a fresh copy of the entity
 			var entityCopy:Object = EntityUtil.copyEntity(entity);
 			
@@ -279,9 +280,9 @@ package org.davekeen.flextrine.orm {
 		 * Merge a detached entity back into Flextrine.  If the entity has changed compared to its merged counterpart the merged
 		 * object will be marked dirty and scheduled for update on the next flush.
 		 *
-		 * <p><code>merge</code> is the opposite operation to <code>detach</code>
+		 * <p><code>merge</code> is the opposite operation to <code>detach</code></p>
 		 *
-		 * @example Thie following example detaches an entity, makes a change, then merges it back into the repository:
+		 * @example Thie following example detaches an entity, makes a change, then merges it back into the repository
 		 *
 		 * <pre>
 		 * var unmanagedUser:User = em.detach(managedUser) as User;
@@ -520,7 +521,7 @@ package org.davekeen.flextrine.orm {
 		 * Ensure that a single valued association is loaded before taking an action.  If the association is already loaded this
 		 * calls <code>onResult</code> instantly.
 		 *
-		 * @example To initalize a lazily loaded single valued association <code>owner</code> on a <code>dog</code> entity:
+		 * @example To initalize a lazily loaded single valued association <code>owner</code> on a <code>dog</code> entity
 		 *
 		 * <pre>
 		 * em.requireOne(dog.owner, onOwnerLoaded);
@@ -560,7 +561,7 @@ package org.davekeen.flextrine.orm {
 		 * Ensure that a many valued collection is loaded before taking an action.  If the collection is already loaded this
 		 * calls <code>onResult</code> instantly.
 		 *
-		 * @example To initalize a lazily loaded collection association <code>toes</code> on a <code>foot</code> entity:
+		 * @example To initalize a lazily loaded collection association <code>toes</code> on a <code>foot</code> entity
 		 *
 		 * <pre>
 		 * em.requireMany(foot, "toes", onToesLoaded);

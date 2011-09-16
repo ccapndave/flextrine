@@ -56,7 +56,7 @@ if (isset($_GET["PHPSESSID"]))
 	session_id($_GET["PHPSESSID"]);
 
 // Load the main configuration file
-$mainConfig = Yaml::load(ROOT_PATH."/config/config.yml");
+$mainConfig = Yaml::parse(ROOT_PATH."/config/config.yml");
 Zend_Registry::set("mainConfig", $mainConfig);
 
 // Now we need to decide which application we are supposed to be running.  The logic goes like this:
@@ -104,15 +104,17 @@ if (!file_exists(APP_PATH)) {
 	if (!file_exists($appConfigFile))
 		throw new \Exception("The configuration file for this application was not found (".$appConfigFile.")");
 	
-	$appConfig =  Yaml::load($appConfigFile);
+	$appConfig = Yaml::parse($appConfigFile);
 	Zend_Registry::set("appConfig", $appConfig);
 	
 	// We need an extra class loader for the entities and services directory themselves; use empty namespace as there could be anything in here
 	$entityClassLoader = new ClassLoader(null, APP_PATH.DIRECTORY_SEPARATOR.$appConfig["directories"]["entities"]);
 	$entityClassLoader->register();
 	
-	// Create the Doctrine EntityManager
-	Zend_Registry::set("em", Flextrine\Factory\EntityManagerFactory::create(Zend_Registry::get("appConfig")));
+	// Create the Doctrine EntityManagerFactory and a default EntityManager (for backwards compatibility)
+	$entityManagerFactory = new Flextrine\Factory\EntityManagerFactory(Zend_Registry::get("appConfig"));
+	Zend_Registry::set("entityManagerFactory", $entityManagerFactory);
+	Zend_Registry::set("em", $entityManagerFactory->create());
 	
 	// If acls are enabled create the Acl instance
 	if ($appConfig["acl"]["enable"])
