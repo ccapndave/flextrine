@@ -5,7 +5,7 @@ Flextrine is a powerful solution for creating Flex/PHP rich internet application
 Documentation is available [in the wiki](https://github.com/ccapndave/flextrine/wiki).  The Flextrine discussion group is on [Google Groups](http://groups.google.com/group/flextrine).  Please log bugs and requests in [issues](https://github.com/ccapndave/flextrine/issues).
 
 # Requirements
-- Flex 3, Flex 4
+- Flex 3, Flex 4, Flex 4.5
 - PHP 5.3+
 - MySQL, PostgreSQL, SQLite, Oracle (more coming)
 
